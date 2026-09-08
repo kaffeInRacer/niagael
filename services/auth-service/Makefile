@@ -4,7 +4,13 @@ MIGRATIONS_DIR ?= ./migrations
 DB_URL := $(shell yq -r '.postgres.migration_url' $(CONFIG_FILE))
 MIGRATIONS_SOURCE := file://$(abspath $(MIGRATIONS_DIR))
 
-.PHONY: migrate-up migrate-down migrate-clean migrate-add proto-gen
+.PHONY: migrate-up migrate-down migrate-clean build run
+
+build:
+	go build -o ./tmp/auth-service ./cmd/*.go
+
+run: build
+	./tmp/auth-service
 
 migrate-up:
 	migrate -source "$(MIGRATIONS_SOURCE)" -database "$(DB_URL)" up
@@ -14,7 +20,7 @@ migrate-down:
 
 migrate-clean:
 	migrate -source "$(MIGRATIONS_SOURCE)" -database "$(DB_URL)" drop -f
+	migrate -source "$(MIGRATIONS_SOURCE)" -database "$(DB_URL)" up
 
-migrate-add:
-	@test -n "$(name)" || (printf '%s\n' 'usage: make migrate-add name=create_products_table'; exit 1)
-	migrate create -ext sql -dir "$(MIGRATIONS_DIR)" -seq "$(name)"
+migrate-status:
+	migrate -source "$(MIGRATIONS_SOURCE)" -database "$(DB_URL)" version

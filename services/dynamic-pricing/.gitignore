@@ -23,7 +23,9 @@ coverage.html
 
 # Logs
 logs/
+logs/**
 *.log
+app.log
 
 # IDE
 .idea/
