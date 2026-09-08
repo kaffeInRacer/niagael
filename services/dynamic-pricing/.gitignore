@@ -1,0 +1,36 @@
+# Binary
+dynamic-pricing
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build
+tmp/
+build/
+bin/
+
+# Config with secrets
+config.yaml
+config.yml
+config.local.yaml
+config.local.yml
+
+# Test
+*.out
+coverage.html
+
+# Logs
+logs/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

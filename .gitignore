@@ -1,0 +1,107 @@
+# ================================
+# ENV & SECRETS
+# ================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+
+# ================================
+# IDE & EDITOR
+# ================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ================================
+# GO BACKEND
+# ================================
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+**/cmd/*.exe
+**/cmd/*.exe~
+**/cmd/*.dll
+**/cmd/*.so
+**/cmd/*.dylib
+
+# Build output
+**/tmp/
+**/build/
+**/bin/
+
+# Test coverage
+*.out
+coverage.html
+**/*.test
+
+# Go workspace
+vendor/
+go.work
+go.work.sum
+
+# ================================
+# NODE.JS FRONTEND
+# ================================
+node_modules/
+dist/
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ================================
+# CONFIG (contain secrets)
+# ================================
+**/config.yaml
+**/config.yml
+**/config.local.yaml
+**/config.local.yml
+
+# Keep example configs
+!**/config.example.yml
+!**/config.example.yaml
+
+# ================================
+# DOCKER
+# ================================
+docker-compose.override.yml
+
+# ================================
+# MISC
+# ================================
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+
+# ================================
+# POSTGRES DATA (if local dev)
+# ================================
+pgdata/
+redis-data/
+
+# ================================
+# LOGS
+# ================================
+logs/
+*.log
+
+# ================================
+# MIGRATION ARTIFACTS
+# ================================
+**/migrations/*.sql
+!**/migrations/*.up.sql
+!**/migrations/*.down.sql
