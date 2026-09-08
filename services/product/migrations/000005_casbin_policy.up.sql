@@ -1,0 +1,40 @@
+CREATE TABLE IF NOT EXISTS casbin_rule (
+    id BIGSERIAL PRIMARY KEY,
+    ptype VARCHAR(16) NOT NULL,
+    v0 VARCHAR(255) NOT NULL DEFAULT '',
+    v1 VARCHAR(255) NOT NULL DEFAULT '',
+    v2 VARCHAR(255) NOT NULL DEFAULT '',
+    v3 VARCHAR(255) NOT NULL DEFAULT '',
+    v4 VARCHAR(255) NOT NULL DEFAULT '',
+    v5 VARCHAR(255) NOT NULL DEFAULT '',
+    CONSTRAINT casbin_rule_unique UNIQUE (ptype, v0, v1, v2, v3, v4, v5)
+);
+
+INSERT INTO casbin_rule (ptype, v0, v1, v2) VALUES
+    ('p', 'staff', 'category', 'read'),
+    ('p', 'staff', 'product', 'read'),
+    ('p', 'staff', 'product', 'create'),
+    ('p', 'staff', 'product', 'update'),
+    ('p', 'staff', 'variant', 'read'),
+    ('p', 'staff', 'variant', 'create'),
+    ('p', 'staff', 'variant', 'update'),
+    ('p', 'staff', 'product_image', 'read'),
+    ('p', 'staff', 'product_image', 'create'),
+    ('p', 'staff', 'product_image', 'delete'),
+    ('p', 'admin', 'category', 'read'),
+    ('p', 'admin', 'category', 'create'),
+    ('p', 'admin', 'category', 'update'),
+    ('p', 'admin', 'category', 'delete'),
+    ('p', 'admin', 'product', 'read'),
+    ('p', 'admin', 'product', 'create'),
+    ('p', 'admin', 'product', 'update'),
+    ('p', 'admin', 'product', 'delete'),
+    ('p', 'admin', 'variant', 'read'),
+    ('p', 'admin', 'variant', 'create'),
+    ('p', 'admin', 'variant', 'update'),
+    ('p', 'admin', 'variant', 'delete'),
+    ('p', 'admin', 'product_image', 'read'),
+    ('p', 'admin', 'product_image', 'create'),
+    ('p', 'admin', 'product_image', 'update'),
+    ('p', 'admin', 'product_image', 'delete')
+ON CONFLICT (ptype, v0, v1, v2, v3, v4, v5) DO NOTHING;

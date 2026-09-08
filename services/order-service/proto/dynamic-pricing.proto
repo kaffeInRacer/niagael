@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package dynamic_pricing;
+
+option go_package = "kaffein/order-service/proto/dynamic-pricing;dynamicpricingpb";
+
+message GetFlashSaleByProductIdRequest {
+  string product_id = 1;
+}
+
+message GetFlashSaleByVariantIdRequest {
+  string product_id = 1;
+  string variant_id = 2;
+}
+
+message GetFlashSalesByProductIdsRequest {
+  repeated string product_ids = 1;
+}
+
+message FlashSale {
+  string id = 1;
+  string name = 2;
+  string product_id = 3;
+  string variant_id = 4;
+  int32 discount_percent = 5;
+  int64 stock = 6;
+  int32 max_per_user = 7;
+  string start_time = 8;
+  string end_time = 9;
+  bool is_active = 10;
+}
+
+message GetFlashSalesByProductIdsResponse {
+  repeated FlashSale flash_sales = 1;
+}
+
+message FlashSaleVariantRequest {
+  string product_id = 1;
+  string variant_id = 2;
+}
+
+message GetFlashSalesByVariantIdsRequest {
+  repeated FlashSaleVariantRequest items = 1;
+}
+
+message GetFlashSalesByVariantIdsResponse {
+  repeated FlashSale flash_sales = 1;
+}
+
+message GetPromoByCodeRequest {
+  string code = 1;
+}
+
+message ApplyPromoRequest {
+  string code = 1;
+  string user_id = 2;
+  int64 total_amount = 3;
+}
+
+message ApplyPromoResponse {
+  int64 discount = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message Promo {
+  string id = 1;
+  string name = 2;
+  string code = 3;
+  string description = 4;
+  string discount_type = 5;
+  int64 discount_value = 6;
+  int64 min_purchase = 7;
+  int64 max_discount = 8;
+  int32 quantity = 9;
+  int32 used_count = 10;
+  int32 max_usage_per_user = 11;
+  bool can_combine_flash_sale = 12;
+  string start_date = 13;
+  string end_date = 14;
+  bool is_active = 15;
+}
+
+message DecrementFlashSaleStockRequest {
+  string flash_sale_id = 1;
+  int32 quantity = 2;
+}
+
+message DecrementFlashSaleStockResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message IncrementFlashSaleUsageRequest {
+  string flash_sale_id = 1;
+  string user_id = 2;
+  int32 quantity = 3;
+}
+
+message IncrementFlashSaleUsageResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetPromoUsageRequest {
+  string promo_id = 1;
+  string user_id = 2;
+}
+
+message PromoUsageResponse {
+  string id = 1;
+  string promo_id = 2;
+  string user_id = 3;
+  int32 quantity = 4;
+}
+
+service DynamicPricingService {
+  rpc GetFlashSaleByProductId (GetFlashSaleByProductIdRequest) returns (FlashSale);
+  rpc GetFlashSaleByVariantId (GetFlashSaleByVariantIdRequest) returns (FlashSale);
+  rpc GetFlashSalesByProductIds (GetFlashSalesByProductIdsRequest) returns (GetFlashSalesByProductIdsResponse);
+  rpc GetFlashSalesByVariantIds (GetFlashSalesByVariantIdsRequest) returns (GetFlashSalesByVariantIdsResponse);
+  rpc GetPromoByCode (GetPromoByCodeRequest) returns (Promo);
+  rpc ApplyPromo (ApplyPromoRequest) returns (ApplyPromoResponse);
+  rpc DecrementFlashSaleStock (DecrementFlashSaleStockRequest) returns (DecrementFlashSaleStockResponse);
+  rpc IncrementFlashSaleUsage (IncrementFlashSaleUsageRequest) returns (IncrementFlashSaleUsageResponse);
+  rpc GetPromoUsage (GetPromoUsageRequest) returns (PromoUsageResponse);
+}

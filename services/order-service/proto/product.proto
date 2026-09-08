@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package product;
+
+option go_package = "kaffein/order-service/proto/product;productpb";
+
+service ProductService {
+  rpc GetProduct (GetProductRequest) returns (Product);
+  rpc GetProducts (GetProductsRequest) returns (ProductsResponse);
+  rpc GetProductsByCategory (GetProductsByCategoryRequest) returns (ProductsResponse);
+  rpc ReserveStock (ReserveStockRequest) returns (ReserveStockResponse);
+  rpc ReleaseStock (ReleaseStockRequest) returns (ReleaseStockResponse);
+  rpc ConfirmStock (ConfirmStockRequest) returns (ConfirmStockResponse);
+}
+
+message GetProductRequest {
+  string id = 1;
+}
+
+message GetProductsRequest {
+  repeated string ids = 1;
+}
+
+message GetProductsByCategoryRequest {
+  string category_id = 1;
+}
+
+message ProductsResponse {
+  repeated Product products = 1;
+}
+
+message Product {
+  string id = 1;
+  string category_id = 2;
+  string category_name = 3;
+  string name = 4;
+  string slug = 5;
+  string description = 6;
+  int64 price = 7;
+  int64 stock = 8;
+  int64 stock_reserved = 9;
+  bool is_active = 10;
+  bool is_promo_excluded = 11;
+  string created_at = 12;
+  string updated_at = 13;
+  repeated ProductVariant variants = 14;
+}
+
+message ProductVariant {
+  string id = 1;
+  string product_id = 2;
+  string name = 3;
+  string sku = 4;
+  int64 price = 5;
+  int64 stock = 6;
+  int64 stock_reserved = 7;
+  bool is_active = 8;
+  map<string, string> attributes = 9;
+}
+
+message ReserveStockRequest {
+  string order_id = 1;
+  repeated StockItem items = 2;
+}
+
+message StockItem {
+  string product_id = 1;
+  string variant_id = 2;
+  int32 quantity = 3;
+}
+
+message ReserveStockResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ReleaseStockRequest {
+  string order_id = 1;
+  repeated StockItem items = 2;
+}
+
+message ReleaseStockResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ConfirmStockRequest {
+  string order_id = 1;
+  repeated StockItem items = 2;
+}
+
+message ConfirmStockResponse {
+  bool success = 1;
+  string message = 2;
+}

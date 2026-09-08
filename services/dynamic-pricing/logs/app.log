@@ -1,0 +1,545 @@
+6:09AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:09AM INF application started mode=development
+6:09AM INF loaded config addr=:8082 grpc=:8083 log_level=info
+6:12AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:12AM INF application started mode=development
+6:12AM INF loaded config addr=:8082 grpc=:8083 log_level=info
+6:12AM FTL failed to listen for gRPC error="listen tcp :8083: bind: address already in use"
+6:12AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:12AM INF application started mode=development
+6:12AM INF loaded config addr=:8082 grpc=:8084 log_level=info
+6:12AM FTL failed to listen for gRPC error="listen tcp :8084: bind: address already in use"
+6:12AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:12AM INF application started mode=development
+6:12AM INF loaded config addr=:8085 grpc=:8086 log_level=info
+6:12AM INF starting gRPC server addr=:8086
+6:14AM INF shutting down gRPC server
+6:14AM INF gRPC server stopped
+6:14AM INF starting HTTP server addr=:8085 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+6:14AM INF shutting down http server
+6:14AM INF HTTP server stopped
+6:18AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:18AM INF application started mode=development
+6:18AM INF loaded config addr=:8085 grpc=:8086 log_level=info
+6:18AM INF starting gRPC server addr=:8086
+6:20AM INF shutting down gRPC server
+6:20AM INF gRPC server stopped
+6:20AM INF starting HTTP server addr=:8085 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+6:20AM INF shutting down http server
+6:20AM INF HTTP server stopped
+6:24AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:24AM INF application started mode=development
+6:24AM INF loaded config addr=:8085 grpc=:8086 log_level=info
+6:24AM INF starting gRPC server addr=:8086
+6:24AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:24AM INF application started mode=development
+6:24AM INF loaded config addr=:8085 grpc=:8086 log_level=info
+6:24AM FTL failed to listen for gRPC error="listen tcp :8086: bind: address already in use"
+6:24AM INF shutting down gRPC server
+6:24AM INF gRPC server stopped
+6:24AM INF shutting down http server
+6:24AM INF starting HTTP server addr=:8085 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+6:24AM INF HTTP server stopped
+6:26AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:26AM INF application started mode=development
+6:26AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+6:26AM FTL failed to listen for gRPC error="listen tcp :8084: bind: address already in use"
+6:26AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:26AM INF application started mode=development
+6:26AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+6:26AM INF starting gRPC server addr=:8084
+6:30AM INF shutting down gRPC server
+6:30AM INF gRPC server stopped
+6:30AM INF starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+6:30AM ERR ListenAndServe failed error="listen tcp :8083: bind: address already in use"
+6:30AM ERR server failed error="listen tcp :8083: bind: address already in use"
+6:30AM INF shutting down http server
+6:35AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:35AM INF application started mode=development
+6:35AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+6:35AM INF starting gRPC server addr=:8084
+6:35AM INF shutting down gRPC server
+6:35AM INF gRPC server stopped
+6:35AM INF starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+6:35AM ERR ListenAndServe failed error="listen tcp :8083: bind: address already in use"
+6:35AM INF shutting down http server
+6:35AM ERR server failed error="listen tcp :8083: bind: address already in use"
+7:38AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+7:38AM INF application started mode=development
+7:38AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+7:38AM INF starting gRPC server addr=:8084
+7:38AM INF shutting down gRPC server
+7:38AM INF gRPC server stopped
+7:38AM INF shutting down http server
+7:38AM INF starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+7:38AM INF HTTP server stopped
+7:39AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+7:39AM INF application started mode=development
+7:39AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+7:39AM INF starting gRPC server addr=:8084
+7:39AM INF shutting down gRPC server
+7:39AM INF gRPC server stopped
+7:39AM INF starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+7:39AM INF shutting down http server
+7:39AM INF HTTP server stopped
+7:39AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+7:39AM INF application started mode=development
+7:39AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+7:39AM INF starting gRPC server addr=:8084
+7:41AM INF shutting down gRPC server
+7:41AM INF gRPC server stopped
+7:41AM INF shutting down http server
+7:41AM INF starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+7:41AM INF HTTP server stopped
+7:43AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+7:43AM INF application started mode=development
+7:43AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+7:43AM INF starting gRPC server addr=:8084
+7:45AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+7:45AM INF application started mode=development
+7:45AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+7:45AM INF starting gRPC server addr=:8084
+7:45AM INF shutting down gRPC server
+7:45AM INF gRPC server stopped
+7:45AM INF starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+7:45AM INF shutting down http server
+7:45AM INF HTTP server stopped
+7:47AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+7:47AM INF application started mode=development
+7:47AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+7:47AM INF starting gRPC server addr=:8084
+7:47AM INF starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+7:47AM INF request client_ip=::1 latency=0.033122 method=GET path=/health status=200
+7:47AM INF request client_ip=::1 latency=0.03391 method=GET path=/health status=200
+7:51AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+7:51AM INF application started mode=development
+7:51AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+7:51AM INF starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+7:51AM INF starting gRPC server addr=:8084
+7:51AM INF request client_ip=::1 latency=0.0485 method=GET path=/health status=200
+7:58AM INF request client_ip=::1 latency=1.702793 method=POST path=/flash-sales status=201
+7:58AM INF request client_ip=::1 latency=0.960124 method=POST path=/flash-sales status=201
+7:58AM INF request client_ip=::1 latency=14.855837 method=POST path=/promos status=201
+7:58AM INF request client_ip=::1 latency=0.79799 method=POST path=/promos status=201
+7:58AM INF request client_ip=::1 latency=0.812846 method=POST path=/promos status=201
+7:58AM INF request client_ip=::1 latency=0.88023 method=POST path=/promos status=201
+7:58AM ERR failed to list flash sales error="can't scan into dest[10] (col: created_at): cannot scan timestamptz (OID 1184) in binary format into *string"
+7:58AM INF request client_ip=::1 latency=4.903228 method=GET path=/flash-sales status=500
+7:58AM ERR failed to list promos error="can't scan into dest[15] (col: created_at): cannot scan timestamptz (OID 1184) in binary format into *string"
+7:58AM INF request client_ip=::1 latency=1.541161 method=GET path=/promos status=500
+7:59AM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+7:59AM INF application started mode=development
+7:59AM INF loaded config addr=:8083 grpc=:8084 log_level=info
+7:59AM INF starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+7:59AM INF starting gRPC server addr=:8084
+7:59AM INF request client_ip=::1 latency=0.035759 method=GET path=/health status=200
+9:02AM INF request client_ip=::1 latency=8.048999 method=GET path=/flash-sales status=200
+12:34PM INF request client_ip=::1 latency=4.756671 method=GET path=/flash-sales status=200
+2:44PM INF request client_ip=::1 latency=4.453768 method=GET path=/flash-sales status=200
+2:45PM INF request client_ip=::1 latency=12.672191 method=DELETE path=/flash-sales/782da796-7bf8-4caa-9340-e0f88ad6fa7c status=200
+2:45PM INF request client_ip=::1 latency=0.865506 method=DELETE path=/flash-sales/eaa033b9-58fd-4ba4-9502-ddc59c67119d status=200
+2:45PM INF request client_ip=::1 latency=1.092656 method=POST path=/flash-sales status=201
+2:45PM INF request client_ip=::1 latency=0.757185 method=POST path=/flash-sales status=201
+10:12PM INF request client_ip=::1 latency=4.71674 method=GET path=/flash-sales status=200
+1:37AM INF shutting down http server
+1:37AM INF shutting down gRPC server
+1:37AM INF gRPC server stopped
+1:37AM INF HTTP server stopped
+3:58PM INF postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+3:58PM INF application started mode=development
+3:58PM INF loaded config addr=:8083 grpc=:8084 log_level=info
+3:58PM INF starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+3:58PM INF starting gRPC server addr=:8084
+3:58PM INF request client_ip=::1 latency=0.049372 method=GET path=/health status=200
+8:50PM INF request client_ip=::1 latency=0.683885 method=GET path=/health status=200
+1:36AM INF request client_ip=::1 latency=0.03377 method=GET path=/health status=200
+3:52AM INF request client_ip=::1 latency=0.038265 method=GET path=/health status=200
+3:59AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+3:59AM INF cmd/main.go:50 > application started mode=development
+3:59AM INF cmd/main.go:56 > loaded config addr=:8083 grpc=:8084 log_level=info
+3:59AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+3:59AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+3:59AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.041245 method=GET path=/health status=200
+4:06AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+4:06AM INF cmd/main.go:50 > application started mode=development
+4:06AM INF cmd/main.go:56 > loaded config addr=:8083 grpc=:8084 log_level=info
+4:06AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+4:06AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+4:06AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.064416 method=GET path=/health status=200
+4:45AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.460022 method=GET path=/health status=200
+4:45AM INF cmd/middleware.go:23 > request client_ip=::1 latency=7.270473 method=GET path=/flash-sales status=200
+4:45AM INF cmd/middleware.go:23 > request client_ip=::1 latency=3.940097 method=GET path=/promos status=200
+4:46AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.125297 method=GET path=/flash-sales status=200
+4:46AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.00552 method=GET path=/flash-sales status=200
+4:47AM INF cmd/middleware.go:23 > request client_ip=::1 latency=4.080392 method=GET path=/flash-sales status=200
+4:50AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+4:50AM INF cmd/main.go:50 > application started mode=development
+4:50AM INF cmd/main.go:56 > loaded config addr=:8083 grpc=:8084 log_level=info
+4:50AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+4:50AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+4:50AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.033666 method=GET path=/health status=200
+11:00AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=7.371353 method=GET path=/flash-sales status=200
+11:00AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.109711 method=GET path=/promos status=200
+11:02AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.024913 method=GET path=/health status=200
+11:02AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.525731 method=GET path=/promos status=200
+11:03AM INF cmd/middleware.go:23 > request client_ip=::1 latency=4.32202 method=GET path=/flash-sales status=200
+11:03AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.828215 method=GET path=/flash-sales status=200
+11:03AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.108918 method=GET path=/promos status=200
+11:03AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.995644 method=GET path=/flash-sales status=200
+11:03AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.526548 method=GET path=/promos status=200
+11:06AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.961003 method=GET path=/flash-sales status=200
+11:06AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.794872 method=GET path=/flash-sales status=200
+11:06AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.973163 method=GET path=/promos status=200
+11:08AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.123501 method=GET path=/flash-sales status=200
+11:08AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.915072 method=GET path=/promos status=200
+11:08AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.117669 method=GET path=/promos status=200
+11:09AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+11:09AM INF cmd/main.go:50 > application started mode=development
+11:09AM INF cmd/main.go:56 > loaded config addr=:8083 grpc=:8084 log_level=info
+11:09AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+11:09AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+11:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.043235 method=GET path=/health status=200
+11:12AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=6.452562 method=GET path=/flash-sales status=200
+11:12AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=4.577978 method=GET path=/promos status=200
+11:13AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=6.586693 method=GET path=/flash-sales status=200
+11:13AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.330005 method=GET path=/promos status=200
+11:41AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.487242 method=GET path=/flash-sales status=200
+11:41AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.000067 method=GET path=/admin/flash-sales status=404
+11:41AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.036806 method=GET path=/promos status=200
+11:41AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.000111 method=GET path=/admin/promos status=404
+11:42AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+11:42AM INF cmd/main.go:50 > application started mode=development
+11:42AM INF cmd/main.go:56 > loaded config addr=:8083 grpc=:8084 log_level=info
+11:42AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+11:42AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+11:42AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.051604 method=GET path=/health status=200
+11:42AM INF cmd/middleware.go:23 > request client_ip=::1 latency=7.437901 method=GET path=/admin/flash-sales status=200
+11:42AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.817131 method=GET path=/flash-sales status=200
+11:42AM INF cmd/middleware.go:23 > request client_ip=::1 latency=2.734573 method=GET path=/admin/promos status=200
+11:42AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.979498 method=GET path=/promos status=200
+11:43AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.030222 method=GET path=/admin/flash-sales status=200
+11:43AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.792339 method=GET path=/admin/promos status=200
+11:43AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.882833 method=GET path=/flash-sales status=200
+11:43AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.980217 method=GET path=/promos status=200
+5:37PM INF cmd/http_server.go:38 > shutting down http server
+5:37PM INF cmd/http_server.go:67 > HTTP server stopped
+5:37PM INF cmd/grpc_server.go:51 > shutting down gRPC server
+5:37PM INF cmd/grpc_server.go:53 > gRPC server stopped
+5:37PM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+5:37PM INF cmd/main.go:50 > application started mode=development
+5:37PM INF cmd/main.go:56 > loaded config addr=:8083 grpc=:8084 log_level=info
+5:37PM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+5:37PM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+5:38PM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.067335 method=GET path=/health status=200
+5:40PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=4.558017 method=GET path=/admin/flash-sales status=200
+5:40PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.182971 method=GET path=/admin/promos status=200
+5:41PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.998991 method=GET path=/admin/flash-sales status=200
+5:41PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.544867 method=GET path=/admin/promos status=200
+5:42PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.894825 method=GET path=/admin/flash-sales status=200
+5:42PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.307713 method=GET path=/admin/promos status=200
+5:46PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.683554 method=GET path=/admin/promos status=200
+5:46PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.123766 method=GET path=/admin/flash-sales status=200
+6:53PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=4.298429 method=GET path=/admin/flash-sales status=200
+6:53PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.562433 method=GET path=/admin/promos status=200
+7:03PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.127167 method=GET path=/admin/flash-sales status=200
+7:05PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.709798 method=GET path=/admin/flash-sales status=200
+7:06PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.41542 method=GET path=/admin/flash-sales status=200
+7:06PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.78484 method=GET path=/admin/promos status=200
+7:08PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=15.419908 method=GET path=/admin/flash-sales status=200
+7:08PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.077774 method=GET path=/admin/promos status=200
+7:11PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.149013 method=GET path=/admin/flash-sales status=200
+7:11PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.228415 method=GET path=/admin/promos status=200
+7:12PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.993124 method=GET path=/admin/flash-sales status=200
+7:12PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.814637 method=GET path=/admin/promos status=200
+7:12PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.874047 method=GET path=/admin/promos status=200
+7:12PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.276463 method=GET path=/admin/flash-sales status=200
+7:12PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.055937 method=GET path=/admin/flash-sales status=200
+7:12PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.046863 method=GET path=/admin/promos status=200
+7:12PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.835536 method=GET path=/admin/flash-sales status=200
+7:18PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.894462 method=GET path=/admin/flash-sales status=200
+7:18PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.991267 method=GET path=/admin/promos status=200
+7:18PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.777421 method=GET path=/admin/flash-sales status=200
+7:38PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.600322 method=GET path=/admin/flash-sales status=200
+7:38PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.989764 method=GET path=/admin/flash-sales status=200
+7:38PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.160343 method=GET path=/admin/flash-sales status=200
+7:38PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.112561 method=GET path=/admin/flash-sales status=200
+7:38PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.750815 method=GET path=/admin/promos status=200
+7:38PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.88815 method=GET path=/admin/promos status=200
+7:38PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.846151 method=GET path=/admin/promos status=200
+7:38PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.230574 method=GET path=/admin/promos status=200
+7:39PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.809367 method=GET path=/admin/flash-sales status=200
+7:39PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.016015 method=GET path=/admin/flash-sales status=200
+7:39PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.101726 method=GET path=/admin/flash-sales status=200
+7:39PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.530124 method=GET path=/admin/flash-sales status=200
+7:39PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.698906 method=GET path=/admin/promos status=200
+7:39PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.175044 method=GET path=/admin/promos status=200
+7:39PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.086769 method=GET path=/admin/promos status=200
+7:39PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.975334 method=GET path=/admin/promos status=200
+7:40PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.053102 method=GET path=/admin/flash-sales status=200
+7:40PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.251067 method=GET path=/admin/flash-sales status=200
+7:40PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.322484 method=GET path=/admin/flash-sales status=200
+7:40PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.808645 method=GET path=/admin/flash-sales status=200
+7:40PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.900574 method=GET path=/admin/promos status=200
+7:40PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.157962 method=GET path=/admin/promos status=200
+7:40PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.648448 method=GET path=/admin/promos status=200
+7:40PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.839004 method=GET path=/admin/promos status=200
+7:43PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.599199 method=GET path=/admin/flash-sales status=200
+7:43PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.257757 method=GET path=/admin/flash-sales status=200
+7:43PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.9708 method=GET path=/admin/promos status=200
+7:43PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.35506 method=GET path=/admin/promos status=200
+8:04PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.191737 method=GET path=/admin/flash-sales status=200
+8:04PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.749588 method=GET path=/admin/promos status=200
+8:36PM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.026824 method=GET path=/health status=200
+9:16PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=5.188993 method=GET path=/admin/flash-sales status=200
+9:16PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.421125 method=GET path=/admin/promos status=200
+9:21PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.969109 method=GET path=/admin/promos status=200
+9:21PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.064717 method=GET path=/admin/flash-sales status=200
+9:21PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.172644 method=GET path=/admin/promos status=200
+9:22PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.342574 method=GET path=/admin/flash-sales status=200
+9:22PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.974472 method=GET path=/admin/flash-sales status=200
+9:31PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.612889 method=GET path=/admin/flash-sales status=200
+9:31PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.037283 method=GET path=/admin/promos status=200
+9:33PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.055748 method=GET path=/admin/flash-sales status=200
+9:33PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.152441 method=GET path=/admin/promos status=200
+9:33PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.212303 method=GET path=/admin/promos status=200
+9:34PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.413413 method=GET path=/admin/flash-sales status=200
+9:34PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.6599 method=GET path=/admin/promos status=200
+9:34PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.231179 method=GET path=/admin/flash-sales status=200
+9:35PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.831331 method=GET path=/admin/flash-sales status=200
+9:36PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.382991 method=GET path=/admin/flash-sales status=200
+9:48PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.770857 method=GET path=/admin/promos status=200
+9:48PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.279565 method=GET path=/admin/flash-sales status=200
+9:48PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=6.403521 method=GET path=/admin/flash-sales status=200
+10:05PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.951775 method=GET path=/admin/flash-sales status=200
+10:06PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.00999 method=GET path=/admin/flash-sales status=200
+10:07PM INF cmd/grpc_server.go:51 > shutting down gRPC server
+10:07PM INF cmd/http_server.go:38 > shutting down http server
+10:07PM INF cmd/http_server.go:67 > HTTP server stopped
+10:07PM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+10:07PM INF cmd/main.go:50 > application started mode=development
+10:07PM INF cmd/main.go:56 > loaded config addr=:8083 grpc=:8084 log_level=info
+10:07PM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+10:07PM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+10:08PM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.050113 method=GET path=/health status=200
+10:08PM INF cmd/middleware.go:23 > request client_ip=::1 latency=14.864346 method=POST path=/admin/flash-sales/bulk status=201
+10:08PM INF cmd/middleware.go:23 > request client_ip=::1 latency=6.016916 method=GET path=/admin/flash-sales status=200
+10:08PM INF cmd/middleware.go:23 > request client_ip=::1 latency=13.996082 method=DELETE path=/admin/flash-sales/1da46c8d-5b21-4c1a-907e-ba17ca6b3bcf status=200
+10:08PM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.086252 method=DELETE path=/admin/flash-sales/27e9eaf4-145f-40f4-a9ed-c916a66be479 status=200
+10:12PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.905373 method=GET path=/admin/flash-sales status=200
+10:14PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=8.260454 method=POST path=/admin/flash-sales/bulk status=201
+10:14PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.105437 method=GET path=/admin/flash-sales status=200
+11:59PM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+11:59PM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=5.807534 method=GET path=/admin/flash-sales status=500
+12:09AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+12:09AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=5.19626 method=GET path=/admin/flash-sales status=500
+12:09AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+12:09AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.957809 method=GET path=/admin/flash-sales status=500
+12:09AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+12:09AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.935338 method=GET path=/admin/flash-sales status=500
+12:09AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+12:09AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.664503 method=GET path=/admin/flash-sales status=500
+12:09AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=17.31438 method=GET path=/admin/promos status=200
+12:09AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.158922 method=GET path=/admin/promos status=200
+12:09AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+12:09AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.892214 method=GET path=/admin/flash-sales status=500
+12:09AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+12:09AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.563386 method=GET path=/admin/flash-sales status=500
+12:10AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.9961 method=GET path=/admin/promos status=200
+12:10AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+12:10AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.860517 method=GET path=/admin/flash-sales status=500
+12:16AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=5.531479 method=GET path=/admin/promos status=200
+12:16AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+12:16AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.605102 method=GET path=/admin/flash-sales status=500
+12:17AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+12:17AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.858502 method=GET path=/admin/flash-sales status=500
+12:17AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+12:17AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.134942 method=GET path=/admin/flash-sales status=500
+1:36AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+1:36AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=4.140583 method=GET path=/admin/flash-sales status=500
+1:36AM ERR internal/handler/flash_sale_handler.go:63 > failed to list flash sales error="ERROR: column \"discount_price\" does not exist (SQLSTATE 42703)"
+1:36AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.570567 method=GET path=/admin/flash-sales status=500
+1:38AM INF cmd/http_server.go:38 > shutting down http server
+1:38AM INF cmd/grpc_server.go:51 > shutting down gRPC server
+1:38AM INF cmd/http_server.go:67 > HTTP server stopped
+1:38AM INF cmd/grpc_server.go:53 > gRPC server stopped
+1:39AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+1:39AM INF cmd/main.go:50 > application started mode=development
+1:39AM INF cmd/main.go:56 > loaded config addr=:8083 grpc=:8084 log_level=info
+1:39AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+1:39AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+1:40AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+1:40AM INF cmd/main.go:50 > application started mode=development
+1:40AM INF cmd/main.go:56 > loaded config addr=:8083 grpc=:8084 log_level=info
+1:40AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+1:40AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+1:40AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=7.397068 method=GET path=/admin/flash-sales status=200
+1:40AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.968401 method=GET path=/admin/flash-sales status=200
+1:43AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=14.624124 method=POST path=/admin/flash-sales status=201
+1:43AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=5.605473 method=GET path=/admin/flash-sales status=200
+1:43AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.652357 method=DELETE path=/admin/flash-sales/e688f17b-4520-4330-9faa-e9142c7907aa status=200
+1:47AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+1:47AM INF cmd/main.go:50 > application started mode=development
+1:47AM INF cmd/main.go:56 > loaded config addr=:8083 grpc=:8084 log_level=info
+1:47AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+1:47AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+1:47AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.048279 method=GET path=/health status=200
+1:47AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.30275 method=POST path=/admin/flash-sales/bulk status=400
+1:48AM INF cmd/middleware.go:23 > request client_ip=::1 latency=12.812004 method=POST path=/admin/flash-sales/bulk status=201
+1:48AM INF cmd/middleware.go:23 > request client_ip=::1 latency=7.210007 method=GET path=/admin/flash-sales status=200
+1:48AM INF cmd/middleware.go:23 > request client_ip=::1 latency=6.587687 method=DELETE path=/admin/flash-sales/76689ab9-6ee3-4f82-b28a-a123310a006a status=200
+1:48AM INF cmd/middleware.go:23 > request client_ip=::1 latency=6.29056 method=DELETE path=/admin/flash-sales/0f0c565e-7ff2-4087-944a-b8076c203a9f status=200
+1:49AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.372018 method=GET path=/admin/flash-sales status=200
+1:49AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.029257 method=GET path=/health status=200
+1:53AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.808538 method=GET path=/admin/flash-sales status=200
+1:53AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=4.289539 method=GET path=/admin/promos status=200
+1:57AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.008018 method=GET path=/admin/flash-sales status=200
+1:57AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.977585 method=GET path=/admin/promos status=200
+1:59AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.232033 method=GET path=/admin/flash-sales status=200
+1:59AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.880824 method=GET path=/admin/promos status=200
+3:01AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=5.151459 method=GET path=/admin/flash-sales status=200
+3:01AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=3.950583 method=GET path=/admin/promos status=200
+3:13AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.035896 method=GET path=/health status=200
+5:26AM INF cmd/middleware.go:23 > request client_ip=::1 latency=3.69356 method=GET path=/admin/promos status=200
+5:27AM INF cmd/middleware.go:23 > request client_ip=::1 latency=14.298385 method=POST path=/admin/promos status=201
+5:27AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.229329 method=POST path=/admin/flash-sales/bulk status=201
+6:29AM INF cmd/grpc_server.go:51 > shutting down gRPC server
+6:29AM INF cmd/grpc_server.go:53 > gRPC server stopped
+6:29AM INF cmd/http_server.go:38 > shutting down http server
+6:29AM INF cmd/http_server.go:67 > HTTP server stopped
+6:29AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:29AM INF cmd/main.go:57 > application started mode=development
+6:29AM INF cmd/main.go:63 > loaded config addr=:8083 grpc=:8084 log_level=info
+6:29AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+6:29AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+6:31AM INF cmd/http_server.go:38 > shutting down http server
+6:31AM INF cmd/http_server.go:67 > HTTP server stopped
+6:31AM INF cmd/grpc_server.go:51 > shutting down gRPC server
+6:31AM INF cmd/grpc_server.go:53 > gRPC server stopped
+6:32AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:32AM INF cmd/main.go:57 > application started mode=development
+6:32AM INF cmd/main.go:63 > loaded config addr=:8083 grpc=:8084 log_level=info
+6:32AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+6:32AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+6:34AM INF cmd/grpc_server.go:51 > shutting down gRPC server
+6:34AM INF cmd/http_server.go:38 > shutting down http server
+6:34AM INF cmd/http_server.go:67 > HTTP server stopped
+6:34AM INF cmd/grpc_server.go:53 > gRPC server stopped
+6:34AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+6:34AM INF cmd/main.go:58 > application started mode=development
+6:34AM INF cmd/main.go:64 > loaded config addr=:8083 grpc=:8084 log_level=info
+6:34AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+6:34AM INF cmd/grpc_server.go:42 > starting gRPC server addr=:8084
+6:35AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=5.896269 method=GET path=/promos status=200
+6:35AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.000074 method=GET path=/promos/apply/X/user-b status=404
+6:35AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.444245 method=GET path=/admin/promos/00000000-0000-0000-0000-000000000000 status=404
+6:35AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.303769 method=POST path=/promos/apply/X/user-b status=403
+6:35AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.339028 method=DELETE path=/admin/promos/00000000-0000-0000-0000-000000000000 status=403
+6:36AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.244413 method=POST path=/promos/apply/X/user-a status=401
+6:43AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.027864 method=GET path=/health status=200
+7:12AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.02518 method=GET path=/health status=200
+7:19AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.031961 method=GET path=/health status=200
+7:41AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.039315 method=GET path=/admin/flash-sales status=401
+7:41AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.039104 method=GET path=/admin/flash-sales status=401
+7:41AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.026824 method=GET path=/admin/promos status=401
+7:41AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.038717 method=GET path=/admin/promos status=401
+7:42AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.040587 method=GET path=/admin/flash-sales status=401
+7:42AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.046109 method=GET path=/admin/flash-sales status=401
+7:42AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.032603 method=GET path=/admin/promos status=401
+7:42AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.028135 method=GET path=/admin/promos status=401
+7:59AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.037331 method=GET path=/admin/flash-sales status=401
+7:59AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.055279 method=GET path=/admin/flash-sales status=401
+7:59AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.033059 method=GET path=/admin/promos status=401
+7:59AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.026416 method=GET path=/admin/promos status=401
+8:00AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.028466 method=GET path=/admin/flash-sales status=401
+8:00AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.034102 method=GET path=/admin/flash-sales status=401
+8:00AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.024449 method=GET path=/admin/promos status=401
+8:00AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.022987 method=GET path=/admin/promos status=401
+8:00AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.027286 method=GET path=/admin/promos status=401
+8:00AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.052801 method=GET path=/admin/promos status=401
+8:00AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.045758 method=GET path=/admin/flash-sales status=401
+8:00AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=0.034605 method=GET path=/admin/flash-sales status=401
+8:02AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.043187 method=GET path=/admin/flash-sales status=401
+8:02AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.023763 method=GET path=/admin/promos status=401
+8:02AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.02579 method=GET path=/health status=200
+8:03AM INF cmd/http_server.go:38 > shutting down http server
+8:03AM INF cmd/grpc_server.go:51 > shutting down gRPC server
+8:03AM INF cmd/http_server.go:67 > HTTP server stopped
+8:03AM INF cmd/grpc_server.go:53 > gRPC server stopped
+8:03AM INF pkg/postgresql/postgresql.go:56 > postgres pool connected dsn_host=localhost max_conns=10 min_conns=2
+8:03AM INF cmd/main.go:58 > application started mode=development
+8:03AM INF cmd/main.go:64 > loaded config addr=:8083 grpc=:8084 log_level=info
+8:03AM INF cmd/http_server.go:54 > starting HTTP server addr=:8083 idle_timeout=120000 read_timeout=10000 write_timeout=10000
+8:03AM INF cmd/grpc_server.go:43 > starting gRPC server addr=:8084
+8:03AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.04137 method=GET path=/health status=200
+8:03AM INF cmd/middleware.go:23 > request client_ip=::1 latency=6.689287 method=GET path=/admin/flash-sales status=200
+8:03AM INF cmd/middleware.go:23 > request client_ip=::1 latency=2.526709 method=GET path=/admin/promos status=200
+8:04AM INF cmd/middleware.go:23 > request client_ip=::1 latency=6.11025 method=GET path=/admin/flash-sales status=200
+8:04AM INF cmd/middleware.go:23 > request client_ip=::1 latency=2.421307 method=GET path=/admin/promos status=200
+8:05AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.202209 method=GET path=/admin/flash-sales status=403
+8:05AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.640608 method=GET path=/admin/flash-sales status=200
+8:05AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.799713 method=GET path=/admin/promos status=200
+8:06AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.776499 method=GET path=/admin/flash-sales status=200
+8:06AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.22343 method=GET path=/admin/promos status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.02489 method=GET path=/health status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.076608 method=GET path=/admin/flash-sales status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.047281 method=GET path=/admin/promos status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.255236 method=GET path=/admin/flash-sales status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.048769 method=GET path=/admin/flash-sales status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.009933 method=GET path=/admin/promos status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.145015 method=GET path=/admin/promos status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.319341 method=GET path=/admin/flash-sales status=403
+8:07AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.215924 method=GET path=/admin/promos status=403
+8:07AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.46594 method=GET path=/admin/flash-sales status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.603098 method=GET path=/admin/promos status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.114183 method=GET path=/admin/promos status=200
+8:07AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.478195 method=GET path=/admin/flash-sales status=200
+8:08AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=2.582042 method=GET path=/admin/flash-sales status=200
+8:08AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.241864 method=GET path=/admin/promos status=200
+8:08AM INF cmd/middleware.go:23 > request client_ip=127.0.0.1 latency=1.160553 method=GET path=/admin/flash-sales status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.043023 method=GET path=/admin/flash-sales status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.123404 method=GET path=/admin/flash-sales status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.900081 method=GET path=/admin/flash-sales/bc56a57b-a2c9-46b1-8c2e-01d4f9ae5750 status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.311546 method=PUT path=/admin/flash-sales/bc56a57b-a2c9-46b1-8c2e-01d4f9ae5750 status=400
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.569154 method=DELETE path=/admin/flash-sales/bc56a57b-a2c9-46b1-8c2e-01d4f9ae5750 status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.947211 method=GET path=/admin/promos status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.337316 method=GET path=/admin/flash-sales status=403
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.722676 method=GET path=/admin/flash-sales/bc56a57b-a2c9-46b1-8c2e-01d4f9ae5750 status=404
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.307474 method=GET path=/admin/promos status=403
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.385 method=PUT path=/admin/flash-sales/bc56a57b-a2c9-46b1-8c2e-01d4f9ae5750 status=400
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.285663 method=DELETE path=/admin/flash-sales/bc56a57b-a2c9-46b1-8c2e-01d4f9ae5750 status=403
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.951209 method=GET path=/admin/promos status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.406887 method=POST path=/admin/flash-sales status=403
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.29188 method=POST path=/admin/promos status=403
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.845633 method=POST path=/admin/promos status=201
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.032399 method=POST path=/admin/promos status=201
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.000205 method=PUT path=/admin/promos/ status=404
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.000063 method=DELETE path=/admin/promos/ status=404
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.000469 method=PUT path=/admin/promos/ status=404
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.000072 method=DELETE path=/admin/promos/ status=404
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.131256 method=GET path=/admin/promos status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.955873 method=GET path=/admin/flash-sales status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.839971 method=GET path=/admin/promos/b05eec1d-21d9-47ec-b6ae-c3933b107184 status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=3.668942 method=GET path=/admin/flash-sales/cdf31aaf-01ca-413b-91fa-4d26650274ee status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.612589 method=GET path=/admin/promos/b05eec1d-21d9-47ec-b6ae-c3933b107184 status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.328281 method=PUT path=/admin/flash-sales/cdf31aaf-01ca-413b-91fa-4d26650274ee status=400
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=3.459266 method=GET path=/admin/promos status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.562066 method=GET path=/admin/promos/b05eec1d-21d9-47ec-b6ae-c3933b107184 status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=10.484867 method=PUT path=/admin/promos/b05eec1d-21d9-47ec-b6ae-c3933b107184 status=200
+8:09AM INF cmd/middleware.go:23 > request client_ip=::1 latency=6.203306 method=PUT path=/admin/promos/b05eec1d-21d9-47ec-b6ae-c3933b107184 status=200
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=2.704759 method=GET path=/admin/flash-sales status=200
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.749213 method=GET path=/admin/flash-sales/cdf31aaf-01ca-413b-91fa-4d26650274ee status=200
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.26235 method=GET path=/admin/flash-sales status=403
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.267668 method=GET path=/admin/promos status=403
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.203258 method=POST path=/admin/flash-sales status=403
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.255773 method=POST path=/admin/promos status=403
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.557698 method=GET path=/admin/flash-sales/cdf31aaf-01ca-413b-91fa-4d26650274ee status=200
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.208225 method=PUT path=/admin/flash-sales/00000000-0000-0000-0000-000000000000 status=403
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.30487 method=PUT path=/admin/promos/00000000-0000-0000-0000-000000000000 status=403
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.296966 method=DELETE path=/admin/flash-sales/00000000-0000-0000-0000-000000000000 status=403
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.283538 method=DELETE path=/admin/promos/00000000-0000-0000-0000-000000000000 status=403
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.436297 method=DELETE path=/admin/flash-sales/00000000-0000-0000-0000-000000000000 status=403
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.319633 method=DELETE path=/admin/promos/00000000-0000-0000-0000-000000000000 status=403
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.28002 method=PUT path=/admin/flash-sales/cdf31aaf-01ca-413b-91fa-4d26650274ee status=400
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=1.402838 method=GET path=/admin/flash-sales status=200
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.691066 method=GET path=/admin/flash-sales/cdf31aaf-01ca-413b-91fa-4d26650274ee status=200
+8:10AM INF cmd/middleware.go:23 > request client_ip=::1 latency=0.337334 method=PUT path=/admin/flash-sales/cdf31aaf-01ca-413b-91fa-4d26650274ee status=400

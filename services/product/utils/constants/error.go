@@ -1,0 +1,59 @@
+package constants
+
+const (
+	// Configuration errors
+	ErrConfigFileNotFound = "config file not found: %s"
+	ErrConfigParse        = "parse config %s: %w"
+	ErrConfigPath         = "config path not found: %s"
+
+	// Postgres errors
+	ErrPostgresDSNEmpty   = "postgres dsn is empty"
+	ErrPostgresParseDSN   = "parse postgres dsn: %w"
+	ErrPostgresCreatePool = "create postgres pool: %w"
+	ErrPostgresPing       = "ping postgres: %w"
+
+	// Redis errors
+	ErrRedisAddrEmpty    = "redis addr is empty"
+	ErrRedisCreateClient = "create redis client: %w"
+	ErrRedisPing         = "ping redis: %w"
+	ErrRedisGet          = "failed to get key %s: %w"
+	ErrRedisMarshal      = "failed to marshal value for key %s: %w"
+
+	// Validation
+	ErrFieldRequired             = "%s cannot be empty"
+	ErrFieldNumeric              = "%s must contain only numbers"
+	ErrFieldImage                = "%s must be a valid image file within the allowed size limit"
+	ErrValidationRequired        = "{0} is required"
+	ErrValidationNumeric         = "{0} must contain only numbers"
+	ErrValidationImage           = "{0} must be a valid image format ({1})"
+	ErrValidationImageSize       = "{0} exceeds maximum allowed size of {1}KB"
+	ErrValidationImageFormat     = "%s must be a valid image format (%s)"
+	ErrValidationImageSizeFormat = "%s exceeds maximum allowed size of %dKB"
+	ErrValidationDatetime        = "{0} must be a valid date format ({1})"
+	ErrValidationMin             = "{0} must be at least {1}"
+	ErrValidationMax             = "{0} must be at most {1}"
+	ErrValidationGTE             = "{0} must be greater than or equal to {1}"
+	ErrValidationGT              = "{0} must be greater than {1}"
+	ErrValidationLTE             = "{0} must be less than or equal to {1}"
+	ErrValidationLT              = "{0} must be less than {1}"
+	ErrValidationLen             = "{0} must be exactly {1} characters"
+	ErrValidationEmail           = "{0} must be a valid email address"
+	ErrValidationURL             = "{0} must be a valid URL"
+	ErrValidationBoolean         = "{0} must be true or false"
+	ErrValidationOneOf           = "{0} must be one of: {1}"
+
+	// MinIO errors
+	ErrMinioCreateClient = "create minio client: %w"
+	ErrMinioBucketExists = "check bucket: %w"
+	ErrMinioUpload       = "upload file: %w"
+	ErrMinioDelete       = "delete file: %w"
+	ErrMinioGetURL       = "get presigned url: %w"
+	ErrMinioExists       = "check file exists: %w"
+
+	// Domain errors
+	ErrProductNotFound    = "product not found"
+	ErrCategoryNotFound   = "category not found"
+	ErrVariantNotFound    = "variant not found"
+	ErrImageNotFound      = "image not found"
+	ErrProductUnauthorized = "unauthorized: product does not belong to this category"
+)
