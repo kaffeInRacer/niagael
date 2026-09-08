@@ -7,9 +7,11 @@ type Config struct {
 	GRPC     GrpcConfig     `yaml:"grpc"`
 	Logger   LoggerConfig   `yaml:"log"`
 	Postgres PostgresConfig `yaml:"postgres"`
+	AuthDB   PostgresConfig `yaml:"auth_db"`
 	Redis    RedisConfig    `yaml:"redis"`
 	Midtrans MidtransConfig `yaml:"midtrans"`
 	JWT      JWTConfig      `yaml:"jwt"`
+	Kafka    KafkaConfig    `yaml:"kafka"`
 }
 
 type JWTConfig struct {
@@ -62,4 +64,10 @@ type MidtransConfig struct {
 	ServerKey   string `yaml:"server_key"`
 	ClientKey   string `yaml:"client_key"`
 	Environment string `yaml:"environment"`
+}
+
+type KafkaConfig struct {
+	Brokers     []string `yaml:"brokers"`
+	GroupID     string   `yaml:"group_id"`
+	CasbinTopic string   `yaml:"casbin_topic"`
 }

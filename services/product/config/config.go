@@ -5,6 +5,7 @@ import (
 	"kaffein/product-service/utils/constants"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"kaffein/product-service/utils/env"
 
@@ -63,6 +64,10 @@ func Load() (*Config, error) {
 	st.Redis.MaxConnIdleTime = env.GetDuration("REDIS_MAX_CONN_IDLE_TIME", st.Redis.MaxConnIdleTime)
 
 	st.Kafka.GroupID = env.GetString("KAFKA_GROUP_ID", st.Kafka.GroupID)
+	st.Kafka.CasbinTopic = env.GetString("KAFKA_CASBIN_TOPIC", st.Kafka.CasbinTopic)
+	if brokers := os.Getenv("KAFKA_BROKERS"); brokers != "" {
+		st.Kafka.Brokers = strings.Split(brokers, ",")
+	}
 
 	st.Minio.Endpoint = env.GetString("MINIO_ENDPOINT", st.Minio.Endpoint)
 	st.Minio.AccessKeyID = env.GetString("MINIO_ACCESS_KEY_ID", st.Minio.AccessKeyID)

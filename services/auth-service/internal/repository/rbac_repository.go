@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/segmentio/kafka-go"
 )
 
 type Policy struct {
@@ -15,12 +17,42 @@ type Policy struct {
 	Action   string `json:"action"`
 }
 
-type RBACRepository struct {
-	db *pgxpool.Pool
+type PolicyEvent struct {
+	Type     string `json:"type"`
+	Service  string `json:"service"`
+	Role     string `json:"role"`
+	Resource string `json:"resource"`
+	Action   string `json:"action"`
 }
 
-func NewRBACRepository(db *pgxpool.Pool) *RBACRepository {
-	return &RBACRepository{db: db}
+type RBACRepository struct {
+	db     *pgxpool.Pool
+	writer *kafka.Writer
+}
+
+func NewRBACRepository(db *pgxpool.Pool, writer *kafka.Writer) *RBACRepository {
+	return &RBACRepository{db: db, writer: writer}
+}
+
+func (r *RBACRepository) publishEvent(ctx context.Context, eventType, service, role, resource, action string) {
+	if r.writer == nil {
+		return
+	}
+	event := PolicyEvent{
+		Type:     eventType,
+		Service:  service,
+		Role:     role,
+		Resource: resource,
+		Action:   action,
+	}
+	data, err := json.Marshal(event)
+	if err != nil {
+		return
+	}
+	r.writer.WriteMessages(ctx, kafka.Message{
+		Key:   []byte(fmt.Sprintf("%s:%s:%s:%s", service, role, resource, action)),
+		Value: data,
+	})
 }
 
 func (r *RBACRepository) GetAllPolicies(ctx context.Context) ([]Policy, error) {
@@ -56,6 +88,7 @@ func (r *RBACRepository) AddPolicy(ctx context.Context, service, role, resource,
 		return fmt.Errorf("insert policy: %w", err)
 	}
 
+	r.publishEvent(ctx, "add", service, role, resource, action)
 	return nil
 }
 
@@ -70,6 +103,7 @@ func (r *RBACRepository) DeletePolicy(ctx context.Context, service, role, resour
 		return fmt.Errorf("policy not found")
 	}
 
+	r.publishEvent(ctx, "delete", service, role, resource, action)
 	return nil
 }
 

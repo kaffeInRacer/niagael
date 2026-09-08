@@ -8,6 +8,7 @@ type Config struct {
 	Postgres PostgresConfig `yaml:"postgres"`
 	Redis    RedisConfig    `yaml:"redis"`
 	JWT      JWTConfig      `yaml:"jwt"`
+	Kafka    KafkaConfig    `yaml:"kafka"`
 }
 
 type HTTPConfig struct {
@@ -49,4 +50,9 @@ type JWTConfig struct {
 	AccessTTL    time.Duration `yaml:"access_ttl"`
 	RefreshTTL   time.Duration `yaml:"refresh_ttl"`
 	CookieSecure bool          `yaml:"cookie_secure"`
+}
+
+type KafkaConfig struct {
+	Brokers []string `yaml:"brokers"`
+	Topic   string   `yaml:"topic"`
 }

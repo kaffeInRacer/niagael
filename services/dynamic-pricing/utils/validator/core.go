@@ -16,7 +16,7 @@ type Validator struct {
 }
 
 var (
-	once    sync.Once
+	once     sync.Once
 	instance *Validator
 )
 

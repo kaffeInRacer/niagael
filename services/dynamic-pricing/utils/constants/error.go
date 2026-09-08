@@ -51,7 +51,7 @@ const (
 	ErrMinioExists       = "check file exists: %w"
 
 	// Domain errors
-	ErrFlashSaleNotFound  = "flash sale not found"
+	ErrFlashSaleNotFound    = "flash sale not found"
 	ErrPromoNotFound        = "promo not found"
 	ErrPromoNotActive       = "promo is not active"
 	ErrPromoExpired         = "promo has expired"

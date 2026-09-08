@@ -26,7 +26,7 @@ func (app *application) routes() *gin.Engine {
 
 	handler.NewAdminHandler(usecase.NewAdminUseCase(users, sessions), app.logger, r, auth, middleware.Admin())
 
-	rbacRepo := repository.NewRBACRepository(app.pgx)
+	rbacRepo := repository.NewRBACRepository(app.pgx, app.kafka)
 	rbacUseCase := usecase.NewRBACUseCase(rbacRepo)
 	handler.NewRBACHandler(rbacUseCase, app.logger, r, auth, middleware.Admin())
 

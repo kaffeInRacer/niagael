@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 
@@ -33,5 +34,9 @@ func Load(path string) (*Config, error) {
 		}
 		cfg.JWT.CookieSecure = cookieSecure
 	}
+	if value := os.Getenv("KAFKA_BROKERS"); value != "" {
+		cfg.Kafka.Brokers = strings.Split(value, ",")
+	}
+	cfg.Kafka.Topic = env.GetString("KAFKA_CASBIN_TOPIC", cfg.Kafka.Topic)
 	return cfg, nil
 }

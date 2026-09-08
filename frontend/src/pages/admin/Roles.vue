@@ -34,8 +34,7 @@
         <div class="p-6">
           <div v-for="(resources, serviceName) in services" :key="serviceName" class="mb-8 last:mb-0">
             <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-              <span class="px-2 py-1 bg-gray-100 rounded text-sm font-mono mr-2">{{ serviceName }}</span>
-              Service
+              <span class="px-2 py-1 bg-gray-100 rounded text-sm font-mono mr-2">{{ serviceNames[serviceName] || serviceName }}</span>
             </h3>
             
             <div class="overflow-x-auto">
@@ -47,7 +46,6 @@
                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Read</th>
                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Update</th>
                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Delete</th>
-                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Apply</th>
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -55,7 +53,7 @@
                     <td class="px-4 py-3 whitespace-nowrap">
                       <span class="font-mono text-sm text-gray-800">{{ resource }}</span>
                     </td>
-                    <td v-for="action in ['create', 'read', 'update', 'delete', 'apply']" :key="action" class="px-4 py-3 text-center">
+                    <td v-for="action in actions" :key="action" class="px-4 py-3 text-center">
                       <label class="relative inline-flex items-center cursor-pointer" v-if="isActionAvailable(serviceName, resource, action)">
                         <input
                           type="checkbox"
@@ -102,12 +100,13 @@ const resources = ref({})
 const selectedRole = ref('admin')
 
 const roles = ['admin', 'staff', 'tenant']
-const actions = ['create', 'read', 'update', 'delete', 'apply']
+const actions = ['create', 'read', 'update', 'delete']
 
 const serviceNames = {
   'product': 'Product Service',
   'dynamic-pricing': 'Dynamic Pricing',
-  'order': 'Order Service'
+  'order': 'Order Service',
+  'auth': 'Auth Service'
 }
 
 const services = computed(() => {
@@ -148,8 +147,6 @@ const hasPermission = (role, service, resource, action) => {
 }
 
 const isActionAvailable = (service, resource, action) => {
-  if (action === 'apply' && resource !== 'promo') return false
-  if (action === 'apply' && service !== 'dynamic-pricing') return false
   return true
 }
 

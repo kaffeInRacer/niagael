@@ -34,12 +34,12 @@ func NewCategoryHandler(usecase IUseCase.CategoryUseCase, logger zerolog.Logger,
 	// Admin routes (full CRUD)
 	adminCategories := engine.Group("/admin/categories")
 	adminCategories.Use(authorization.Authenticate())
-	adminCategories.GET("", authorization.Authorize("category", "read"), h.List)
-	adminCategories.POST("", authorization.Authorize("category", "create"), h.Create)
-	adminCategories.GET("/slug/:slug", authorization.Authorize("category", "read"), h.ReadBySlug)
-	adminCategories.GET("/:id", authorization.Authorize("category", "read"), h.ReadById)
-	adminCategories.PUT("/:id", authorization.Authorize("category", "update"), h.Update)
-	adminCategories.DELETE("/:id", authorization.Authorize("category", "delete"), h.Delete)
+	adminCategories.GET("", authorization.Authorize("categories", "read"), h.List)
+	adminCategories.POST("", authorization.Authorize("categories", "create"), h.Create)
+	adminCategories.GET("/slug/:slug", authorization.Authorize("categories", "read"), h.ReadBySlug)
+	adminCategories.GET("/:id", authorization.Authorize("categories", "read"), h.ReadById)
+	adminCategories.PUT("/:id", authorization.Authorize("categories", "update"), h.Update)
+	adminCategories.DELETE("/:id", authorization.Authorize("categories", "delete"), h.Delete)
 
 	return h
 }

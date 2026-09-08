@@ -28,12 +28,6 @@
         :server-side="true"
         :options="tableOptions"
       >
-        <template #flash-sale-actions="props">
-          <div class="flex justify-end gap-3">
-            <button @click="editFlashSale(props.rowData)" class="text-blue-600 hover:text-blue-900">Edit</button>
-            <button @click="deleteFlashSale(props.rowData.id)" class="text-red-600 hover:text-red-900">Delete</button>
-          </div>
-        </template>
       </AdminDataTable>
     </div>
 
@@ -179,15 +173,20 @@ const columns = [
   { data: 'stock', title: 'Stock', orderable: false },
   { data: 'max_per_user', title: 'Max/User', orderable: false },
   { data: null, title: 'Period', render: function(data, type, row) {
+    if (!row) return ''
     return `${formatDate(row.start_time)} - ${formatDate(row.end_time)}`
   }},
   { data: null, title: 'Status', orderable: false, render: function(data, type, row) {
+    if (!row) return ''
     const status = getFlashSaleStatus(row.start_time, row.end_time)
     const cls = getFlashSaleStatusClass(status)
     const label = status.charAt(0).toUpperCase() + status.slice(1)
     return `<span class="px-2 py-1 text-xs font-medium rounded-full ${cls}">${label}</span>`
   }},
-  { data: null, title: 'Actions', orderable: false, searchable: false, render: '#flash-sale-actions' }
+  { data: null, title: 'Actions', orderable: false, searchable: false, render: function(data, type, row) {
+    if (!row) return ''
+    return `<div class="flex justify-end gap-3"><button class="text-blue-600 hover:text-blue-900 edit-btn" data-id="${row.id}">Edit</button><button class="text-red-600 hover:text-red-900 delete-btn" data-id="${row.id}">Delete</button></div>`
+  }}
 ]
 
 const tableOptions = {
@@ -333,5 +332,20 @@ const deleteFlashSale = async (id) => {
 
 onMounted(() => {
   fetchProducts()
+
+  const tableEl = document.querySelector('.dataTable')
+  if (tableEl) {
+    tableEl.addEventListener('click', (e) => {
+      const editBtn = e.target.closest('.edit-btn')
+      const deleteBtn = e.target.closest('.delete-btn')
+      if (editBtn) {
+        const id = editBtn.dataset.id
+        const row = table.value?.getInstance()?.row(editBtn.closest('tr'))?.data()
+        if (row) editFlashSale(row)
+      } else if (deleteBtn) {
+        deleteFlashSale(deleteBtn.dataset.id)
+      }
+    })
+  }
 })
 </script>

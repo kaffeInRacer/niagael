@@ -7,6 +7,7 @@ type Config struct {
 	GRPC     GrpcConfig     `yaml:"grpc"`
 	Logger   LoggerConfig   `yaml:"log"`
 	Postgres PostgresConfig `yaml:"postgres"`
+	AuthDB   PostgresConfig `yaml:"auth_db"`
 	Redis    RedisConfig    `yaml:"redis"`
 	Kafka    KafkaConfig    `yaml:"kafka"`
 	Minio    MinIOConfig    `yaml:"minio"`
@@ -60,9 +61,10 @@ type LoggerConfig struct {
 }
 
 type KafkaConfig struct {
-	Brokers []string          `yaml:"brokers"`
-	GroupID string            `yaml:"group_id"`
-	Topics  map[string]string `yaml:"topics"`
+	Brokers     []string          `yaml:"brokers"`
+	GroupID     string            `yaml:"group_id"`
+	Topics      map[string]string `yaml:"topics"`
+	CasbinTopic string            `yaml:"casbin_topic"`
 }
 
 type MinIOConfig struct {

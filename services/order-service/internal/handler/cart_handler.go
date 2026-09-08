@@ -25,11 +25,11 @@ func NewCartHandler(usecase IUseCase.CartUseCase, logger zerolog.Logger, engine 
 	carts := engine.Group("/carts")
 	{
 		carts.Use(authorization.Authenticate())
-		carts.GET("/user/:userId", authorization.Authorize("cart", "read"), h.ReadByUserId)
-		carts.POST("/items", authorization.Authorize("cart", "create"), h.AddItem)
-		carts.PUT("/items/:id", authorization.Authorize("cart", "update"), h.UpdateItem)
-		carts.DELETE("/items/:id", authorization.Authorize("cart", "delete"), h.DeleteItem)
-		carts.DELETE("/user/:userId", authorization.Authorize("cart", "delete"), h.Clear)
+		carts.GET("/user/:userId", authorization.Authorize("orders", "read"), h.ReadByUserId)
+		carts.POST("/items", authorization.Authorize("orders", "create"), h.AddItem)
+		carts.PUT("/items/:id", authorization.Authorize("orders", "update"), h.UpdateItem)
+		carts.DELETE("/items/:id", authorization.Authorize("orders", "delete"), h.DeleteItem)
+		carts.DELETE("/user/:userId", authorization.Authorize("orders", "delete"), h.Clear)
 	}
 
 	return h

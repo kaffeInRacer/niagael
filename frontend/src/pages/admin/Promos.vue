@@ -28,12 +28,6 @@
         :server-side="true"
         :options="tableOptions"
       >
-        <template #promo-actions="props">
-          <div class="flex justify-end gap-3">
-            <button @click="editPromo(props.rowData)" class="text-blue-600 hover:text-blue-900">Edit</button>
-            <button @click="deletePromo(props.rowData.id)" class="text-red-600 hover:text-red-900">Delete</button>
-          </div>
-        </template>
       </AdminDataTable>
     </div>
 
@@ -120,7 +114,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import api from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
 import { createServerSideAjax } from '../../utils/datatables'
@@ -163,15 +157,20 @@ const columns = [
     return `${row.used_count}/${row.quantity}`
   }},
   { data: null, title: 'Period', render: function(data, type, row) {
+    if (!row) return ''
     return `${formatDate(row.start_date)} - ${formatDate(row.end_date)}`
   }},
   { data: null, title: 'Status', orderable: false, render: function(data, type, row) {
+    if (!row) return ''
     const active = isPromoActive(row.start_date, row.end_date)
     const cls = active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
     const label = active ? 'Active' : 'Inactive'
     return `<span class="px-2 py-1 text-xs font-medium rounded-full ${cls}">${label}</span>`
   }},
-  { data: null, title: 'Actions', orderable: false, searchable: false, render: '#promo-actions' }
+  { data: null, title: 'Actions', orderable: false, searchable: false, render: function(data, type, row) {
+    if (!row) return ''
+    return `<div class="flex justify-end gap-3"><button class="text-blue-600 hover:text-blue-900 edit-btn" data-id="${row.id}">Edit</button><button class="text-red-600 hover:text-red-900 delete-btn" data-id="${row.id}">Delete</button></div>`
+  }}
 ]
 
 const tableOptions = {
@@ -250,4 +249,20 @@ const deletePromo = async (id) => {
     alert(e.response?.data?.error || 'Failed to delete promo')
   }
 }
+
+onMounted(() => {
+  const tableEl = document.querySelector('.dataTable')
+  if (tableEl) {
+    tableEl.addEventListener('click', (e) => {
+      const editBtn = e.target.closest('.edit-btn')
+      const deleteBtn = e.target.closest('.delete-btn')
+      if (editBtn) {
+        const row = table.value?.getInstance()?.row(editBtn.closest('tr'))?.data()
+        if (row) editPromo(row)
+      } else if (deleteBtn) {
+        deletePromo(deleteBtn.dataset.id)
+      }
+    })
+  }
+})
 </script>

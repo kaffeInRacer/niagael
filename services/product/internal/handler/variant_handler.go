@@ -32,10 +32,10 @@ func NewVariantHandler(usecase IUseCase.VariantUseCase, logger zerolog.Logger, e
 	// Admin routes (full CRUD)
 	adminVariants := engine.Group("/admin/variants")
 	adminVariants.Use(authorization.Authenticate())
-	adminVariants.GET("", authorization.Authorize("variant", "read"), h.List)
-	adminVariants.POST("", authorization.Authorize("variant", "create"), h.Create)
-	adminVariants.PUT("/:id", authorization.Authorize("variant", "update"), h.Update)
-	adminVariants.DELETE("/:id", authorization.Authorize("variant", "delete"), h.Delete)
+	adminVariants.GET("", authorization.Authorize("products", "read"), h.List)
+	adminVariants.POST("", authorization.Authorize("products", "create"), h.Create)
+	adminVariants.PUT("/:id", authorization.Authorize("products", "update"), h.Update)
+	adminVariants.DELETE("/:id", authorization.Authorize("products", "delete"), h.Delete)
 
 	return h
 }

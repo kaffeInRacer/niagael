@@ -36,12 +36,12 @@ func NewFlashSaleHandler(usecase IUseCase.FlashSaleUseCase, logger zerolog.Logge
 	adminFlashSales := engine.Group("/admin/flash-sales")
 	{
 		adminFlashSales.Use(authorization.Authenticate())
-		adminFlashSales.GET("", authorization.Authorize("flash_sale", "read"), h.List)
-		adminFlashSales.POST("", authorization.Authorize("flash_sale", "create"), h.Create)
-		adminFlashSales.POST("/bulk", authorization.Authorize("flash_sale", "create"), h.CreateBulk)
-		adminFlashSales.GET("/:id", authorization.Authorize("flash_sale", "read"), h.ReadById)
-		adminFlashSales.PUT("/:id", authorization.Authorize("flash_sale", "update"), h.Update)
-		adminFlashSales.DELETE("/:id", authorization.Authorize("flash_sale", "delete"), h.Delete)
+		adminFlashSales.GET("", authorization.Authorize("flash-sales", "read"), h.List)
+		adminFlashSales.POST("", authorization.Authorize("flash-sales", "create"), h.Create)
+		adminFlashSales.POST("/bulk", authorization.Authorize("flash-sales", "create"), h.CreateBulk)
+		adminFlashSales.GET("/:id", authorization.Authorize("flash-sales", "read"), h.ReadById)
+		adminFlashSales.PUT("/:id", authorization.Authorize("flash-sales", "update"), h.Update)
+		adminFlashSales.DELETE("/:id", authorization.Authorize("flash-sales", "delete"), h.Delete)
 	}
 
 	return h

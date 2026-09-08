@@ -30,7 +30,7 @@ func NewPaymentHandler(usecase IUseCase.PaymentUseCase, orderUseCase IUseCase.Or
 	payments := engine.Group("/payments")
 	{
 		payments.Use(authorization.Authenticate())
-		payments.POST("/:orderId", authorization.Authorize("payment", "create"), h.Create)
+		payments.POST("/:orderId", authorization.Authorize("orders", "create"), h.Create)
 	}
 
 	webhooks := engine.Group("/webhooks")

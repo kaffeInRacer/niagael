@@ -36,9 +36,6 @@
         :server-side="true"
         :options="tableOptions"
       >
-        <template #order-actions="props">
-          <button @click="viewOrder(props.rowData)" class="text-blue-600 hover:text-blue-900">View</button>
-        </template>
       </AdminDataTable>
 
     </div>
@@ -101,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import api from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
 import { createServerSideAjax } from '../../utils/datatables'
@@ -135,7 +132,10 @@ const columns = [
   { data: 'created_at', title: 'Date', render: function(data) {
     return formatDate(data)
   }},
-  { data: null, title: 'Actions', orderable: false, searchable: false, render: '#order-actions' }
+  { data: null, title: 'Actions', orderable: false, searchable: false, render: function(data, type, row) {
+    if (!row) return ''
+    return `<div class="flex justify-end"><button class="text-blue-600 hover:text-blue-900 view-btn" data-id="${row.id}">View</button></div>`
+  }}
 ]
 
 const tableOptions = {
@@ -164,4 +164,17 @@ const reloadTable = (resetPaging = false) => {
 const viewOrder = (order) => {
   selectedOrder.value = order
 }
+
+onMounted(() => {
+  const tableEl = document.querySelector('.dataTable')
+  if (tableEl) {
+    tableEl.addEventListener('click', (e) => {
+      const viewBtn = e.target.closest('.view-btn')
+      if (viewBtn) {
+        const row = table.value?.getInstance()?.row(viewBtn.closest('tr'))?.data()
+        if (row) viewOrder(row)
+      }
+    })
+  }
+})
 </script>

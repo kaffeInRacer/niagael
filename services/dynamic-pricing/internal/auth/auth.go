@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
@@ -13,6 +15,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+
+	"kaffein/dynamic-pricing-service/pkg/kafkawatcher"
 )
 
 const claimsKey = "auth.claims"
@@ -25,16 +29,39 @@ type Claims struct {
 }
 
 type Service struct {
-	secret   []byte
-	issuer   string
-	redis    *redis.Client
-	enforcer *casbin.SyncedEnforcer
+	secret       []byte
+	issuer       string
+	redis        *redis.Client
+	enforcer     *casbin.SyncedEnforcer
+	enforcerMu   sync.RWMutex
+	watcher      *kafkawatcher.Watcher
+	cancelReload context.CancelFunc
 }
 
-func New(ctx context.Context, secret, issuer string, redisDB int, db *pgxpool.Pool, redisClient *redis.Client) (*Service, error) {
+func New(ctx context.Context, secret, issuer string, redisDB int, db *pgxpool.Pool, redisClient *redis.Client, kafkaBrokers []string, kafkaTopic, kafkaGroupID string) (*Service, error) {
 	if secret == "" || issuer == "" {
 		return nil, errors.New("JWT secret and issuer are required")
 	}
+	e, err := loadEnforcer(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+	redisOptions := *redisClient.Options()
+	redisOptions.DB = redisDB
+	s := &Service{secret: []byte(secret), issuer: issuer, redis: redis.NewClient(&redisOptions), enforcer: e}
+	if len(kafkaBrokers) > 0 && kafkaTopic != "" {
+		s.watcher = kafkawatcher.New(kafkaBrokers, kafkaTopic, kafkaGroupID)
+		if err := s.watcher.SetUpdateCallback(func(string) { _ = s.reloadPolicies(context.Background(), db) }); err != nil {
+			return nil, fmt.Errorf("start casbin watcher: %w", err)
+		}
+		reloadCtx, cancel := context.WithCancel(context.Background())
+		s.cancelReload = cancel
+		go s.autoReload(reloadCtx, db)
+	}
+	return s, nil
+}
+
+func loadEnforcer(ctx context.Context, db *pgxpool.Pool) (*casbin.SyncedEnforcer, error) {
 	m := model.NewModel()
 	m.AddDef("r", "r", "sub, obj, act")
 	m.AddDef("p", "p", "sub, obj, act")
@@ -61,12 +88,42 @@ func New(ctx context.Context, secret, issuer string, redisDB int, db *pgxpool.Po
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("load casbin policies: %w", err)
 	}
-	redisOptions := *redisClient.Options()
-	redisOptions.DB = redisDB
-	return &Service{secret: []byte(secret), issuer: issuer, redis: redis.NewClient(&redisOptions), enforcer: e}, nil
+	return e, nil
 }
 
-func (s *Service) Close() error { return s.redis.Close() }
+func (s *Service) reloadPolicies(ctx context.Context, db *pgxpool.Pool) error {
+	e, err := loadEnforcer(ctx, db)
+	if err != nil {
+		return err
+	}
+	s.enforcerMu.Lock()
+	s.enforcer = e
+	s.enforcerMu.Unlock()
+	return nil
+}
+
+func (s *Service) autoReload(ctx context.Context, db *pgxpool.Pool) {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			_ = s.reloadPolicies(ctx, db)
+		}
+	}
+}
+
+func (s *Service) Close() error {
+	if s.cancelReload != nil {
+		s.cancelReload()
+	}
+	if s.watcher != nil {
+		s.watcher.Close()
+	}
+	return s.redis.Close()
+}
 
 func (s *Service) Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -117,8 +174,11 @@ func (s *Service) Authorize(resource, action string) gin.HandlerFunc {
 			abort(c, http.StatusUnauthorized, "unauthorized")
 			return
 		}
+		s.enforcerMu.RLock()
+		e := s.enforcer
+		s.enforcerMu.RUnlock()
 		for _, role := range claims.Roles {
-			allowed, err := s.enforcer.Enforce(role, resource, action)
+			allowed, err := e.Enforce(role, resource, action)
 			if err == nil && allowed {
 				c.Next()
 				return

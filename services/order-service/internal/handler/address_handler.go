@@ -28,11 +28,11 @@ func NewAddressHandler(usecase IUseCase.AddressUseCase, logger zerolog.Logger, e
 	addresses := engine.Group("/addresses")
 	{
 		addresses.Use(authorization.Authenticate())
-		addresses.GET("", authorization.Authorize("address", "read"), h.List)
-		addresses.POST("", authorization.Authorize("address", "create"), h.Create)
-		addresses.GET("/:id", authorization.Authorize("address", "read"), h.ReadById)
-		addresses.PUT("/:id", authorization.Authorize("address", "update"), h.Update)
-		addresses.DELETE("/:id", authorization.Authorize("address", "delete"), h.Delete)
+		addresses.GET("", authorization.Authorize("orders", "read"), h.List)
+		addresses.POST("", authorization.Authorize("orders", "create"), h.Create)
+		addresses.GET("/:id", authorization.Authorize("orders", "read"), h.ReadById)
+		addresses.PUT("/:id", authorization.Authorize("orders", "update"), h.Update)
+		addresses.DELETE("/:id", authorization.Authorize("orders", "delete"), h.Delete)
 	}
 
 	return h

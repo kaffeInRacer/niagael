@@ -30,18 +30,18 @@ func NewPromoHandler(usecase IUseCase.PromoUseCase, logger zerolog.Logger, engin
 	{
 		promos.GET("", h.List)
 		promos.GET("/:id", h.ReadById)
-		promos.POST("/apply/:code/:userId", authorization.Authenticate(), authorization.Authorize("promo", "apply"), h.ApplyPromo)
+		promos.POST("/apply/:code/:userId", authorization.Authenticate(), authorization.Authorize("promos", "apply"), h.ApplyPromo)
 	}
 
 	// Admin: full CRUD promos
 	adminPromos := engine.Group("/admin/promos")
 	{
 		adminPromos.Use(authorization.Authenticate())
-		adminPromos.GET("", authorization.Authorize("promo", "read"), h.List)
-		adminPromos.POST("", authorization.Authorize("promo", "create"), h.Create)
-		adminPromos.GET("/:id", authorization.Authorize("promo", "read"), h.ReadById)
-		adminPromos.PUT("/:id", authorization.Authorize("promo", "update"), h.Update)
-		adminPromos.DELETE("/:id", authorization.Authorize("promo", "delete"), h.Delete)
+		adminPromos.GET("", authorization.Authorize("promos", "read"), h.List)
+		adminPromos.POST("", authorization.Authorize("promos", "create"), h.Create)
+		adminPromos.GET("/:id", authorization.Authorize("promos", "read"), h.ReadById)
+		adminPromos.PUT("/:id", authorization.Authorize("promos", "update"), h.Update)
+		adminPromos.DELETE("/:id", authorization.Authorize("promos", "delete"), h.Delete)
 	}
 
 	return h

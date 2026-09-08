@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kaffein/order-service/utils/constants"
 	"os"
+	"strings"
 
 	"kaffein/order-service/utils/env"
 
@@ -60,6 +61,12 @@ func Load(path string) (*Config, error) {
 	st.JWT.Secret = env.GetString("JWT_SECRET", st.JWT.Secret)
 	st.JWT.Issuer = env.GetString("JWT_ISSUER", st.JWT.Issuer)
 	st.JWT.RedisDB = env.GetInt("JWT_REDIS_DB", st.JWT.RedisDB)
+
+	st.Kafka.GroupID = env.GetString("KAFKA_GROUP_ID", st.Kafka.GroupID)
+	st.Kafka.CasbinTopic = env.GetString("KAFKA_CASBIN_TOPIC", st.Kafka.CasbinTopic)
+	if brokers := os.Getenv("KAFKA_BROKERS"); brokers != "" {
+		st.Kafka.Brokers = strings.Split(brokers, ",")
+	}
 
 	// 4. Return pointer variabel `st`
 	return st, nil

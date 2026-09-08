@@ -23,6 +23,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/admin\/users/, '/admin/users')
       },
+      '/api/admin/rbac': {
+        target: 'http://localhost:8085',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/admin\/rbac/, '/admin/rbac')
+      },
 
       // Dynamic Pricing Service :8083 (specific routes first)
       '/api/admin/flash-sales': {

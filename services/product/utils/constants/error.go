@@ -51,9 +51,9 @@ const (
 	ErrMinioExists       = "check file exists: %w"
 
 	// Domain errors
-	ErrProductNotFound    = "product not found"
-	ErrCategoryNotFound   = "category not found"
-	ErrVariantNotFound    = "variant not found"
-	ErrImageNotFound      = "image not found"
+	ErrProductNotFound     = "product not found"
+	ErrCategoryNotFound    = "category not found"
+	ErrVariantNotFound     = "variant not found"
+	ErrImageNotFound       = "image not found"
 	ErrProductUnauthorized = "unauthorized: product does not belong to this category"
 )

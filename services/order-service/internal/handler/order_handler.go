@@ -32,11 +32,11 @@ func NewOrderHandler(usecase IUseCase.OrderUseCase, addressUseCase IUseCase.Addr
 	orders := engine.Group("/orders")
 	{
 		orders.Use(authorization.Authenticate())
-		orders.POST("", authorization.Authorize("order", "create"), h.Create)
-		orders.GET("", authorization.Authorize("order", "read"), authorization.RequireRoles("staff", "admin"), h.List)
-		orders.GET("/user/:userId", authorization.Authorize("order", "read"), h.ReadByUserId)
-		orders.PATCH("/:id/status", authorization.Authorize("order", "update"), authorization.RequireRoles("staff", "admin"), h.UpdateStatus)
-		orders.GET("/:id", authorization.Authorize("order", "read"), h.ReadById)
+		orders.POST("", authorization.Authorize("orders", "create"), h.Create)
+		orders.GET("", authorization.Authorize("orders", "read"), authorization.RequireRoles("staff", "admin"), h.List)
+		orders.GET("/user/:userId", authorization.Authorize("orders", "read"), h.ReadByUserId)
+		orders.PATCH("/:id/status", authorization.Authorize("orders", "update"), authorization.RequireRoles("staff", "admin"), h.UpdateStatus)
+		orders.GET("/:id", authorization.Authorize("orders", "read"), h.ReadById)
 	}
 
 	return h

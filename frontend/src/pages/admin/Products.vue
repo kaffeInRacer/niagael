@@ -50,22 +50,6 @@
         :server-side="true"
         :options="tableOptions"
       >
-        <template #product-variants="props">
-          <button
-            @click="openVariants(props.rowData)"
-            class="px-2 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors"
-            :class="props.rowData.has_variants ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-          >
-            {{ props.rowData.has_variants ? 'Manage Variants' : 'Add Variants' }}
-          </button>
-        </template>
-        <template #product-actions="props">
-          <div class="flex justify-end gap-3">
-            <button @click="viewProduct(props.rowData)" class="text-gray-600 hover:text-gray-900">View</button>
-            <button @click="editProduct(props.rowData)" class="text-blue-600 hover:text-blue-900">Edit</button>
-            <button @click="deleteProduct(props.rowData.id)" class="text-red-600 hover:text-red-900">Delete</button>
-          </div>
-        </template>
       </AdminDataTable>
 
     </div>
@@ -369,8 +353,16 @@ const columns = [
   { data: 'category', title: 'Category', orderable: false, render: function(data) {
     return data || '-'
   }},
-  { data: null, title: 'Variants', orderable: false, searchable: false, render: '#product-variants' },
-  { data: null, title: 'Actions', orderable: false, searchable: false, render: '#product-actions' }
+  { data: null, title: 'Variants', orderable: false, searchable: false, render: function(data, type, row) {
+    if (!row) return ''
+    const cls = row.has_variants ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+    const label = row.has_variants ? 'Manage Variants' : 'Add Variants'
+    return `<button class="px-2 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors variants-btn ${cls}" data-id="${row.id}">${label}</button>`
+  }},
+  { data: null, title: 'Actions', orderable: false, searchable: false, render: function(data, type, row) {
+    if (!row) return ''
+    return `<div class="flex justify-end gap-3"><button class="text-gray-600 hover:text-gray-900 view-btn" data-id="${row.id}">View</button><button class="text-blue-600 hover:text-blue-900 edit-btn" data-id="${row.id}">Edit</button><button class="text-red-600 hover:text-red-900 delete-btn" data-id="${row.id}">Delete</button></div>`
+  }}
 ]
 
 const tableOptions = {
@@ -582,5 +574,27 @@ const deleteVariant = async (id) => {
 
 onMounted(() => {
   fetchCategories()
+
+  const tableEl = document.querySelector('.dataTable')
+  if (tableEl) {
+    tableEl.addEventListener('click', (e) => {
+      const variantsBtn = e.target.closest('.variants-btn')
+      const viewBtn = e.target.closest('.view-btn')
+      const editBtn = e.target.closest('.edit-btn')
+      const deleteBtn = e.target.closest('.delete-btn')
+      if (variantsBtn) {
+        const row = table.value?.getInstance()?.row(variantsBtn.closest('tr'))?.data()
+        if (row) openVariants(row)
+      } else if (viewBtn) {
+        const row = table.value?.getInstance()?.row(viewBtn.closest('tr'))?.data()
+        if (row) viewProduct(row)
+      } else if (editBtn) {
+        const row = table.value?.getInstance()?.row(editBtn.closest('tr'))?.data()
+        if (row) editProduct(row)
+      } else if (deleteBtn) {
+        deleteProduct(deleteBtn.dataset.id)
+      }
+    })
+  }
 })
 </script>

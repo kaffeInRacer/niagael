@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
@@ -13,9 +15,17 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+
+	"kaffein/order-service/pkg/kafkawatcher"
 )
 
 const claimsKey = "auth.claims"
+
+const (
+	accessTokenType = "access"
+	roleStaff       = "staff"
+	roleAdmin       = "admin"
+)
 
 type Claims struct {
 	SessionID string   `json:"sid"`
@@ -24,31 +34,92 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-type Service struct {
-	secret   []byte
-	issuer   string
-	redis    *redis.Client
-	enforcer *casbin.SyncedEnforcer
+func (c *Claims) isValid() bool {
+	return c.Subject != "" &&
+		c.SessionID != "" &&
+		c.IssuedAt != nil &&
+		c.TokenType == accessTokenType &&
+		len(c.Roles) > 0
 }
 
-func New(ctx context.Context, secret, issuer string, redisDB int, db *pgxpool.Pool, redisClient *redis.Client) (*Service, error) {
+func (c *Claims) hasRole(wanted string) bool {
+	for _, role := range c.Roles {
+		if role == wanted {
+			return true
+		}
+	}
+	return false
+}
+
+type Service struct {
+	secret       []byte
+	issuer       string
+	redis        *redis.Client
+	enforcer     *casbin.SyncedEnforcer
+	enforcerMu   sync.RWMutex
+	watcher      *kafkawatcher.Watcher
+	cancelReload context.CancelFunc
+}
+
+func New(ctx context.Context, secret, issuer string, redisDB int, db *pgxpool.Pool, redisClient *redis.Client, kafkaBrokers []string, kafkaTopic, kafkaGroupID string) (*Service, error) {
 	if secret == "" || issuer == "" {
 		return nil, errors.New("JWT secret and issuer are required")
 	}
+
+	enforcer, err := loadEnforcer(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	redisOptions := *redisClient.Options()
+	redisOptions.DB = redisDB
+
+	s := &Service{
+		secret:   []byte(secret),
+		issuer:   issuer,
+		redis:    redis.NewClient(&redisOptions),
+		enforcer: enforcer,
+	}
+
+	if len(kafkaBrokers) > 0 && kafkaTopic != "" {
+		if err := s.startPolicyWatcher(db, kafkaBrokers, kafkaTopic, kafkaGroupID); err != nil {
+			return nil, err
+		}
+	}
+
+	return s, nil
+}
+
+func (s *Service) startPolicyWatcher(db *pgxpool.Pool, brokers []string, topic, groupID string) error {
+	s.watcher = kafkawatcher.New(brokers, topic, groupID)
+	if err := s.watcher.SetUpdateCallback(func(string) { _ = s.reloadPolicies(context.Background(), db) }); err != nil {
+		return fmt.Errorf("start casbin watcher: %w", err)
+	}
+
+	reloadCtx, cancel := context.WithCancel(context.Background())
+	s.cancelReload = cancel
+	go s.autoReload(reloadCtx, db)
+	return nil
+}
+
+func loadEnforcer(ctx context.Context, db *pgxpool.Pool) (*casbin.SyncedEnforcer, error) {
 	m := model.NewModel()
 	m.AddDef("r", "r", "sub, obj, act")
 	m.AddDef("p", "p", "sub, obj, act")
 	m.AddDef("e", "e", "some(where (p_eft == allow))")
 	m.AddDef("m", "m", "r.sub == p.sub && r.obj == p.obj && r.act == p.act")
+
 	e, err := casbin.NewSyncedEnforcer(m)
 	if err != nil {
 		return nil, fmt.Errorf("create casbin enforcer: %w", err)
 	}
+
 	rows, err := db.Query(ctx, `SELECT v0, v1, v2 FROM casbin_rule WHERE ptype = 'p'`)
 	if err != nil {
 		return nil, fmt.Errorf("load casbin policies: %w", err)
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var role, resource, action string
 		if err := rows.Scan(&role, &resource, &action); err != nil {
@@ -61,12 +132,43 @@ func New(ctx context.Context, secret, issuer string, redisDB int, db *pgxpool.Po
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("load casbin policies: %w", err)
 	}
-	redisOptions := *redisClient.Options()
-	redisOptions.DB = redisDB
-	return &Service{secret: []byte(secret), issuer: issuer, redis: redis.NewClient(&redisOptions), enforcer: e}, nil
+
+	return e, nil
 }
 
-func (s *Service) Close() error { return s.redis.Close() }
+func (s *Service) reloadPolicies(ctx context.Context, db *pgxpool.Pool) error {
+	e, err := loadEnforcer(ctx, db)
+	if err != nil {
+		return err
+	}
+	s.enforcerMu.Lock()
+	s.enforcer = e
+	s.enforcerMu.Unlock()
+	return nil
+}
+
+func (s *Service) autoReload(ctx context.Context, db *pgxpool.Pool) {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			_ = s.reloadPolicies(ctx, db)
+		}
+	}
+}
+
+func (s *Service) Close() error {
+	if s.cancelReload != nil {
+		s.cancelReload()
+	}
+	if s.watcher != nil {
+		s.watcher.Close()
+	}
+	return s.redis.Close()
+}
 
 func (s *Service) Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -75,6 +177,7 @@ func (s *Service) Authenticate() gin.HandlerFunc {
 			abort(c, http.StatusUnauthorized, "unauthorized")
 			return
 		}
+
 		claims := &Claims{}
 		token, err := jwt.ParseWithClaims(rawToken, claims, func(token *jwt.Token) (any, error) {
 			if token.Method != jwt.SigningMethodHS256 {
@@ -82,15 +185,18 @@ func (s *Service) Authenticate() gin.HandlerFunc {
 			}
 			return s.secret, nil
 		}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}), jwt.WithIssuer(s.issuer), jwt.WithExpirationRequired(), jwt.WithIssuedAt())
-		if err != nil || !token.Valid || claims.Subject == "" || claims.SessionID == "" || claims.IssuedAt == nil || claims.TokenType != "access" || len(claims.Roles) == 0 {
+
+		if err != nil || !token.Valid || !claims.isValid() {
 			abort(c, http.StatusUnauthorized, "unauthorized")
 			return
 		}
+
 		revoked, err := s.redis.Exists(c.Request.Context(), "auth:revoked:"+claims.SessionID).Result()
 		if err != nil || revoked > 0 {
 			abort(c, http.StatusUnauthorized, "unauthorized")
 			return
 		}
+
 		c.Set(claimsKey, claims)
 		c.Next()
 	}
@@ -117,9 +223,13 @@ func (s *Service) Authorize(resource, action string) gin.HandlerFunc {
 			abort(c, http.StatusUnauthorized, "unauthorized")
 			return
 		}
+
+		s.enforcerMu.RLock()
+		e := s.enforcer
+		s.enforcerMu.RUnlock()
+
 		for _, role := range claims.Roles {
-			allowed, err := s.enforcer.Enforce(role, resource, action)
-			if err == nil && allowed {
+			if allowed, err := e.Enforce(role, resource, action); err == nil && allowed {
 				c.Next()
 				return
 			}
@@ -141,29 +251,21 @@ func (s *Service) RequireRoles(roles ...string) gin.HandlerFunc {
 }
 
 func ClaimsFrom(c *gin.Context) (*Claims, bool) {
-	value, ok := c.Get(claimsKey)
+	claims, ok := c.Get(claimsKey)
 	if !ok {
 		return nil, false
 	}
-	claims, ok := value.(*Claims)
-	return claims, ok
+	cl, ok := claims.(*Claims)
+	return cl, ok
 }
 
 func HasRole(c *gin.Context, wanted string) bool {
 	claims, ok := ClaimsFrom(c)
-	if !ok {
-		return false
-	}
-	for _, role := range claims.Roles {
-		if role == wanted {
-			return true
-		}
-	}
-	return false
+	return ok && claims.hasRole(wanted)
 }
 
 func CanBypassOwnership(c *gin.Context) bool {
-	return HasRole(c, "staff") || HasRole(c, "admin")
+	return HasRole(c, roleStaff) || HasRole(c, roleAdmin)
 }
 
 func RequireOwner(c *gin.Context, userID string) bool {

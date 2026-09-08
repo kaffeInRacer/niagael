@@ -11,29 +11,41 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func NewPool(ctx context.Context, cfg *config.Config, logger zerolog.Logger) (*pgxpool.Pool, error) {
-	if cfg.Postgres.DSN == "" {
+type Option func(*config.PostgresConfig)
+
+func WithDSN(dsn string) Option {
+	return func(cfg *config.PostgresConfig) {
+		cfg.DSN = dsn
+	}
+}
+
+func NewPool(ctx context.Context, cfg *config.Config, logger zerolog.Logger, opts ...Option) (*pgxpool.Pool, error) {
+	pc := cfg.Postgres
+	for _, opt := range opts {
+		opt(&pc)
+	}
+
+	if pc.DSN == "" {
 		return nil, fmt.Errorf(constants.ErrPostgresDSNEmpty)
 	}
 
-	poolCfg, err := pgxpool.ParseConfig(cfg.Postgres.DSN)
+	poolCfg, err := pgxpool.ParseConfig(pc.DSN)
 	if err != nil {
 		return nil, fmt.Errorf(constants.ErrPostgresParseDSN, err)
 	}
 
-	if cfg.Postgres.MaxConns > 0 {
-		poolCfg.MaxConns = int32(cfg.Postgres.MaxConns)
+	if pc.MaxConns > 0 {
+		poolCfg.MaxConns = int32(pc.MaxConns)
 	}
-	if cfg.Postgres.MinConns > 0 {
-		poolCfg.MinConns = int32(cfg.Postgres.MinConns)
+	if pc.MinConns > 0 {
+		poolCfg.MinConns = int32(pc.MinConns)
 	}
-	if cfg.Postgres.MaxConnLifetime > 0 {
-		poolCfg.MaxConnLifetime = cfg.Postgres.MaxConnLifetime
+	if pc.MaxConnLifetime > 0 {
+		poolCfg.MaxConnLifetime = pc.MaxConnLifetime
 	}
-	if cfg.Postgres.MaxConnIdleTime > 0 {
-		poolCfg.MaxConnIdleTime = cfg.Postgres.MaxConnIdleTime
+	if pc.MaxConnIdleTime > 0 {
+		poolCfg.MaxConnIdleTime = pc.MaxConnIdleTime
 	}
-	// health check interval default 1m
 	poolCfg.HealthCheckPeriod = time.Minute
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
@@ -41,7 +53,6 @@ func NewPool(ctx context.Context, cfg *config.Config, logger zerolog.Logger) (*p
 		return nil, fmt.Errorf(constants.ErrPostgresCreatePool, err)
 	}
 
-	// ping
 	ctxPing, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	if err := pool.Ping(ctxPing); err != nil {

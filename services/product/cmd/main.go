@@ -35,13 +35,19 @@ func main() {
 	}
 	defer pool.Close()
 
+	authPool, err := postgresql.NewPool(ctx, c, l, postgresql.WithDSN(c.AuthDB.DSN))
+	if err != nil {
+		l.Fatal().Err(err).Msg("failed to create auth postgres pool")
+	}
+	defer authPool.Close()
+
 	redisClient, err := rdb.NewCache(c, "product-service", 15*time.Minute)
 	if err != nil {
 		l.Fatal().Err(err).Msg("failed to connect to redis")
 	}
 	defer redisClient.Client.Close()
 
-	authService, err := auth.New(ctx, c.JWT.Secret, c.JWT.Issuer, c.JWT.RedisDB, pool, redisClient.Client)
+	authService, err := auth.New(ctx, c.JWT.Secret, c.JWT.Issuer, c.JWT.RedisDB, authPool, redisClient.Client, c.Kafka.Brokers, c.Kafka.CasbinTopic, c.Kafka.GroupID)
 	if err != nil {
 		l.Fatal().Err(err).Msg("failed to initialize authorization")
 	}

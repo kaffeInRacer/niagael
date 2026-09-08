@@ -28,12 +28,6 @@
         :server-side="true"
         :options="tableOptions"
       >
-        <template #category-actions="props">
-          <div class="flex justify-end gap-3">
-            <button @click="editCategory(props.rowData)" class="text-blue-600 hover:text-blue-900">Edit</button>
-            <button @click="deleteCategory(props.rowData.id)" class="text-red-600 hover:text-red-900">Delete</button>
-          </div>
-        </template>
       </AdminDataTable>
     </div>
 
@@ -78,7 +72,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import api from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
 import { createServerSideAjax } from '../../utils/datatables'
@@ -116,7 +110,10 @@ const columns = [
   { data: 'created_at', title: 'Created', render: function(data) {
     return formatDate(data)
   }},
-  { data: null, title: 'Actions', orderable: false, searchable: false, render: '#category-actions' }
+  { data: null, title: 'Actions', orderable: false, searchable: false, render: function(data, type, row) {
+    if (!row) return ''
+    return `<div class="flex justify-end gap-3"><button class="text-blue-600 hover:text-blue-900 edit-btn" data-id="${row.id}">Edit</button><button class="text-red-600 hover:text-red-900 delete-btn" data-id="${row.id}">Delete</button></div>`
+  }}
 ]
 
 const tableOptions = {
@@ -183,4 +180,20 @@ const deleteCategory = async (id) => {
     alert(e.response?.data?.error || 'Failed to delete category')
   }
 }
+
+onMounted(() => {
+  const tableEl = document.querySelector('.dataTable')
+  if (tableEl) {
+    tableEl.addEventListener('click', (e) => {
+      const editBtn = e.target.closest('.edit-btn')
+      const deleteBtn = e.target.closest('.delete-btn')
+      if (editBtn) {
+        const row = table.value?.getInstance()?.row(editBtn.closest('tr'))?.data()
+        if (row) editCategory(row)
+      } else if (deleteBtn) {
+        deleteCategory(deleteBtn.dataset.id)
+      }
+    })
+  }
+})
 </script>
