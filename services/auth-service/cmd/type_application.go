@@ -8,11 +8,8 @@ import (
 )
 
 type application struct {
-	config    *config.Config
-	logger    zerolog.Logger
-	pgx       *pgxpool.Pool
-	redis     *redislib.Client
-	productDB *pgxpool.Pool
-	pricingDB *pgxpool.Pool
-	orderDB   *pgxpool.Pool
+	config *config.Config
+	logger zerolog.Logger
+	pgx    *pgxpool.Pool
+	redis  *redislib.Client
 }

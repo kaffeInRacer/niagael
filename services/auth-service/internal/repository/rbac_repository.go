@@ -16,74 +16,34 @@ type Policy struct {
 }
 
 type RBACRepository struct {
-	productDB *pgxpool.Pool
-	pricingDB *pgxpool.Pool
-	orderDB   *pgxpool.Pool
+	db *pgxpool.Pool
 }
 
-func NewRBACRepository(productDB, pricingDB, orderDB *pgxpool.Pool) *RBACRepository {
-	return &RBACRepository{
-		productDB: productDB,
-		pricingDB: pricingDB,
-		orderDB:   orderDB,
-	}
+func NewRBACRepository(db *pgxpool.Pool) *RBACRepository {
+	return &RBACRepository{db: db}
 }
 
 func (r *RBACRepository) GetAllPolicies(ctx context.Context) ([]Policy, error) {
-	var allPolicies []Policy
-
-	productPolicies, err := r.getPoliciesFromDB(ctx, r.productDB, "product")
+	rows, err := r.db.Query(ctx, `SELECT id, service, v0, v1, v2 FROM casbin_rule WHERE ptype = 'p' ORDER BY service, v0, v1, v2`)
 	if err != nil {
-		return nil, fmt.Errorf("get product policies: %w", err)
-	}
-	allPolicies = append(allPolicies, productPolicies...)
-
-	pricingPolicies, err := r.getPoliciesFromDB(ctx, r.pricingDB, "dynamic-pricing")
-	if err != nil {
-		return nil, fmt.Errorf("get pricing policies: %w", err)
-	}
-	allPolicies = append(allPolicies, pricingPolicies...)
-
-	orderPolicies, err := r.getPoliciesFromDB(ctx, r.orderDB, "order")
-	if err != nil {
-		return nil, fmt.Errorf("get order policies: %w", err)
-	}
-	allPolicies = append(allPolicies, orderPolicies...)
-
-	return allPolicies, nil
-}
-
-func (r *RBACRepository) getPoliciesFromDB(ctx context.Context, db *pgxpool.Pool, serviceName string) ([]Policy, error) {
-	if db == nil {
-		return nil, nil
-	}
-
-	rows, err := db.Query(ctx, `SELECT id, v0, v1, v2 FROM casbin_rule WHERE ptype = 'p' ORDER BY v0, v1, v2`)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get all policies: %w", err)
 	}
 	defer rows.Close()
 
 	var policies []Policy
 	for rows.Next() {
 		var p Policy
-		if err := rows.Scan(&p.ID, &p.Role, &p.Resource, &p.Action); err != nil {
-			return nil, err
+		if err := rows.Scan(&p.ID, &p.Service, &p.Role, &p.Resource, &p.Action); err != nil {
+			return nil, fmt.Errorf("scan policy: %w", err)
 		}
-		p.Service = serviceName
 		policies = append(policies, p)
 	}
 	return policies, rows.Err()
 }
 
 func (r *RBACRepository) AddPolicy(ctx context.Context, service, role, resource, action string) error {
-	db := r.getDBForService(service)
-	if db == nil {
-		return fmt.Errorf("unknown service: %s", service)
-	}
-
 	var exists bool
-	err := db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM casbin_rule WHERE ptype = 'p' AND v0 = $1 AND v1 = $2 AND v2 = $3)`, role, resource, action).Scan(&exists)
+	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM casbin_rule WHERE ptype = 'p' AND v0 = $1 AND v1 = $2 AND v2 = $3 AND service = $4)`, role, resource, action, service).Scan(&exists)
 	if err != nil {
 		return fmt.Errorf("check existing policy: %w", err)
 	}
@@ -91,7 +51,7 @@ func (r *RBACRepository) AddPolicy(ctx context.Context, service, role, resource,
 		return fmt.Errorf("policy already exists")
 	}
 
-	_, err = db.Exec(ctx, `INSERT INTO casbin_rule (ptype, v0, v1, v2, v3, v4, v5) VALUES ('p', $1, $2, $3, '', '', '')`, role, resource, action)
+	_, err = r.db.Exec(ctx, `INSERT INTO casbin_rule (ptype, v0, v1, v2, v3, v4, v5, service) VALUES ('p', $1, $2, $3, '', '', '', $4)`, role, resource, action, service)
 	if err != nil {
 		return fmt.Errorf("insert policy: %w", err)
 	}
@@ -100,12 +60,7 @@ func (r *RBACRepository) AddPolicy(ctx context.Context, service, role, resource,
 }
 
 func (r *RBACRepository) DeletePolicy(ctx context.Context, service, role, resource, action string) error {
-	db := r.getDBForService(service)
-	if db == nil {
-		return fmt.Errorf("unknown service: %s", service)
-	}
-
-	result, err := db.Exec(ctx, `DELETE FROM casbin_rule WHERE ptype = 'p' AND v0 = $1 AND v1 = $2 AND v2 = $3`, role, resource, action)
+	result, err := r.db.Exec(ctx, `DELETE FROM casbin_rule WHERE ptype = 'p' AND v0 = $1 AND v1 = $2 AND v2 = $3 AND service = $4`, role, resource, action, service)
 	if err != nil {
 		return fmt.Errorf("delete policy: %w", err)
 	}
@@ -119,12 +74,7 @@ func (r *RBACRepository) DeletePolicy(ctx context.Context, service, role, resour
 }
 
 func (r *RBACRepository) DeleteAllPoliciesForRole(ctx context.Context, service, role string) error {
-	db := r.getDBForService(service)
-	if db == nil {
-		return fmt.Errorf("unknown service: %s", service)
-	}
-
-	_, err := db.Exec(ctx, `DELETE FROM casbin_rule WHERE ptype = 'p' AND v0 = $1`, role)
+	_, err := r.db.Exec(ctx, `DELETE FROM casbin_rule WHERE ptype = 'p' AND v0 = $1 AND service = $2`, role, service)
 	if err != nil {
 		return fmt.Errorf("delete policies for role: %w", err)
 	}
@@ -132,46 +82,23 @@ func (r *RBACRepository) DeleteAllPoliciesForRole(ctx context.Context, service, 
 	return nil
 }
 
-func (r *RBACRepository) getDBForService(service string) *pgxpool.Pool {
-	switch service {
-	case "product":
-		return r.productDB
-	case "dynamic-pricing":
-		return r.pricingDB
-	case "order":
-		return r.orderDB
-	default:
-		return nil
-	}
-}
-
 func (r *RBACRepository) GetResources(ctx context.Context) (map[string][]string, error) {
-	services := map[string]*pgxpool.Pool{
-		"product":         r.productDB,
-		"dynamic-pricing": r.pricingDB,
-		"order":           r.orderDB,
+	rows, err := r.db.Query(ctx, `SELECT DISTINCT service, v1 FROM casbin_rule WHERE ptype = 'p' ORDER BY service, v1`)
+	if err != nil {
+		return nil, fmt.Errorf("get resources: %w", err)
 	}
+	defer rows.Close()
 
 	result := make(map[string][]string)
-	for serviceName, db := range services {
-		if db == nil {
-			continue
+	for rows.Next() {
+		var service, resource string
+		if err := rows.Scan(&service, &resource); err != nil {
+			return nil, fmt.Errorf("scan resource: %w", err)
 		}
-		rows, err := db.Query(ctx, `SELECT DISTINCT v1 FROM casbin_rule WHERE ptype = 'p' ORDER BY v1`)
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		var resources []string
-		for rows.Next() {
-			var resource string
-			if err := rows.Scan(&resource); err != nil {
-				return nil, err
-			}
-			resources = append(resources, resource)
-		}
-		result[serviceName] = resources
+		result[service] = append(result[service], resource)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return result, nil
 }
