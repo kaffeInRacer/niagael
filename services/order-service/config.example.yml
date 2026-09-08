@@ -1,0 +1,45 @@
+http:
+  service_name: "order-service"
+  mode: "development"
+  addr: ":8082"
+  read_timeout: 10s
+  write_timeout: 10s
+  idle_timeout: 120s
+  shutdown_timeout: 5s
+
+grpc:
+  product_server: "localhost:8081"
+  dynamic_pricing_server: "localhost:8084"
+
+log:
+  level: info
+  format: console
+  stdout: true
+  path: logs/app.log
+
+postgres:
+  dsn: "host=localhost port=5432 user=postgres password=your_password dbname=order_service sslmode=disable"
+  migration_url: "postgresql://postgres:your_password@localhost:5432/order_service?sslmode=disable"
+  max_conns: 10
+  min_conns: 2
+  max_conn_lifetime: 1h
+  max_conn_idle_time: 10m
+
+redis:
+  addr: "localhost:6379"
+  password: "your_redis_password"
+  db: 2
+  pool_size: 10
+  min_idle_conns: 5
+  max_conn_lifetime: 1h
+  max_conn_idle_time: 10m
+
+jwt:
+  secret: "your_jwt_secret_key_here"
+  issuer: "auth-service"
+  redis_db: 3
+
+midtrans:
+  server_key: "SB-Mid-server-your_server_key"
+  client_key: "SB-Mid-client-your_client_key"
+  environment: "sandbox"
