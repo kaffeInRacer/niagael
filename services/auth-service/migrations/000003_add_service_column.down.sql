@@ -1,0 +1,1 @@
+ALTER TABLE casbin_rule DROP COLUMN IF EXISTS service;
