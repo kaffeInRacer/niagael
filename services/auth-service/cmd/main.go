@@ -63,7 +63,7 @@ func main() {
 
 func connectServiceDB(ctx context.Context, cfg *config.Config, dbName string, l zerolog.Logger) *pgxpool.Pool {
 	dsn := cfg.Postgres.DSN
-	
+
 	if idx := strings.Index(dsn, "dbname="); idx != -1 {
 		endIdx := strings.IndexAny(dsn[idx:], " \n")
 		if endIdx == -1 {

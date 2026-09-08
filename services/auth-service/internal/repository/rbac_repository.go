@@ -16,9 +16,9 @@ type Policy struct {
 }
 
 type RBACRepository struct {
-	productDB   *pgxpool.Pool
-	pricingDB   *pgxpool.Pool
-	orderDB     *pgxpool.Pool
+	productDB *pgxpool.Pool
+	pricingDB *pgxpool.Pool
+	orderDB   *pgxpool.Pool
 }
 
 func NewRBACRepository(productDB, pricingDB, orderDB *pgxpool.Pool) *RBACRepository {
@@ -147,9 +147,9 @@ func (r *RBACRepository) getDBForService(service string) *pgxpool.Pool {
 
 func (r *RBACRepository) GetResources(ctx context.Context) (map[string][]string, error) {
 	services := map[string]*pgxpool.Pool{
-		"product":        r.productDB,
+		"product":         r.productDB,
 		"dynamic-pricing": r.pricingDB,
-		"order":          r.orderDB,
+		"order":           r.orderDB,
 	}
 
 	result := make(map[string][]string)
