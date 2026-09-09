@@ -191,7 +191,7 @@ import { flashSaleApi, adminApi, productApi } from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
 import ModalDialog from '../../components/ModalDialog.vue'
 import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
-import { formatDate, getFlashSaleStatus, getFlashSaleStatusClass, localDateTimeToIso, toLocalDateTimeInput } from '../../utils/format'
+import { formatDate, formatPrice, getFlashSaleStatus, getFlashSaleStatusClass, localDateTimeToIso, toLocalDateTimeInput } from '../../utils/format'
 
 const productList = ref([])
 const error = ref(null)
