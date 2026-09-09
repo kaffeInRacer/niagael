@@ -32,11 +32,7 @@
       </AdminDataTable>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="category-modal-title">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div class="px-6 py-4 border-b">
-          <h3 id="category-modal-title" class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit Category' : 'Add Category' }}</h3>
-        </div>
+    <ModalDialog :show="showModal" :title="editingId ? 'Edit Category' : 'Add Category'" aria-id="category-modal-title" @close="showModal = false">
         <form @submit.prevent="saveCategory" class="px-6 py-4 space-y-4">
           <div>
             <label for="category-name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
@@ -69,8 +65,7 @@
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalDialog>
   </div>
 </template>
 
@@ -78,6 +73,7 @@
 import { ref } from 'vue'
 import api from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
+import ModalDialog from '../../components/ModalDialog.vue'
 import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
 import { formatDate } from '../../utils/format'
 
