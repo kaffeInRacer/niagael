@@ -7,7 +7,6 @@ import (
 	"kaffein/product-service/internal/dto"
 	"kaffein/product-service/internal/interfaces/IUseCase"
 	grpcclient "kaffein/product-service/pkg/grpc/client"
-	kafka "kaffein/product-service/pkg/kafka"
 	dynamicpricingpb "kaffein/product-service/proto/dynamic-pricing"
 	"kaffein/product-service/utils/constants"
 	"kaffein/product-service/utils/validator"
@@ -18,7 +17,7 @@ import (
 )
 
 type FlashSaleProjectionReader interface {
-	ListActive(ctx context.Context) ([]kafka.FlashSaleProjection, error)
+	ListActive(ctx context.Context) ([]domain.FlashSaleProjection, error)
 }
 
 type productHandler struct {
@@ -170,7 +169,7 @@ func (h *productHandler) List(c *gin.Context) {
 	products, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to list products")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 	for i := range products {
@@ -195,7 +194,7 @@ func (h *productHandler) ListActiveImages(c *gin.Context) {
 	product, err := h.usecase.ReadById(c.Request.Context(), c.Param("id"))
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read product by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -226,7 +225,7 @@ func (h *productHandler) ListBuyer(c *gin.Context) {
 	products, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to list products")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -274,7 +273,7 @@ func (h *productHandler) Create(c *gin.Context) {
 
 	if err := h.usecase.Create(c.Request.Context(), args); err != nil {
 		h.logger.Error().Err(err).Msg("failed to create product")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -301,7 +300,7 @@ func (h *productHandler) Update(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to update product")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -317,7 +316,7 @@ func (h *productHandler) Delete(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to delete product")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -330,7 +329,7 @@ func (h *productHandler) ReadById(c *gin.Context) {
 	product, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read product by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -353,7 +352,7 @@ func (h *productHandler) ReadActiveById(c *gin.Context) {
 	product, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read product by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -366,7 +365,7 @@ func (h *productHandler) ReadBySlug(c *gin.Context) {
 	product, err := h.usecase.ReadBySlug(c.Request.Context(), slug)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read product by slug")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -390,7 +389,7 @@ func (h *productHandler) ReadActiveBySlug(c *gin.Context) {
 	product, err := h.usecase.ReadBySlug(c.Request.Context(), slug)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read product by slug")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
