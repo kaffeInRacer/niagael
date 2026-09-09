@@ -95,7 +95,7 @@ func Authorize(db *pgxpool.Pool, logger zerolog.Logger, resource, action string)
 		)`, roles.([]string), resource, action).Scan(&allowed)
 		if err != nil {
 			logger.Error().Err(err).Str("resource", resource).Str("action", action).Msg("RBAC authorization query failed")
-			abort(c, http.StatusInternalServerError, "internal server error")
+			abort(c, http.StatusInternalServerError, constants.ErrInternalServer)
 			return
 		}
 		if !allowed {
