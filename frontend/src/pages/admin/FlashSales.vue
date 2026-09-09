@@ -32,16 +32,7 @@
       </AdminDataTable>
     </div>
 
-    <div v-if="detailItem" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="fs-detail-modal-title">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
-          <h3 id="fs-detail-modal-title" class="text-lg font-semibold text-gray-800">Flash Sale Details</h3>
-          <button type="button" @click="detailItem = null" class="text-gray-400 hover:text-gray-600" aria-label="Close flash sale details">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <ModalDialog :show="!!detailItem" title="Flash Sale Details" aria-id="fs-detail-modal-title" size="lg" scroll-body @close="detailItem = null">
         <div class="px-6 py-4 space-y-4" v-if="detailItem">
           <div class="flex items-center justify-between">
             <div>
@@ -98,14 +89,9 @@
             <p v-else class="text-sm text-gray-500">Product no longer available</p>
           </div>
         </div>
-      </div>
-    </div>
+    </ModalDialog>
 
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="flash-sale-modal-title">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 my-8">
-        <div class="px-6 py-4 border-b">
-          <h3 id="flash-sale-modal-title" class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit Flash Sale' : 'Add Flash Sale' }}</h3>
-        </div>
+    <ModalDialog :show="showModal" :title="editingId ? 'Edit Flash Sale' : 'Add Flash Sale'" aria-id="flash-sale-modal-title" size="xl" scroll-body @close="showModal = false">
         <form @submit.prevent="saveFlashSale" class="px-6 py-4 space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
@@ -194,8 +180,7 @@
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalDialog>
   </div>
 </template>
 
@@ -204,6 +189,7 @@ import { ref, onMounted } from 'vue'
 import api from '../../api'
 import { flashSaleApi } from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
+import ModalDialog from '../../components/ModalDialog.vue'
 import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
 import { formatDate, getFlashSaleStatus, getFlashSaleStatusClass, localDateTimeToIso, toLocalDateTimeInput } from '../../utils/format'
 
