@@ -26,14 +26,14 @@ const (
 	refreshTokenCookie = "refresh_token"
 )
 
-func NewAuthHandler(usecase IUseCase.AuthUseCase, logger zerolog.Logger, engine *gin.Engine, auth gin.HandlerFunc, jwt config.JWTConfig) *authHandler {
+func NewAuthHandler(usecase IUseCase.AuthUseCase, logger zerolog.Logger, engine *gin.Engine, authorization *middleware.Service, jwt config.JWTConfig) *authHandler {
 	h := &authHandler{usecase: usecase, logger: logger, jwt: jwt}
 	routes := engine.Group("/auth")
 	routes.POST("/register", h.register)
 	routes.POST("/login", h.login)
 	routes.POST("/refresh", h.refresh)
-	routes.POST("/logout", auth, h.logout)
-	routes.GET("/me", auth, h.me)
+	routes.POST("/logout", authorization.Authenticate(), h.logout)
+	routes.GET("/me", authorization.Authenticate(), h.me)
 	return h
 }
 
