@@ -173,7 +173,7 @@ func (h *productHandler) List(c *gin.Context) {
 		return
 	}
 	for i := range products {
-		activeProduct(&products[i])
+		resolveActiveProduct(&products[i])
 	}
 
 	productFlashSales, _ := h.getFlashSalesForProducts(c, products)
@@ -198,7 +198,7 @@ func (h *productHandler) ListActiveImages(c *gin.Context) {
 		return
 	}
 
-	if activeProduct(product) == nil {
+	if resolveActiveProduct(product) == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": constants.ErrProductNotFound})
 		return
 	}
@@ -244,7 +244,7 @@ func (h *productHandler) ListBuyer(c *gin.Context) {
 	})
 }
 
-func activeProduct(product *domain.Product) *domain.Product {
+func resolveActiveProduct(product *domain.Product) *domain.Product {
 	if product == nil || !product.IsActive || !product.CategoryActive {
 		return nil
 	}
@@ -397,7 +397,7 @@ func (h *productHandler) ReadActiveBySlug(c *gin.Context) {
 }
 
 func (h *productHandler) writeActiveProduct(c *gin.Context, product *domain.Product) {
-	product = activeProduct(product)
+	product = resolveActiveProduct(product)
 	if product == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": constants.ErrProductNotFound})
 		return
