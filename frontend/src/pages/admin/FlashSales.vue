@@ -54,7 +54,13 @@
             </div>
           </div>
           <div class="border-t pt-4">
-            <h4 class="text-sm font-semibold text-gray-700 mb-3">Items on Flash Sale ({{ detailProducts.length }})</h4>
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="text-sm font-semibold text-gray-700">Items on Flash Sale ({{ detailProducts.length }})</h4>
+              <div class="flex gap-2">
+                <button type="button" @click="addItemToSession" class="text-xs px-2.5 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700">+ Add Item</button>
+                <button type="button" @click="deleteSession" class="text-xs px-2.5 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700">Delete Session</button>
+              </div>
+            </div>
             <div v-if="detailLoading" class="flex justify-center py-6" role="status" aria-label="Loading details">
               <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>
@@ -86,6 +92,10 @@
                     <span>Stock: {{ p.stock ?? '-' }}</span>
                     <span v-if="p.max_per_user"> · Max {{ p.max_per_user }}/user</span>
                   </p>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                  <button type="button" @click="editSessionItem(p)" class="text-sm text-blue-600 hover:text-blue-900">Edit</button>
+                  <button type="button" @click="deleteSessionItem(p)" class="text-sm text-red-600 hover:text-red-900">Delete</button>
                 </div>
                 <div v-if="detailItem.variant_id" class="text-right">
                   <p class="text-xs text-gray-400">Variant</p>
@@ -229,36 +239,25 @@ const form = ref({
 })
 
 const columns = [
-  { data: 'name', title: 'Name' },
-  { data: 'product_id', title: 'Product', orderable: false, render: function(data, type, row) {
-    if (!row) return ''
-    const p = productList.value.find(pr => pr.id === data)
-    const label = p ? p.name : `<span class="font-mono">${escapeHtml(String(data ?? '').slice(0, 8))}...</span>`
-    if (row.variant_id) {
-      const v = p?.variants?.find(vr => vr.id === row.variant_id)
-      return label + (v ? `<span class="block text-xs text-gray-500">${escapeHtml(v.name)}</span>` : '')
-    }
-    return label
+  { data: 'name', title: 'Flash Sale' },
+  { data: 'item_count', title: 'Items', orderable: false, className: 'text-center', render: function(data) {
+    return `<span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-xs font-semibold">${escapeHtml(data)} item(s)</span>`
   }},
-  { data: 'discount_percent', title: 'Discount (%)', orderable: false, render: function(data) {
-    return `<span class="font-medium">${escapeHtml(data)}%</span>`
-  }},
-  { data: 'stock', title: 'Stock', orderable: false },
-  { data: 'max_per_user', title: 'Max/User', orderable: false },
+  { data: 'total_stock', title: 'Total FS Stock', orderable: false, className: 'text-center' },
   { data: null, title: 'Period', render: function(data, type, row) {
     if (!row) return ''
     return `${formatDate(row.start_time)} - ${formatDate(row.end_time)}`
   }},
-  { data: null, title: 'Status', orderable: false, render: function(data, type, row) {
+  { data: null, title: 'Status', orderable: false, className: 'text-center', render: function(data, type, row) {
     if (!row) return ''
     const status = row.is_active === true ? getFlashSaleStatus(row.start_time, row.end_time) : 'inactive'
     const cls = getFlashSaleStatusClass(status)
     const label = status.charAt(0).toUpperCase() + status.slice(1)
     return `<span class="px-2 py-1 text-xs font-medium rounded-full ${cls}">${label}</span>`
   }},
-  { data: null, title: 'Actions', orderable: false, searchable: false, render: function(data, type, row) {
+  { data: null, title: 'Actions', orderable: false, searchable: false, className: 'text-right', render: function(data, type, row) {
     if (!row) return ''
-    return '<div class="flex justify-end gap-3"><button type="button" class="text-blue-600 hover:text-blue-900" data-table-action="details">Details</button><button type="button" class="text-blue-600 hover:text-blue-900" data-table-action="edit">Edit</button><button type="button" class="text-red-600 hover:text-red-900" data-table-action="delete">Delete</button></div>'
+    return '<div class="flex justify-end gap-3"><button type="button" class="text-blue-600 hover:text-blue-900" data-table-action="details">Details</button></div>'
   }}
 ]
 
@@ -267,13 +266,13 @@ const tableOptions = {
   lengthMenu: [10, 25, 50, 100],
   order: [[0, 'asc']],
   columnDefs: [
-    { orderable: false, targets: [1, 2, 3, 4, 6, 7] },
-    { searchable: false, targets: [7] }
+    { orderable: false, targets: [1, 2, 3, 4, 5] },
+    { searchable: false, targets: [5] }
   ]
 }
 
 const tableAjax = createServerSideAjax({
-  fetchPage: (params) => api.get('/admin/flash-sales', { params }),
+  fetchPage: (params) => api.get('/admin/flash-sales/sessions', { params }),
   orderColumns: { 0: 'name', 5: 'start_time' },
   onError: (e) => {
     error.value = e.response?.data?.error || 'Failed to load flash sales'
@@ -334,26 +333,6 @@ const removeItem = (index) => {
   form.value.items.splice(index, 1)
 }
 
-const editFlashSale = (fs) => {
-  editingId.value = fs.id
-  form.value = {
-    name: fs.name,
-    start_time: toLocalDateTimeInput(fs.start_time),
-    end_time: toLocalDateTimeInput(fs.end_time),
-    is_active: fs.is_active ?? true,
-    items: [{
-      product_id: fs.product_id || '',
-      variant_id: fs.variant_id || '',
-      variants: [],
-      discount_percent: fs.discount_percent,
-      stock: fs.stock,
-      max_per_user: fs.max_per_user
-    }]
-  }
-  if (fs.product_id) fetchVariantsForItem(0)
-  showModal.value = true
-}
-
 const saveFlashSale = async () => {
   saving.value = true
   formError.value = null
@@ -397,24 +376,12 @@ const saveFlashSale = async () => {
   }
 }
 
-const deleteFlashSale = async (id) => {
-  if (!confirm('Are you sure you want to delete this flash sale?')) return
-  try {
-    await api.delete(`/admin/flash-sales/${id}`)
-    table.value?.reload()
-  } catch (e) {
-    alert(e.response?.data?.error || 'Failed to delete flash sale')
-  }
-}
-
 onMounted(() => {
   fetchProducts()
 })
 
 const handleTableAction = ({ action, row }) => {
   if (action === 'details') openDetail(row)
-  if (action === 'edit') editFlashSale(row)
-  if (action === 'delete') deleteFlashSale(row.id)
 }
 
 const buildDetailRow = async (item) => {
@@ -489,5 +456,66 @@ const openDetail = async (fs) => {
 const productImageUrl = (p) => {
   const base = import.meta.env.VITE_IMG_URL || ''
   return `${base}/${p.id}/${p.image.file_name}`
+}
+
+const reloadSession = () => {
+  if (detailItem.value) return openDetail({ name: detailItem.value.name })
+}
+
+const deleteSession = async () => {
+  if (!confirm(`Delete ALL items in flash sale "${detailItem.value.name}"?`)) return
+  try {
+    const { data } = await flashSaleApi.adminList({ name: detailItem.value.name, page: 1, page_size: 100 })
+    await Promise.all((data.data || []).map(i => api.delete(`/admin/flash-sales/${i.id}`)))
+    detailItem.value = null
+    table.value?.reload()
+  } catch (e) {
+    alert(e.response?.data?.error || 'Failed to delete session')
+  }
+}
+
+const deleteSessionItem = async (item) => {
+  if (!confirm(`Remove "${item.name}" from this flash sale?`)) return
+  try {
+    await api.delete(`/admin/flash-sales/${item.id}`)
+    reloadSession()
+    table.value?.reload()
+  } catch (e) {
+    alert(e.response?.data?.error || 'Failed to remove item')
+  }
+}
+
+const editSessionItem = (item) => {
+  showModal.value = true
+  editingId.value = item.id
+  form.value = {
+    name: detailItem.value.name,
+    start_time: toLocalDateTimeInput(item.start_time),
+    end_time: toLocalDateTimeInput(item.end_time),
+    is_active: true,
+    items: [{
+      product_id: item.product_id,
+      variant_id: item.variant?.id || '',
+      variants: [],
+      discount_percent: item.discount_percent,
+      stock: item.stock,
+      max_per_user: item.max_per_user
+    }]
+  }
+  if (item.product_id) fetchVariantsForItem(0)
+}
+
+const addItemToSession = async () => {
+  const session = detailItem.value
+  if (!session) return
+  showModal.value = true
+  editingId.value = null
+  form.value = {
+    name: session.name,
+    start_time: toLocalDateTimeInput(session.start_time),
+    end_time: toLocalDateTimeInput(session.end_time),
+    is_active: true,
+    items: [createEmptyItem()]
+  }
 }
 </script>
