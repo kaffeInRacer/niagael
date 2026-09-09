@@ -182,7 +182,7 @@ func (uc *paymentUseCase) Callback(ctx context.Context, args dto.MidtransCallbac
 		}
 		if resp == nil || !resp.GetSuccess() {
 			if resp == nil {
-				return errors.New("release stock returned empty response")
+				return errors.New(constants.ErrReleaseStockEmpty)
 			}
 			return fmt.Errorf("release stock failed: %s", resp.GetMessage())
 		}
