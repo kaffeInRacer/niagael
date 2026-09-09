@@ -39,7 +39,7 @@ func (app *application) startGrpcServer(ctx context.Context, flashSaleRepo IRepo
 		app.logger.Fatal().Err(err).Msg("failed to listen for gRPC")
 	}
 
-	flashSaleUseCase := usecase.NewFlashSaleUseCase(flashSaleRepo, flashSaleUsageRepo)
+	flashSaleUseCase := usecase.NewFlashSaleUseCase(flashSaleRepo, flashSaleUsageRepo, app.config.Kafka.Brokers)
 	promoUseCase := usecase.NewPromoUseCase(promoRepo, promoUsageRepo)
 
 	s := grpc.NewServer()
