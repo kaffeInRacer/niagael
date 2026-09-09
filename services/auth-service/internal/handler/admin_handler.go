@@ -6,6 +6,7 @@ import (
 
 	"kaffein/auth-service/internal/dto"
 	"kaffein/auth-service/internal/interfaces/IUseCase"
+	"kaffein/auth-service/internal/middleware"
 	"kaffein/auth-service/utils/constants"
 
 	"github.com/gin-gonic/gin"
@@ -18,17 +19,17 @@ type adminHandler struct {
 	logger  zerolog.Logger
 }
 
-func NewAdminHandler(usecase IUseCase.AdminUseCase, logger zerolog.Logger, engine *gin.Engine, auth, admin, read, update, create, delete gin.HandlerFunc) *adminHandler {
+func NewAdminHandler(usecase IUseCase.AdminUseCase, logger zerolog.Logger, engine *gin.Engine, authorization *middleware.Service) *adminHandler {
 	h := &adminHandler{usecase: usecase, logger: logger}
 
 	routes := engine.Group("/admin/users")
-	routes.Use(auth, admin)
-	routes.GET("", read, h.list)
-	routes.POST("", create, h.create)
-	routes.PATCH("/:id/role", update, h.role)
-	routes.PATCH("/:id/status", update, h.status)
-	routes.PUT("/:id/email", update, h.email)
-	routes.DELETE("/:id", delete, h.delete)
+	routes.Use(authorization.Authenticate(), authorization.Admin())
+	routes.GET("", authorization.Authorize("users", "read"), h.list)
+	routes.POST("", authorization.Authorize("users", "create"), h.create)
+	routes.PATCH("/:id/role", authorization.Authorize("users", "update"), h.role)
+	routes.PATCH("/:id/status", authorization.Authorize("users", "update"), h.status)
+	routes.PUT("/:id/email", authorization.Authorize("users", "update"), h.email)
+	routes.DELETE("/:id", authorization.Authorize("users", "delete"), h.delete)
 	return h
 }
 
