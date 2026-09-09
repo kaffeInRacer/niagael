@@ -126,6 +126,7 @@ export const adminApi = {
   },
   products: {
     list: (params) => api.get('/admin/products', { params }),
+    getById: (id) => api.get(`/admin/products/${id}`),
     create: (data) => api.post('/admin/products', data),
     update: (id, data) => api.put(`/admin/products/${id}`, data),
     delete: (id) => api.delete(`/admin/products/${id}`),

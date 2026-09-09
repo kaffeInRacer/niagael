@@ -187,7 +187,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '../../api'
-import { flashSaleApi } from '../../api'
+import { flashSaleApi, adminApi, productApi } from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
 import ModalDialog from '../../components/ModalDialog.vue'
 import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
@@ -419,8 +419,16 @@ const openDetail = async (fs) => {
     detailItem.value = detailRes.data || detailRes
 
     const fresh = detailItem.value
-    const { data } = await productApi.getById(fresh.product_id)
-    const p = data.data || data
+    let p = null
+    try {
+      const { data } = await adminApi.products.getById(fresh.product_id)
+      p = data.data || data
+    } catch {
+      try {
+        const { data } = await productApi.getById(fresh.product_id)
+        p = data.data || data
+      } catch { p = null }
+    }
     if (p && p.id) {
       let variant = null
       if (fresh.variant_id) {
