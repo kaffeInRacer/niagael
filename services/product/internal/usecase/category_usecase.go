@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"golang.org/x/sync/errgroup"
 	"context"
 	"kaffein/product-service/internal/domain"
 	"kaffein/product-service/internal/dto"
@@ -32,8 +33,14 @@ func (uc *categoryUseCase) List(ctx context.Context, params dto.ListCategoryPara
 		return nil, 0, err
 	}
 
-	count, err := uc.repo.ListCount(ctx, params)
-	if err != nil {
+	var count int64
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		total, err := uc.repo.ListCount(gctx, params)
+		count = total
+		return err
+	})
+	if err := g.Wait(); err != nil {
 		return nil, 0, err
 	}
 
