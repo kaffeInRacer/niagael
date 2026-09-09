@@ -14,9 +14,8 @@ import (
 	"kaffein/order-service/pkg/midtrans"
 	"kaffein/order-service/pkg/postgresql"
 	productpb "kaffein/order-service/proto/product"
+	"kaffein/order-service/utils"
 	"kaffein/order-service/utils/constants"
-	"strconv"
-	"strings"
 
 	"github.com/google/uuid"
 )
@@ -125,7 +124,7 @@ func (uc *paymentUseCase) Callback(ctx context.Context, args dto.MidtransCallbac
 		return errors.New(constants.ErrInvalidPaymentSignature)
 	}
 
-	amount, err := parseMidtransGrossAmount(args.GrossAmount)
+	amount, err := utils.ParseMidtransGrossAmount(args.GrossAmount)
 	if err != nil {
 		return domain.ErrInvalidPaymentAmount
 	}
@@ -192,19 +191,4 @@ func (uc *paymentUseCase) Callback(ctx context.Context, args dto.MidtransCallbac
 		return nil
 	})
 	return err
-}
-
-func parseMidtransGrossAmount(value string) (int64, error) {
-	integer, fraction, found := strings.Cut(value, ".")
-	if integer == "" || strings.HasPrefix(integer, "+") || strings.HasPrefix(integer, "-") {
-		return 0, domain.ErrInvalidPaymentAmount
-	}
-	if found && (fraction == "" || strings.Trim(fraction, "0") != "") {
-		return 0, domain.ErrInvalidPaymentAmount
-	}
-	amount, err := strconv.ParseInt(integer, 10, 64)
-	if err != nil {
-		return 0, domain.ErrInvalidPaymentAmount
-	}
-	return amount, nil
 }
