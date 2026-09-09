@@ -76,7 +76,7 @@ func (h *flashSaleHandler) list(c *gin.Context, currentOnly bool) {
 	flashSales, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to list flash sales")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -108,7 +108,7 @@ func (h *flashSaleHandler) Create(c *gin.Context) {
 
 	if err := h.usecase.Create(c.Request.Context(), args); err != nil {
 		h.logger.Error().Err(err).Msg("failed to create flash sale")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -129,7 +129,7 @@ func (h *flashSaleHandler) CreateBulk(c *gin.Context) {
 
 	if err := h.usecase.CreateBulk(c.Request.Context(), args); err != nil {
 		h.logger.Error().Err(err).Msg("failed to create flash sales bulk")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -156,7 +156,7 @@ func (h *flashSaleHandler) Update(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to update flash sale")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -172,7 +172,7 @@ func (h *flashSaleHandler) Delete(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to delete flash sale")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -185,7 +185,7 @@ func (h *flashSaleHandler) ReadById(c *gin.Context) {
 	flashSale, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read flash sale by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -202,7 +202,7 @@ func (h *flashSaleHandler) ReadCurrentById(c *gin.Context) {
 	flashSale, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read flash sale by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 	if !currentFlashSale(flashSale, time.Now()) {
