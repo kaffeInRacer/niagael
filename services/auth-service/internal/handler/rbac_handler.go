@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 	"kaffein/auth-service/internal/interfaces/IUseCase"
+	"kaffein/auth-service/internal/middleware"
 	"kaffein/auth-service/utils/constants"
 )
 
@@ -28,14 +29,14 @@ type DeletePolicyRequest struct {
 	Action   string `json:"action" binding:"required"`
 }
 
-func NewRBACHandler(usecase IUseCase.RBACUseCase, logger zerolog.Logger, engine *gin.Engine, auth, admin, read, create, remove gin.HandlerFunc) *rbacHandler {
+func NewRBACHandler(usecase IUseCase.RBACUseCase, logger zerolog.Logger, engine *gin.Engine, authorization *middleware.Service) *rbacHandler {
 	h := &rbacHandler{usecase: usecase, logger: logger}
 	routes := engine.Group("/admin/rbac")
-	routes.Use(auth, admin)
-	routes.GET("/policies", read, h.listPolicies)
-	routes.GET("/resources", read, h.getResources)
-	routes.POST("/policies", create, h.addPolicy)
-	routes.DELETE("/policies", remove, h.deletePolicy)
+	routes.Use(authorization.Authenticate(), authorization.Admin())
+	routes.GET("/policies", authorization.Authorize("policies", "read"), h.listPolicies)
+	routes.GET("/resources", authorization.Authorize("policies", "read"), h.getResources)
+	routes.POST("/policies", authorization.Authorize("policies", "create"), h.addPolicy)
+	routes.DELETE("/policies", authorization.Authorize("policies", "delete"), h.deletePolicy)
 	return h
 }
 
