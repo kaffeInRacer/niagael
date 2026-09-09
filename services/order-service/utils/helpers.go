@@ -2,6 +2,9 @@ package utils
 
 import (
 	"crypto/rand"
+	"errors"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -36,4 +39,19 @@ func GenerateOrderRef() string {
 	}
 
 	return "ORD-" + string(middle) + "-" + string(tail)
+}
+
+func ParseMidtransGrossAmount(value string) (int64, error) {
+	integer, fraction, found := strings.Cut(value, ".")
+	if integer == "" || strings.HasPrefix(integer, "+") || strings.HasPrefix(integer, "-") {
+		return 0, errors.New("invalid payment amount")
+	}
+	if found && (fraction == "" || strings.Trim(fraction, "0") != "") {
+		return 0, errors.New("invalid payment amount")
+	}
+	amount, err := strconv.ParseInt(integer, 10, 64)
+	if err != nil {
+		return 0, errors.New("invalid payment amount")
+	}
+	return amount, nil
 }
