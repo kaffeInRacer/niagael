@@ -39,7 +39,7 @@ func NewAuthHandler(usecase IUseCase.AuthUseCase, logger zerolog.Logger, engine 
 
 func (h *authHandler) register(c *gin.Context) {
 	var req dto.RegisterRequest
-	if !bind(c, &req) {
+	if !bindJSON(c, &req) {
 		return
 	}
 	user, err := h.usecase.Register(c.Request.Context(), req)
@@ -52,7 +52,7 @@ func (h *authHandler) register(c *gin.Context) {
 
 func (h *authHandler) login(c *gin.Context) {
 	var req dto.LoginRequest
-	if !bind(c, &req) {
+	if !bindJSON(c, &req) {
 		return
 	}
 	result, err := h.usecase.Login(c.Request.Context(), req)
@@ -71,7 +71,7 @@ func (h *authHandler) refresh(c *gin.Context) {
 		raw = strings.TrimSpace(raw)
 		if raw == "" {
 			var req dto.RefreshRequest
-			if !bind(c, &req) {
+			if !bindJSON(c, &req) {
 				return
 			}
 			raw = req.RefreshToken
@@ -135,7 +135,7 @@ func (h *authHandler) me(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func bind(c *gin.Context, value any) bool {
+func bindJSON(c *gin.Context, value any) bool {
 	if err := c.ShouldBindJSON(value); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return false
