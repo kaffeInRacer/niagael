@@ -97,7 +97,7 @@ func (h *orderHandler) Create(c *gin.Context) {
 		return
 	}
 
-	order, err := h.usecase.Create(c.Request.Context(), args)
+	order, err := h.usecase.Create(c.Request.Context(), args, c.GetHeader("Idempotency-Key"))
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to create order")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
