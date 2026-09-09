@@ -47,7 +47,7 @@ func NewOrderUseCase(
 func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*domain.Order, error) {
 	for _, item := range args.Items {
 		if item.Quantity <= 0 || item.Quantity > math.MaxInt32 {
-			return nil, errors.New("quantity must be between 1 and 2147483647")
+			return nil, errors.New(constants.ErrInvalidQuantity)
 		}
 	}
 
@@ -106,11 +106,11 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 			availableStock = product.Stock - product.StockReserved
 		}
 		if unitPrice < 0 || unitPrice > math.MaxInt64/int64(item.Quantity) {
-			return nil, errors.New("order item total exceeds int64")
+			return nil, errors.New(constants.ErrOrderItemTotalOverflow)
 		}
 		itemSubtotal := unitPrice * int64(item.Quantity)
 		if subtotal > math.MaxInt64-itemSubtotal {
-			return nil, errors.New("order subtotal exceeds int64")
+			return nil, errors.New(constants.ErrOrderSubtotalOverflow)
 		}
 
 		if availableStock < int64(item.Quantity) {
