@@ -421,7 +421,7 @@ func (r *flashSaleRepository) DecrementStock(ctx context.Context, id string, qua
 		return err
 	}
 	if cmdTag.RowsAffected() == 0 {
-		return errors.New("insufficient flash sale stock")
+		return errors.New(constants.ErrFlashSaleStockInsufficient)
 	}
 	return nil
 }
