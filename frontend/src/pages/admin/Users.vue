@@ -155,7 +155,7 @@ const tableOptions = {
 }
 
 const tableAjax = createServerSideAjax({
-  fetchPage: (params) => userAdminApi.list({ params: { ...params, page: params.page + 1 } }),
+  fetchPage: (params) => userAdminApi.list({ params }),
   orderColumns: {},
   defaultOrderBy: 'created_at',
   defaultOrderDir: 'desc',
