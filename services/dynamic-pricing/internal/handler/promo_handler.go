@@ -76,7 +76,7 @@ func (h *promoHandler) list(c *gin.Context, currentOnly bool) {
 	promos, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to list promos")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -108,7 +108,7 @@ func (h *promoHandler) Create(c *gin.Context) {
 
 	if err := h.usecase.Create(c.Request.Context(), args); err != nil {
 		h.logger.Error().Err(err).Msg("failed to create promo")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *promoHandler) Update(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to update promo")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -151,7 +151,7 @@ func (h *promoHandler) Delete(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to delete promo")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -164,7 +164,7 @@ func (h *promoHandler) ReadById(c *gin.Context) {
 	promo, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read promo by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -181,7 +181,7 @@ func (h *promoHandler) ReadCurrentById(c *gin.Context) {
 	promo, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read promo by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 	if !currentPromo(promo, time.Now()) {
@@ -199,7 +199,7 @@ func currentPromo(promo *domain.Promo, now time.Time) bool {
 func (h *promoHandler) ApplyPromo(c *gin.Context) {
 	claims, ok := auth.ClaimsFrom(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": constants.ErrUnauthorized})
 		return
 	}
 	if claims.Subject != c.Param("userId") {
@@ -208,7 +208,7 @@ func (h *promoHandler) ApplyPromo(c *gin.Context) {
 			isPrivileged = isPrivileged || role == "staff" || role == "admin"
 		}
 		if !isPrivileged {
-			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			c.JSON(http.StatusForbidden, gin.H{"error": constants.ErrForbidden})
 			return
 		}
 	}
@@ -235,7 +235,7 @@ func (h *promoHandler) ApplyPromo(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to apply promo")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
