@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/sync/errgroup"
 )
 
 type orderUseCase struct {
@@ -213,8 +214,21 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 		allocationRequest.Items = append(allocationRequest.Items, requestItem)
 	}
 
-	allocation, err := uc.pricingClient.AllocatePricing(ctx, allocationRequest)
-	if err != nil {
+	var allocation *dynamicpricingpb.AllocatePricingResponse
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		alloc, err := uc.pricingClient.AllocatePricing(gctx, allocationRequest)
+		if err != nil {
+			return err
+		}
+		allocation = alloc
+		return nil
+	})
+	g.Go(func() error {
+		_, err := uc.productClient.ReserveStock(gctx, orderId, stockItems)
+		return err
+	})
+	if err := g.Wait(); err != nil {
 		return nil, errors.Join(err, uc.compensate(ctx, orderId, args.UserId, stockItems))
 	}
 
@@ -261,11 +275,6 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 		CreatedAt:   time.Now(),
 	}
 
-	_, err = uc.productClient.ReserveStock(ctx, orderId, stockItems)
-	if err != nil {
-		return nil, errors.Join(err, uc.compensate(ctx, orderId, args.UserId, stockItems))
-	}
-
 	if err := uc.repo.CreateWithItemsWithTx(ctx, order, orderItems); err != nil {
 		return nil, errors.Join(err, uc.compensate(ctx, orderId, args.UserId, stockItems))
 	}
@@ -281,7 +290,10 @@ func (uc *orderUseCase) releaseStock(orderID string, items []*productpb.StockIte
 }
 
 func (uc *orderUseCase) compensate(ctx context.Context, orderID, userID string, stockItems []*productpb.StockItem) error {
-	return errors.Join(uc.releaseStock(orderID, stockItems), uc.releasePricing(orderID, userID))
+	var eg errgroup.Group
+	eg.Go(func() error { return uc.releaseStock(orderID, stockItems) })
+	eg.Go(func() error { return uc.releasePricing(orderID, userID) })
+	return eg.Wait()
 }
 
 func (uc *orderUseCase) releasePricing(orderID, userID string) error {
@@ -291,16 +303,24 @@ func (uc *orderUseCase) releasePricing(orderID, userID string) error {
 }
 
 func (uc *orderUseCase) List(ctx context.Context, params dto.ListOrderParams) ([]domain.Order, int64, error) {
-	orders, err := uc.repo.List(ctx, params)
-	if err != nil {
+	var (
+		orders []domain.Order
+		count  int64
+	)
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		data, err := uc.repo.List(gctx, params)
+		orders = data
+		return err
+	})
+	g.Go(func() error {
+		total, err := uc.repo.ListCount(gctx, params)
+		count = total
+		return err
+	})
+	if err := g.Wait(); err != nil {
 		return nil, 0, err
 	}
-
-	count, err := uc.repo.ListCount(ctx, params)
-	if err != nil {
-		return nil, 0, err
-	}
-
 	return orders, count, nil
 }
 
