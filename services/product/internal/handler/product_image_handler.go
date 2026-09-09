@@ -5,9 +5,9 @@ import (
 	"kaffein/product-service/internal/interfaces/IUseCase"
 	"kaffein/product-service/pkg/minio/storage"
 	"kaffein/product-service/utils/constants"
+	"kaffein/product-service/internal/dto"
 	"kaffein/product-service/utils/validator"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -39,7 +39,16 @@ func (h *productImageHandler) Create(c *gin.Context) {
 		return
 	}
 
-	sortOrder, _ := strconv.Atoi(c.PostForm("sort_order"))
+	var args dto.UploadProductImageDto
+	if err := c.ShouldBind(&args); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if errors := h.v.ValidateStruct(args); errors != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
+		return
+	}
+	sortOrder := args.SortOrder
 
 	src, err := file.Open()
 	if err != nil {
@@ -56,7 +65,7 @@ func (h *productImageHandler) Create(c *gin.Context) {
 		return
 	}
 
-	if err := h.usecase.Create(c.Request.Context(), productId, fileName, sortOrder); err != nil {
+	if err := h.usecase.Create(c.Request.Context(), productId, fileName, int(sortOrder)); err != nil {
 		h.logger.Error().Err(err).Msg("failed to create product image")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
