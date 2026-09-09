@@ -14,6 +14,7 @@ import (
 	"kaffein/order-service/internal/repository"
 	grpcclient "kaffein/order-service/pkg/grpc/client"
 	"kaffein/order-service/pkg/kafka"
+	"kaffein/order-service/pkg/kafka/event"
 
 	"github.com/rs/zerolog/log"
 )
@@ -90,14 +91,12 @@ func main() {
 			}
 			authPoolForSnapshot.Close()
 
-			userConsumer := kafka.NewCasbinPolicyConsumer(c.Kafka.Brokers, c.Kafka.UserTopic, c.Kafka.GroupID+"-users", buyersRepo)
-			userConsumer.Run(ctx)
-			defer userConsumer.Close()
+			buyersConsumer := kafka.NewBuyersConsumer(buyersRepo)
+			go event.Consume(ctx, c.Kafka.Brokers, c.Kafka.UserTopic, c.Kafka.GroupID+"-users", buyersConsumer.Handle)
 		}
 
-		orderConsumer := kafka.NewFulfillmentConsumer(c.Kafka.Brokers, c.Kafka.OrderTopic, c.Kafka.GroupID+"-fulfillment", productClient, pricingClient)
-		orderConsumer.Run(ctx)
-		defer orderConsumer.Close()
+		fulfillment := kafka.NewFulfillmentConsumer(productClient, pricingClient)
+		go event.Consume(ctx, c.Kafka.Brokers, c.Kafka.OrderTopic, c.Kafka.GroupID+"-fulfillment", fulfillment.Handle)
 
 		relay := kafka.NewOutboxRelay(c.Kafka.Brokers, c.Kafka.OrderTopic, outboxKafkaAdapter{repository.NewOutboxRepository(pool, postgresql.NewStore(pool))})
 		go relay.Run(ctx)
