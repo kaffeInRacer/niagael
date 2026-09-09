@@ -50,7 +50,8 @@ func (app *application) routes(ctx context.Context) *gin.Engine {
 	orderRepo := repository.NewOrderRepository(store)
 	orderItemRepo := repository.NewOrderItemRepository(store)
 	outboxRepo := repository.NewOutboxRepository(app.pgx, store)
-	orderUseCase := usecase.NewOrderUseCase(orderRepo, app.productClient, app.pricingClient, outboxRepo)
+	idempotencyRepo := repository.NewIdempotencyRepository(app.pgx)
+	orderUseCase := usecase.NewOrderUseCase(orderRepo, app.productClient, app.pricingClient, outboxRepo, idempotencyRepo)
 	handler.NewOrderHandler(orderUseCase, addressUseCase, app.logger, r, app.auth)
 
 	paymentRepo := repository.NewPaymentRepository(store)
