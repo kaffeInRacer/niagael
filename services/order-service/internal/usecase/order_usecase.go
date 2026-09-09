@@ -20,11 +20,17 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+type IdempotencyRepo interface {
+	ClaimOrderKey(ctx context.Context, key, orderID string) (string, bool, error)
+	ReleaseOrderKey(ctx context.Context, key string) error
+}
+
 type orderUseCase struct {
 	repo          IRepository.OrderRepository
 	productClient *grpcclient.ProductClient
 	pricingClient *grpcclient.DynamicPricingClient
 	outbox        OutboxRepo
+	idempotency   IdempotencyRepo
 }
 
 type OutboxRepo interface {
@@ -36,16 +42,18 @@ func NewOrderUseCase(
 	productClient *grpcclient.ProductClient,
 	pricingClient *grpcclient.DynamicPricingClient,
 	outbox OutboxRepo,
+	idempotency IdempotencyRepo,
 ) IUseCase.OrderUseCase {
 	return &orderUseCase{
 		repo:          repo,
 		productClient: productClient,
 		pricingClient: pricingClient,
 		outbox:        outbox,
+		idempotency:   idempotency,
 	}
 }
 
-func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*domain.Order, error) {
+func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto, idempotencyKey string) (*domain.Order, error) {
 	for _, item := range args.Items {
 		if item.Quantity <= 0 || item.Quantity > math.MaxInt32 {
 			return nil, errors.New(constants.ErrInvalidQuantity)
@@ -54,6 +62,19 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 
 	orderId := uuid.New().String()
 	orderRef := utils.GenerateOrderRef()
+
+	if idempotencyKey != "" {
+		winnerID, won, err := uc.idempotency.ClaimOrderKey(ctx, idempotencyKey, orderId)
+		if err != nil {
+			return nil, err
+		}
+		if !won {
+			if existing, err := uc.repo.ReadById(ctx, winnerID); err == nil && existing != nil {
+				return existing, nil
+			}
+			_ = uc.idempotency.ReleaseOrderKey(ctx, idempotencyKey)
+		}
+	}
 
 	var productIds []string
 	for _, item := range args.Items {
@@ -229,6 +250,9 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 		return err
 	})
 	if err := g.Wait(); err != nil {
+		if idempotencyKey != "" {
+			_ = uc.idempotency.ReleaseOrderKey(ctx, idempotencyKey)
+		}
 		return nil, errors.Join(err, uc.compensate(ctx, orderId, args.UserId, stockItems))
 	}
 
@@ -276,6 +300,9 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 	}
 
 	if err := uc.repo.CreateWithItemsWithTx(ctx, order, orderItems); err != nil {
+		if idempotencyKey != "" {
+			_ = uc.idempotency.ReleaseOrderKey(ctx, idempotencyKey)
+		}
 		return nil, errors.Join(err, uc.compensate(ctx, orderId, args.UserId, stockItems))
 	}
 
