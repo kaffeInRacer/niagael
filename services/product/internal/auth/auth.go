@@ -19,6 +19,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"kaffein/product-service/pkg/kafkawatcher"
+	"kaffein/product-service/utils/constants"
 )
 
 const (
@@ -227,7 +228,7 @@ func (s *Service) Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rawToken, ok := accessToken(c.Request)
 		if !ok {
-			abort(c, http.StatusUnauthorized, "unauthorized")
+			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 			return
 		}
 
@@ -248,13 +249,13 @@ func (s *Service) Authenticate() gin.HandlerFunc {
 		)
 		if err != nil || !token.Valid || claims.Subject == "" || claims.SessionID == "" ||
 			claims.IssuedAt == nil || claims.TokenType != "access" || len(claims.Roles) == 0 {
-			abort(c, http.StatusUnauthorized, "unauthorized")
+			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 			return
 		}
 
 		revoked, err := s.redis.Exists(c.Request.Context(), "auth:revoked:"+claims.SessionID).Result()
 		if err != nil || revoked > 0 {
-			abort(c, http.StatusUnauthorized, "unauthorized")
+			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 			return
 		}
 
@@ -282,7 +283,7 @@ func (s *Service) Authorize(resource, action string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims, ok := ClaimsFrom(c)
 		if !ok {
-			abort(c, http.StatusUnauthorized, "unauthorized")
+			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 			return
 		}
 
@@ -297,7 +298,7 @@ func (s *Service) Authorize(resource, action string) gin.HandlerFunc {
 				return
 			}
 		}
-		abort(c, http.StatusForbidden, "forbidden")
+		abort(c, http.StatusForbidden, constants.ErrForbidden)
 	}
 }
 
