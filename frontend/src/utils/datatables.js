@@ -14,7 +14,7 @@ export function createServerSideAjax({
     const orderDir = ['asc', 'desc'].includes(order?.dir) ? order.dir : defaultOrderDir
 
     const params = {
-      page: Math.floor(request.start / pageSize),
+      page: Math.floor(request.start / pageSize) + 1,
       page_size: pageSize,
       search: request.search?.value?.trim() || undefined,
       order_by: orderBy,
