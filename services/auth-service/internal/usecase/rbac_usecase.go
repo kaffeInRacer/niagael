@@ -47,23 +47,23 @@ func (u *rbacUseCase) GetAllPolicies(ctx context.Context) ([]repository.Policy, 
 }
 
 func (u *rbacUseCase) AddPolicy(ctx context.Context, service, role, resource, action string) error {
-	service, role, resource, action = normalizePolicy(service, role, resource, action)
-	if !validPolicy(service, role, resource, action) {
+	service, role, resource, action = normalizePolicyInput(service, role, resource, action)
+	if !isValidPolicyCombination(service, role, resource, action) {
 		return errors.New(constants.ErrInvalidPolicy)
 	}
 	return u.repo.AddPolicy(ctx, service, role, resource, action)
 }
 
 func (u *rbacUseCase) DeletePolicy(ctx context.Context, service, role, resource, action string) error {
-	service, role, resource, action = normalizePolicy(service, role, resource, action)
-	if !validPolicy(service, role, resource, action) {
+	service, role, resource, action = normalizePolicyInput(service, role, resource, action)
+	if !isValidPolicyCombination(service, role, resource, action) {
 		return errors.New(constants.ErrInvalidPolicy)
 	}
 	return u.repo.DeletePolicy(ctx, service, role, resource, action)
 }
 
 func (u *rbacUseCase) DeleteAllPoliciesForRole(ctx context.Context, service, role string) error {
-	service, role, _, _ = normalizePolicy(service, role, "", "")
+	service, role, _, _ = normalizePolicyInput(service, role, "", "")
 	if _, ok := allowedPolicies[service]; !ok || !domain.ValidRole(role) {
 		return errors.New(constants.ErrInvalidPolicy)
 	}
@@ -81,11 +81,11 @@ func (u *rbacUseCase) GetResources(ctx context.Context) (map[string][]string, er
 	return resources, nil
 }
 
-func normalizePolicy(service, role, resource, action string) (string, string, string, string) {
+func normalizePolicyInput(service, role, resource, action string) (string, string, string, string) {
 	return strings.ToLower(strings.TrimSpace(service)), strings.ToLower(strings.TrimSpace(role)), strings.ToLower(strings.TrimSpace(resource)), strings.ToLower(strings.TrimSpace(action))
 }
 
-func validPolicy(service, role, resource, action string) bool {
+func isValidPolicyCombination(service, role, resource, action string) bool {
 	if !domain.ValidRole(role) {
 		return false
 	}
