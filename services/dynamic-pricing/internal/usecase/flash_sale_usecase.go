@@ -36,6 +36,10 @@ func (uc *flashSaleUseCase) List(ctx context.Context, params dto.ListFlashSalePa
 	return flashSales, count, nil
 }
 
+func (uc *flashSaleUseCase) ListSessions(ctx context.Context, params dto.ListFlashSaleParams) ([]dto.FlashSaleSession, int64, error) {
+	return uc.repo.ListSessions(ctx, params)
+}
+
 func (uc *flashSaleUseCase) Create(ctx context.Context, args dto.CreateFlashSaleDto) error {
 	arg := dto.CreateFlashSaleDto{
 		Id:              uuid.New().String(),

@@ -85,3 +85,12 @@ type VariantIdPair struct {
 	ProductId string `json:"product_id"`
 	VariantId string `json:"variant_id"`
 }
+
+type FlashSaleSession struct {
+	Name        string    `json:"name"`
+	ItemCount   int64     `json:"item_count"`
+	TotalStock  int64     `json:"total_stock"`
+	StartTime   time.Time `json:"start_time"`
+	EndTime     time.Time `json:"end_time"`
+	IsActive    bool      `json:"is_active"`
+}

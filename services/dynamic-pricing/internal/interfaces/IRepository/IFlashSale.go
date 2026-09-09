@@ -8,6 +8,7 @@ import (
 
 type FlashSaleRepository interface {
 	List(ctx context.Context, params dto.ListFlashSaleParams) ([]domain.FlashSale, error)
+	ListSessions(ctx context.Context, params dto.ListFlashSaleParams) ([]dto.FlashSaleSession, int64, error)
 	ListCount(ctx context.Context, params dto.ListFlashSaleParams) (int64, error)
 	Create(ctx context.Context, args dto.CreateFlashSaleDto) error
 	CreateBulk(ctx context.Context, args dto.CreateFlashSaleBulkDto) error

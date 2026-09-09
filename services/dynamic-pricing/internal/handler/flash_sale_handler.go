@@ -37,6 +37,7 @@ func NewFlashSaleHandler(usecase IUseCase.FlashSaleUseCase, logger zerolog.Logge
 	{
 		adminFlashSales.Use(authorization.Authenticate())
 		adminFlashSales.GET("", authorization.Authorize("flash-sales", "read"), h.List)
+		adminFlashSales.GET("/sessions", authorization.Authorize("flash-sales", "read"), h.ListSessions)
 		adminFlashSales.POST("", authorization.Authorize("flash-sales", "create"), h.Create)
 		adminFlashSales.POST("/bulk", authorization.Authorize("flash-sales", "create"), h.CreateBulk)
 		adminFlashSales.GET("/:id", authorization.Authorize("flash-sales", "read"), h.ReadById)
@@ -49,6 +50,28 @@ func NewFlashSaleHandler(usecase IUseCase.FlashSaleUseCase, logger zerolog.Logge
 
 func (h *flashSaleHandler) List(c *gin.Context) {
 	h.list(c, false)
+}
+
+func (h *flashSaleHandler) ListSessions(c *gin.Context) {
+	var params dto.ListFlashSaleParams
+	if err := c.ShouldBindQuery(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if errors := h.v.ValidateStruct(&params); errors != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
+		return
+	}
+	params.PageOffset *= params.PageSize
+
+	sessions, count, err := h.usecase.ListSessions(c.Request.Context(), params)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("failed to list flash sale sessions")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": sessions, "count": count})
 }
 
 func (h *flashSaleHandler) ListCurrent(c *gin.Context) {

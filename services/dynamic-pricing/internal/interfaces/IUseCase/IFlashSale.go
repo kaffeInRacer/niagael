@@ -8,6 +8,7 @@ import (
 
 type FlashSaleUseCase interface {
 	List(ctx context.Context, params dto.ListFlashSaleParams) ([]domain.FlashSale, int64, error)
+	ListSessions(ctx context.Context, params dto.ListFlashSaleParams) ([]dto.FlashSaleSession, int64, error)
 	Create(ctx context.Context, args dto.CreateFlashSaleDto) error
 	CreateBulk(ctx context.Context, args dto.CreateFlashSaleBulkDto) error
 	Update(ctx context.Context, id string, args dto.UpdateFlashSaleDto) error
