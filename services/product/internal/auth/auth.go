@@ -18,7 +18,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 
-	"kaffein/product-service/pkg/kafkawatcher"
+	"kaffein/product-service/pkg/kafka"
 	"kaffein/product-service/utils/constants"
 )
 
@@ -46,7 +46,7 @@ type Service struct {
 	logger       zerolog.Logger
 	cancelReload context.CancelFunc
 	reloadDone   chan struct{}
-	watcher      *kafkawatcher.Watcher
+	watcher      *kafka.Watcher
 }
 
 func New(ctx context.Context, c *config.Config, db *pgxpool.Pool, redisClient *redis.Client, logger zerolog.Logger) (*Service, error) {
@@ -81,7 +81,7 @@ func New(ctx context.Context, c *config.Config, db *pgxpool.Pool, redisClient *r
 	go s.autoReload(reloadCtx, db, c.RBAC.PolicyReloadInterval)
 
 	if len(c.Kafka.Brokers) > 0 && c.Kafka.CasbinTopic != "" {
-		s.watcher = kafkawatcher.New(c.Kafka.Brokers, c.Kafka.CasbinTopic, c.Kafka.GroupID)
+		s.watcher = kafka.NewWatcher(c.Kafka.Brokers, c.Kafka.CasbinTopic, c.Kafka.GroupID)
 		if err := s.watcher.SetUpdateCallback(func(string) { _ = s.reloadPolicies(context.Background(), db) }); err != nil {
 			return nil, fmt.Errorf("start casbin watcher: %w", err)
 		}
