@@ -70,6 +70,10 @@ func (h *orderHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if errors := h.v.ValidateStruct(args); errors != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
+		return
+	}
 	if !auth.RequireOwner(c, args.UserId) {
 		return
 	}
@@ -114,7 +118,7 @@ func (h *orderHandler) List(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
 		return
 	}
-	params.PageOffset *= params.PageSize
+	params.PageOffset = (params.Page - 1) * params.PageSize
 
 	orders, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
