@@ -31,7 +31,12 @@ func NewPromoHandler(usecase IUseCase.PromoUseCase, logger zerolog.Logger, engin
 	{
 		promos.GET("", h.ListCurrent)
 		promos.GET("/:id", h.ReadCurrentById)
-		promos.POST("/apply/:code/:userId", authorization.Authenticate(), authorization.Authorize("promos", "apply"), h.ApplyPromo)
+	}
+
+	promoApply := engine.Group("/promos")
+	{
+		promoApply.Use(authorization.Authenticate())
+		promoApply.POST("/apply/:code/:userId", authorization.Authorize("promos", "apply"), h.ApplyPromo)
 	}
 
 	adminPromos := engine.Group("/admin/promos")
