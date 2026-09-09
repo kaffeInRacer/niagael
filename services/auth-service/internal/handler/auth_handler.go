@@ -12,6 +12,7 @@ import (
 	"kaffein/auth-service/internal/dto"
 	"kaffein/auth-service/internal/interfaces/IUseCase"
 	"kaffein/auth-service/internal/middleware"
+	"kaffein/auth-service/utils"
 	"kaffein/auth-service/utils/constants"
 )
 
@@ -65,7 +66,7 @@ func (h *authHandler) login(c *gin.Context) {
 }
 
 func (h *authHandler) refresh(c *gin.Context) {
-	raw := bearerToken(c.GetHeader("Authorization"))
+	raw := utils.BearerToken(c.GetHeader("Authorization"))
 	if raw == "" {
 		raw, _ = c.Cookie(refreshTokenCookie)
 		raw = strings.TrimSpace(raw)
@@ -95,14 +96,6 @@ func (h *authHandler) logout(c *gin.Context) {
 	}
 	h.clearTokenCookies(c)
 	c.Status(http.StatusNoContent)
-}
-
-func bearerToken(header string) string {
-	parts := strings.Fields(header)
-	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
-		return parts[1]
-	}
-	return ""
 }
 
 func (h *authHandler) setTokenCookies(c *gin.Context, result *dto.TokenResponse) {
