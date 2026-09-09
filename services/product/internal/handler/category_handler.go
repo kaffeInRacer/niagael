@@ -73,7 +73,7 @@ func (h *categoryHandler) list(c *gin.Context, activeOnly bool) {
 	categories, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to list categories")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -97,7 +97,7 @@ func (h *categoryHandler) Create(c *gin.Context) {
 
 	if err := h.usecase.Create(c.Request.Context(), args); err != nil {
 		h.logger.Error().Err(err).Msg("failed to create category")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -124,7 +124,7 @@ func (h *categoryHandler) Update(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to update category")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -141,7 +141,7 @@ func (h *categoryHandler) Delete(c *gin.Context) {
 		}
 
 		h.logger.Error().Err(err).Msg("failed to delete category")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -154,7 +154,7 @@ func (h *categoryHandler) ReadById(c *gin.Context) {
 	category, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read category by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -172,7 +172,7 @@ func (h *categoryHandler) ReadActiveById(c *gin.Context) {
 	category, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read category by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -185,7 +185,7 @@ func (h *categoryHandler) ReadBySlug(c *gin.Context) {
 	category, err := h.usecase.ReadBySlug(c.Request.Context(), slug)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read category by slug")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -203,7 +203,7 @@ func (h *categoryHandler) ReadActiveBySlug(c *gin.Context) {
 	category, err := h.usecase.ReadBySlug(c.Request.Context(), slug)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read category by slug")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
