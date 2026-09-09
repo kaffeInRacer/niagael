@@ -8,8 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"kaffein/auth-service/config"
 	"kaffein/auth-service/pkg/logger"
-	"kaffein/auth-service/utils/events"
-	"kaffein/auth-service/pkg/postgresql"
+		"kaffein/auth-service/pkg/postgresql"
 	redisclient "kaffein/auth-service/pkg/redis"
 )
 
@@ -31,8 +30,6 @@ func main() {
 		l.Fatal().Err(err).Msg("failed to connect redis")
 	}
 	defer rdb.Close()
-
-	events.Init(cfg.Kafka.Brokers)
 
 	app := &application{
 		config: cfg,
