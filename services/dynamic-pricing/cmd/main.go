@@ -6,8 +6,7 @@ import (
 	"kaffein/dynamic-pricing-service/pkg/logger"
 	"kaffein/dynamic-pricing-service/pkg/postgresql"
 	"kaffein/dynamic-pricing-service/pkg/redis"
-	"kaffein/dynamic-pricing-service/utils/events"
-	"os/signal"
+		"os/signal"
 	"sync"
 	"syscall"
 	"time"
@@ -52,8 +51,6 @@ func main() {
 		l.Fatal().Err(err).Msg("failed to initialize authorization")
 	}
 	defer authService.Close()
-
-	events.Init(c.Kafka.Brokers)
 
 	app := &application{
 		config: c,
