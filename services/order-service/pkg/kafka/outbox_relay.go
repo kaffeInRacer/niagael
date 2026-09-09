@@ -39,12 +39,12 @@ func (r *OutboxRelay) Run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			r.relayBatch(ctx)
+			r.flushPendingEvents(ctx)
 		}
 	}
 }
 
-func (r *OutboxRelay) relayBatch(ctx context.Context) {
+func (r *OutboxRelay) flushPendingEvents(ctx context.Context) {
 	events, err := r.outbox.ListUnprocessed(ctx, 100)
 	if err != nil {
 		log.Printf("outbox relay query error: %v", err)
