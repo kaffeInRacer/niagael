@@ -19,6 +19,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"kaffein/dynamic-pricing-service/pkg/kafkawatcher"
+	"kaffein/dynamic-pricing-service/utils/constants"
 )
 
 const (
@@ -209,7 +210,7 @@ func (s *Service) Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rawToken, ok := accessToken(c.Request)
 		if !ok {
-			abort(c, http.StatusUnauthorized, "unauthorized")
+			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 			return
 		}
 		claims := &Claims{}
@@ -220,18 +221,18 @@ func (s *Service) Authenticate() gin.HandlerFunc {
 			return s.secret, nil
 		}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}), jwt.WithIssuer(s.issuer), jwt.WithExpirationRequired(), jwt.WithIssuedAt())
 		if err != nil || !token.Valid || claims.Subject == "" || claims.SessionID == "" || claims.IssuedAt == nil || claims.TokenType != "access" || len(claims.Roles) == 0 {
-			abort(c, http.StatusUnauthorized, "unauthorized")
+			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 			return
 		}
 		revoked, err := s.redis.Exists(c.Request.Context(), "auth:revoked:"+claims.SessionID).Result()
 		if err != nil || revoked > 0 {
-			abort(c, http.StatusUnauthorized, "unauthorized")
+			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 			return
 		}
 		var role string
 		var active bool
 		if err := s.db.QueryRow(c.Request.Context(), `SELECT role, is_active FROM users WHERE id = $1 AND deleted_at IS NULL`, claims.Subject).Scan(&role, &active); err != nil || !active || len(claims.Roles) != 1 || claims.Roles[0] != role {
-			abort(c, http.StatusUnauthorized, "unauthorized")
+			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 			return
 		}
 		c.Set(claimsKey, claims)
@@ -258,7 +259,7 @@ func (s *Service) Authorize(resource, action string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims, ok := ClaimsFrom(c)
 		if !ok {
-			abort(c, http.StatusUnauthorized, "unauthorized")
+			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 			return
 		}
 		s.enforcerMu.RLock()
@@ -271,7 +272,7 @@ func (s *Service) Authorize(resource, action string) gin.HandlerFunc {
 				return
 			}
 		}
-		abort(c, http.StatusForbidden, "forbidden")
+		abort(c, http.StatusForbidden, constants.ErrForbidden)
 	}
 }
 
