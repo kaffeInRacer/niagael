@@ -177,6 +177,7 @@ const applyPromo = async () => {
 const submitOrder = async () => {
   loading.value = true
   error.value = null
+  const idempotencyKey = orderApi.newIdempotencyKey()
 
   try {
 	const addressResponse = await addressApi.create({
@@ -200,7 +201,7 @@ const submitOrder = async () => {
       promo_code: cart.promoCode || undefined
     }
 
-    const response = await orderApi.create(orderData)
+    const response = await orderApi.create(orderData, idempotencyKey)
     const orderId = response.data.data.id
 
     try {
