@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"kaffein/dynamic-pricing-service/internal/domain"
 	"kaffein/dynamic-pricing-service/internal/interfaces/IRepository"
+	"kaffein/dynamic-pricing-service/utils/constants"
 	"kaffein/dynamic-pricing-service/pkg/postgresql"
 )
 
@@ -35,7 +36,7 @@ func (r *pricingAllocationRepository) AllocateWithTx(ctx context.Context, alloca
 		}
 		if existing != nil {
 			if existing.UserID != allocation.UserID || existing.RequestHash != allocation.RequestHash {
-				return errors.New("order ID already belongs to a different pricing allocation request")
+				return errors.New(constants.ErrAllocationConflict)
 			}
 			result = existing
 			return nil
@@ -89,7 +90,7 @@ func (r *pricingAllocationRepository) AllocateWithTx(ctx context.Context, alloca
 				return err
 			}
 			if command.RowsAffected() != 1 {
-				return errors.New("insufficient flash sale stock")
+				return errors.New(constants.ErrFlashSaleStockInsufficient)
 			}
 			if _, err := tx.Exec(ctx, `
 				INSERT INTO flash_sale_usage (id, flash_sale_id, user_id, quantity, created_at)
@@ -127,7 +128,7 @@ func (r *pricingAllocationRepository) AllocateWithTx(ctx context.Context, alloca
 				&startDate, &endDate, &active,
 			)
 			if errors.Is(err, pgx.ErrNoRows) {
-				return errors.New("promo not found")
+				return errors.New(constants.ErrPromoNotFound)
 			}
 			if err != nil {
 				return err
@@ -165,7 +166,7 @@ func (r *pricingAllocationRepository) AllocateWithTx(ctx context.Context, alloca
 				return err
 			}
 			if command.RowsAffected() != 1 {
-				return errors.New("promo usage limit reached")
+				return errors.New(constants.ErrPromoLimitReached)
 			}
 			if _, err := tx.Exec(ctx, `
 				INSERT INTO promo_usage (id, promo_id, user_id, quantity, created_at)
@@ -224,7 +225,7 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 			return err
 		}
 		if allocatedUserID != userID {
-			return errors.New("order ID belongs to another pricing allocation")
+			return errors.New(constants.ErrAllocationOwnerMismatch)
 		}
 		if allocationStatus == "released" {
 			return nil
@@ -261,14 +262,14 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 				return err
 			}
 			if command.RowsAffected() != 1 {
-				return errors.New("flash sale release target missing")
+				return errors.New(constants.ErrFlashSaleReleaseTargetMissing)
 			}
 			command, err = tx.Exec(ctx, `UPDATE flash_sale_usage SET quantity = quantity - $3, updated_at = NOW() WHERE flash_sale_id = $1 AND user_id = $2 AND quantity >= $3`, item.id, allocatedUserID, item.quantity)
 			if err != nil {
 				return err
 			}
 			if command.RowsAffected() != 1 {
-				return errors.New("flash sale usage release target missing")
+				return errors.New(constants.ErrFlashSaleUsageTargetMissing)
 			}
 		}
 		if promoID != "" {
@@ -277,14 +278,14 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 				return err
 			}
 			if command.RowsAffected() != 1 {
-				return errors.New("promo release target missing")
+				return errors.New(constants.ErrPromoReleaseTargetMissing)
 			}
 			command, err = tx.Exec(ctx, `UPDATE promo_usage SET quantity = quantity - 1, updated_at = NOW() WHERE promo_id = $1 AND user_id = $2 AND quantity > 0`, promoID, allocatedUserID)
 			if err != nil {
 				return err
 			}
 			if command.RowsAffected() != 1 {
-				return errors.New("promo usage release target missing")
+				return errors.New(constants.ErrPromoUsageTargetMissing)
 			}
 		}
 		command, err = tx.Exec(ctx, `UPDATE pricing_allocation SET status = 'released', released_at = NOW() WHERE order_id = $1 AND status = 'allocated'`, orderID)
@@ -292,7 +293,7 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 			return err
 		}
 		if command.RowsAffected() != 1 {
-			return errors.New("pricing allocation release target missing")
+			return errors.New(constants.ErrAllocationReleaseTargetMissing)
 		}
 		return nil
 	})
@@ -315,7 +316,7 @@ func readAllocation(ctx context.Context, db postgresql.DBTX, orderID string) (*P
 		return nil, err
 	}
 	if status != "allocated" {
-		return nil, errors.New("pricing allocation was released")
+		return nil, errors.New(constants.ErrAllocationAlreadyReleased)
 	}
 	rows, err := db.Query(ctx, `
 		SELECT item_id, flash_sale_id, quantity, name, discount_percent
