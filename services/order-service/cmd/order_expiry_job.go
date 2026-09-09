@@ -108,7 +108,7 @@ func (app *application) cancelExpiredOrders(ctx context.Context) {
 			continue
 		}
 
-		event := kafka.OrderEvent{
+		event := kafka.OutboxEvent{
 			Type:    "order.expired",
 			OrderID: order.Id,
 			UserID:  order.UserId,
