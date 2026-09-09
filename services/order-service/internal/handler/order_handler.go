@@ -58,7 +58,7 @@ func (h *orderHandler) UpdateStatus(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to update order status")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "order status updated"})
@@ -76,7 +76,7 @@ func (h *orderHandler) Create(c *gin.Context) {
 	address, err := h.addressUseCase.ReadById(c.Request.Context(), args.AddressId)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read order address")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 	if address == nil {
@@ -84,7 +84,7 @@ func (h *orderHandler) Create(c *gin.Context) {
 		return
 	}
 	if address.UserId != args.UserId {
-		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		c.JSON(http.StatusForbidden, gin.H{"error": constants.ErrForbidden})
 		return
 	}
 
@@ -96,7 +96,7 @@ func (h *orderHandler) Create(c *gin.Context) {
 	order, err := h.usecase.Create(c.Request.Context(), args)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to create order")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -119,7 +119,7 @@ func (h *orderHandler) List(c *gin.Context) {
 	orders, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to list orders")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *orderHandler) ReadById(c *gin.Context) {
 	order, items, err := h.usecase.ReadByIdWithItems(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read order by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -179,7 +179,7 @@ func (h *orderHandler) ReadByUserId(c *gin.Context) {
 	orders, err := h.usecase.ReadByUserId(c.Request.Context(), userId, params.Before, params.PageSize)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read orders by user id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
