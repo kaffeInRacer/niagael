@@ -46,14 +46,14 @@ func (h *variantHandler) ListActive(c *gin.Context) {
 	productId := c.Query("product_id")
 
 	if productId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "product_id is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": constants.ErrProductIDRequired})
 		return
 	}
 
 	variants, err := h.usecase.ListActiveByProductId(c.Request.Context(), productId)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to list variants")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -63,14 +63,14 @@ func (h *variantHandler) ListActive(c *gin.Context) {
 func (h *variantHandler) list(c *gin.Context) {
 	productId := c.Query("product_id")
 	if productId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "product_id is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": constants.ErrProductIDRequired})
 		return
 	}
 
 	variants, err := h.usecase.ListByProductId(c.Request.Context(), productId)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to list variants")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -80,7 +80,7 @@ func (h *variantHandler) list(c *gin.Context) {
 func (h *variantHandler) Create(c *gin.Context) {
 	productId := c.Query("product_id")
 	if productId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "product_id is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": constants.ErrProductIDRequired})
 		return
 	}
 
@@ -101,7 +101,7 @@ func (h *variantHandler) Create(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to create variant")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -128,7 +128,7 @@ func (h *variantHandler) Update(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to update variant")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -144,7 +144,7 @@ func (h *variantHandler) Delete(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to delete variant")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
