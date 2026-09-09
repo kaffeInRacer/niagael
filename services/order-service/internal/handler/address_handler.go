@@ -56,7 +56,7 @@ func (h *addressHandler) List(c *gin.Context) {
 	addresses, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to list addresses")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -81,7 +81,7 @@ func (h *addressHandler) Create(c *gin.Context) {
 	address, err := h.usecase.Create(c.Request.Context(), args)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to create address")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -93,7 +93,7 @@ func (h *addressHandler) Update(c *gin.Context) {
 	address, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read address by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 	if address == nil {
@@ -122,7 +122,7 @@ func (h *addressHandler) Update(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to update address")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -134,7 +134,7 @@ func (h *addressHandler) Delete(c *gin.Context) {
 	address, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read address by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 	if address == nil {
@@ -151,7 +151,7 @@ func (h *addressHandler) Delete(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to delete address")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -164,7 +164,7 @@ func (h *addressHandler) ReadById(c *gin.Context) {
 	address, err := h.usecase.ReadById(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read address by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
