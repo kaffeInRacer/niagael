@@ -9,8 +9,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"kaffein/dynamic-pricing-service/internal/domain"
 	"kaffein/dynamic-pricing-service/internal/interfaces/IRepository"
-	"kaffein/dynamic-pricing-service/utils/constants"
 	"kaffein/dynamic-pricing-service/pkg/postgresql"
+	"kaffein/dynamic-pricing-service/utils"
+	"kaffein/dynamic-pricing-service/utils/constants"
 )
 
 type (
@@ -107,7 +108,7 @@ func (r *pricingAllocationRepository) AllocateWithTx(ctx context.Context, alloca
 
 		adjustedSubtotal := allocation.Subtotal
 		for _, item := range result.Items {
-			discountedUnitPrice := domain.FlashSaleDiscountedUnitPrice(item.UnitPrice, item.DiscountPercent)
+			discountedUnitPrice := utils.DiscountedUnitPrice(item.UnitPrice, item.DiscountPercent)
 			adjustedSubtotal -= (item.UnitPrice - discountedUnitPrice) * int64(item.AllocatedQuantity)
 		}
 
