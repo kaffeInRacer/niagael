@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -20,7 +21,28 @@ const (
 	ExpirationKey = "exp"
 )
 
-func Auth(tokens *token.Manager, sessions IRepository.SessionRepository, users IRepository.UserRepository) gin.HandlerFunc {
+type Service struct {
+	tokens   *token.Manager
+	sessions IRepository.SessionRepository
+	users    IRepository.UserRepository
+	db       *pgxpool.Pool
+	logger   zerolog.Logger
+
+	mu     sync.Mutex
+	policy map[string]map[string]map[string]bool
+}
+
+func NewService(tokens *token.Manager, sessions IRepository.SessionRepository, users IRepository.UserRepository, db *pgxpool.Pool, logger zerolog.Logger) *Service {
+	return &Service{
+		tokens:   tokens,
+		sessions: sessions,
+		users:    users,
+		db:       db,
+		logger:   logger,
+	}
+}
+
+func (s *Service) Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		raw := bearerToken(c.GetHeader("Authorization"))
 		if raw == "" {
@@ -31,18 +53,18 @@ func Auth(tokens *token.Manager, sessions IRepository.SessionRepository, users I
 			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
 			return
 		}
-		claims, err := tokens.Parse(raw, "access")
+		claims, err := s.tokens.Parse(raw, "access")
 		if err != nil {
 			abort(c, http.StatusUnauthorized, constants.ErrInvalidToken)
 			return
 		}
-		revoked, err := sessions.IsRevoked(c.Request.Context(), claims.SessionID)
+		revoked, err := s.sessions.IsRevoked(c.Request.Context(), claims.SessionID)
 		if err != nil || revoked {
 			abort(c, http.StatusUnauthorized, constants.ErrInvalidToken)
 			return
 		}
 		userID, _ := uuid.Parse(claims.Subject)
-		user, err := users.ByID(c.Request.Context(), userID)
+		user, err := s.users.ByID(c.Request.Context(), userID)
 		if err != nil || user == nil || !user.IsActive || len(claims.Roles) != 1 || claims.Roles[0] != user.Role {
 			abort(c, http.StatusUnauthorized, constants.ErrInvalidToken)
 			return
@@ -55,15 +77,7 @@ func Auth(tokens *token.Manager, sessions IRepository.SessionRepository, users I
 	}
 }
 
-func bearerToken(header string) string {
-	parts := strings.Fields(header)
-	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
-		return parts[1]
-	}
-	return ""
-}
-
-func Admin() gin.HandlerFunc {
+func (s *Service) Admin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		roles, ok := c.Get(RolesKey)
 		if !ok {
@@ -80,7 +94,7 @@ func Admin() gin.HandlerFunc {
 	}
 }
 
-func Authorize(db *pgxpool.Pool, logger zerolog.Logger, resource, action string) gin.HandlerFunc {
+func (s *Service) Authorize(resource, action string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		roles, ok := c.Get(RolesKey)
 		if !ok {
@@ -89,12 +103,12 @@ func Authorize(db *pgxpool.Pool, logger zerolog.Logger, resource, action string)
 		}
 
 		var allowed bool
-		err := db.QueryRow(c.Request.Context(), `SELECT EXISTS (
+		err := s.db.QueryRow(c.Request.Context(), `SELECT EXISTS (
 			SELECT 1 FROM casbin_rule
 			WHERE ptype = 'p' AND service = 'auth' AND v0 = ANY($1) AND v1 = $2 AND v2 = $3
 		)`, roles.([]string), resource, action).Scan(&allowed)
 		if err != nil {
-			logger.Error().Err(err).Str("resource", resource).Str("action", action).Msg("RBAC authorization query failed")
+			s.logger.Error().Err(err).Str("resource", resource).Str("action", action).Msg("RBAC authorization query failed")
 			abort(c, http.StatusInternalServerError, constants.ErrInternalServer)
 			return
 		}
@@ -104,6 +118,14 @@ func Authorize(db *pgxpool.Pool, logger zerolog.Logger, resource, action string)
 		}
 		c.Next()
 	}
+}
+
+func bearerToken(header string) string {
+	parts := strings.Fields(header)
+	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+		return parts[1]
+	}
+	return ""
 }
 
 func abort(c *gin.Context, status int, message string) {
