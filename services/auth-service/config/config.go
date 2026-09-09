@@ -33,6 +33,7 @@ func Load(path string) (*Config, error) {
 	if strings.TrimSpace(cfg.JWT.Secret) == "" || strings.TrimSpace(cfg.JWT.Issuer) == "" {
 		return nil, fmt.Errorf("JWT secret and issuer are required")
 	}
+
 	if value, ok := os.LookupEnv("JWT_COOKIE_SECURE"); ok && value != "" {
 		cookieSecure, err := strconv.ParseBool(value)
 		if err != nil {
