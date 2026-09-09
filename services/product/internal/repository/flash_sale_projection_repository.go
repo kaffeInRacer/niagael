@@ -5,7 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	kafka "kaffein/product-service/pkg/kafka"
+	"kaffein/product-service/internal/domain"
 )
 
 type FlashSaleProjectionRepository struct {
@@ -16,7 +16,7 @@ func NewFlashSaleProjectionRepository(pool *pgxpool.Pool) *FlashSaleProjectionRe
 	return &FlashSaleProjectionRepository{db: pool}
 }
 
-func (r *FlashSaleProjectionRepository) Upsert(ctx context.Context, p kafka.FlashSaleProjection) error {
+func (r *FlashSaleProjectionRepository) Upsert(ctx context.Context, p domain.FlashSaleProjection) error {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO flash_sale_projection (product_id, variant_id, name, discount_percent, start_time, end_time, is_active, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
@@ -42,7 +42,7 @@ func (r *FlashSaleProjectionRepository) Count(ctx context.Context) (int, error) 
 	return count, err
 }
 
-func (r *FlashSaleProjectionRepository) ListActive(ctx context.Context) ([]kafka.FlashSaleProjection, error) {
+func (r *FlashSaleProjectionRepository) ListActive(ctx context.Context) ([]domain.FlashSaleProjection, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT product_id, variant_id, name, discount_percent, start_time, end_time, is_active
 		FROM flash_sale_projection
@@ -53,9 +53,9 @@ func (r *FlashSaleProjectionRepository) ListActive(ctx context.Context) ([]kafka
 	}
 	defer rows.Close()
 
-	var items []kafka.FlashSaleProjection
+	var items []domain.FlashSaleProjection
 	for rows.Next() {
-		var p kafka.FlashSaleProjection
+		var p domain.FlashSaleProjection
 		if err := rows.Scan(&p.ProductID, &p.VariantID, &p.Name, &p.DiscountPercent, &p.StartTime, &p.EndTime, &p.IsActive); err != nil {
 			return nil, err
 		}
