@@ -68,7 +68,7 @@ func (h *categoryHandler) list(c *gin.Context, activeOnly bool) {
 		params.IsActive = &active
 		params.ActiveProductsOnly = true
 	}
-	params.PageOffset *= params.PageSize
+	params.PageOffset = (params.Page - 1) * params.PageSize
 
 	categories, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
