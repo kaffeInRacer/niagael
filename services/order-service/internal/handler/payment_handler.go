@@ -48,7 +48,7 @@ func (h *paymentHandler) Create(c *gin.Context) {
 	order, err := h.orderUseCase.ReadById(c.Request.Context(), orderId)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to read order by id")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 	if order == nil {
@@ -75,7 +75,7 @@ func (h *paymentHandler) Create(c *gin.Context) {
 	redirectUrl, err := h.usecase.Create(c.Request.Context(), args)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to create payment")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -102,7 +102,7 @@ func (h *paymentHandler) Callback(c *gin.Context) {
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to process payment callback")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
