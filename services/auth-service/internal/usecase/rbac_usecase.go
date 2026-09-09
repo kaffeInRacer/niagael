@@ -8,9 +8,8 @@ import (
 
 	"kaffein/auth-service/internal/domain"
 	"kaffein/auth-service/internal/repository"
+	"kaffein/auth-service/utils/constants"
 )
-
-var ErrInvalidPolicy = errors.New("invalid service, role, resource, or action combination")
 
 var allowedPolicies = map[string]map[string]map[string]bool{
 	"auth": {
@@ -50,7 +49,7 @@ func (u *rbacUseCase) GetAllPolicies(ctx context.Context) ([]repository.Policy, 
 func (u *rbacUseCase) AddPolicy(ctx context.Context, service, role, resource, action string) error {
 	service, role, resource, action = normalizePolicy(service, role, resource, action)
 	if !validPolicy(service, role, resource, action) {
-		return ErrInvalidPolicy
+		return errors.New(constants.ErrInvalidPolicy)
 	}
 	return u.repo.AddPolicy(ctx, service, role, resource, action)
 }
@@ -58,7 +57,7 @@ func (u *rbacUseCase) AddPolicy(ctx context.Context, service, role, resource, ac
 func (u *rbacUseCase) DeletePolicy(ctx context.Context, service, role, resource, action string) error {
 	service, role, resource, action = normalizePolicy(service, role, resource, action)
 	if !validPolicy(service, role, resource, action) {
-		return ErrInvalidPolicy
+		return errors.New(constants.ErrInvalidPolicy)
 	}
 	return u.repo.DeletePolicy(ctx, service, role, resource, action)
 }
@@ -66,7 +65,7 @@ func (u *rbacUseCase) DeletePolicy(ctx context.Context, service, role, resource,
 func (u *rbacUseCase) DeleteAllPoliciesForRole(ctx context.Context, service, role string) error {
 	service, role, _, _ = normalizePolicy(service, role, "", "")
 	if _, ok := allowedPolicies[service]; !ok || !domain.ValidRole(role) {
-		return ErrInvalidPolicy
+		return errors.New(constants.ErrInvalidPolicy)
 	}
 	return u.repo.DeleteAllPoliciesForRole(ctx, service, role)
 }
