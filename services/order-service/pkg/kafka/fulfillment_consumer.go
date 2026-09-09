@@ -27,7 +27,7 @@ func (c *FulfillmentConsumer) Handle(ctx context.Context, data []byte) error {
 
 	switch event.Type {
 	case "payment.settled":
-		items := ToStockItems(event.Items)
+		items := ConvertToStockItems(event.Items)
 		resp, err := c.productClient.ConfirmStock(ctx, event.OrderID, items)
 		if err != nil {
 			return err
@@ -40,7 +40,7 @@ func (c *FulfillmentConsumer) Handle(ctx context.Context, data []byte) error {
 		return nil
 
 	case "order.cancelled", "order.expired", "order.refunded":
-		items := ToStockItems(event.Items)
+		items := ConvertToStockItems(event.Items)
 		if _, err := c.productClient.ReleaseStock(ctx, event.OrderID, items); err != nil {
 			return err
 		}
@@ -53,7 +53,7 @@ func (c *FulfillmentConsumer) Handle(ctx context.Context, data []byte) error {
 	return nil
 }
 
-func ToStockItems(eventItems []OrderEventItem) []*productpb.StockItem {
+func ConvertToStockItems(eventItems []OrderEventItem) []*productpb.StockItem {
 	items := make([]*productpb.StockItem, 0, len(eventItems))
 	for _, item := range eventItems {
 		var variantID string
