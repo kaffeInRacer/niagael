@@ -162,14 +162,14 @@ func (uc *flashSaleUseCase) ReadByVariantIds(ctx context.Context, items []dto.Va
 
 func (uc *flashSaleUseCase) DecrementStock(ctx context.Context, id string, quantity int) error {
 	if quantity <= 0 {
-		return errors.New("quantity must be greater than zero")
+		return errors.New(constants.ErrFlashSaleQuantityInvalid)
 	}
 	return uc.repo.DecrementStock(ctx, id, quantity)
 }
 
 func (uc *flashSaleUseCase) IncrementUsage(ctx context.Context, flashSaleId string, userId string, quantity int) error {
 	if quantity <= 0 {
-		return errors.New("quantity must be greater than zero")
+		return errors.New(constants.ErrFlashSaleQuantityInvalid)
 	}
 	return uc.usageRepo.IncrementUsage(ctx, flashSaleId, userId, quantity)
 }
