@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"kaffein/order-service/internal/auth"
 	"kaffein/order-service/internal/domain"
@@ -99,6 +100,10 @@ func (h *paymentHandler) Callback(c *gin.Context) {
 		}
 		if errors.Is(err, domain.ErrInvalidPaymentAmount) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			h.logger.Warn().Err(err).Str("order_id", args.OrderId).Msg("payment callback interrupted; midtrans will retry")
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to process payment callback")
