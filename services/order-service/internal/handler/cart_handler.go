@@ -142,6 +142,6 @@ func (h *cartHandler) respondError(c *gin.Context, err error, logMessage string)
 		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 	default:
 		h.logger.Error().Err(err).Msg(logMessage)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 	}
 }
