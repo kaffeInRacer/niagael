@@ -25,8 +25,11 @@ func (app *application) startOrderExpiryJob(ctx context.Context) {
 }
 
 func (app *application) cancelExpiredOrders(ctx context.Context) {
+	_, _ = app.pgx.Exec(ctx, `DELETE FROM order_request_keys WHERE created_at < NOW() - INTERVAL '24 hours'`)
+
 	store := postgresql.NewStore(app.pgx)
 	outboxRepo := repository.NewOutboxRepository(app.pgx, store)
+
 	orderRepo := repository.NewOrderRepository(store)
 	orderItemRepo := repository.NewOrderItemRepository(store)
 
