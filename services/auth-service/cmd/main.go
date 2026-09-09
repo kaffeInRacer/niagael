@@ -5,26 +5,30 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/rs/zerolog/log"
 	"kaffein/auth-service/config"
 	"kaffein/auth-service/pkg/logger"
-		"kaffein/auth-service/pkg/postgresql"
+	"kaffein/auth-service/pkg/postgresql"
 	redisclient "kaffein/auth-service/pkg/redis"
+
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
 	cfg, err := config.Load("config.yaml")
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
+
 	l := logger.New(cfg.Logger)
 	db, err := postgresql.NewPool(ctx, cfg.Postgres)
 	if err != nil {
 		l.Fatal().Err(err).Msg("failed to connect postgres")
 	}
 	defer db.Close()
+
 	rdb, err := redisclient.New(cfg.Redis)
 	if err != nil {
 		l.Fatal().Err(err).Msg("failed to connect redis")
@@ -37,6 +41,7 @@ func main() {
 		pgx:    db,
 		redis:  rdb,
 	}
+
 	if err := app.ServeHTTP(ctx); err != nil {
 		l.Fatal().Err(err).Msg("HTTP server failed")
 	}

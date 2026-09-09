@@ -20,9 +20,11 @@ func Publish(brokers []string, topic, key string, payload any) {
 		RequiredAcks: kafka.RequireAll,
 	}
 	defer w.Close()
+
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return
 	}
+
 	_ = w.WriteMessages(context.Background(), kafka.Message{Key: []byte(key), Value: data})
 }
