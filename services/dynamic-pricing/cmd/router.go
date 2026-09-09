@@ -35,7 +35,7 @@ func (app *application) routes(ctx context.Context) *gin.Engine {
 
 	flashSaleRepo := repository.NewFlashSaleRepository(store)
 	flashSaleUsageRepo := repository.NewFlashSaleUsageRepository(store)
-	flashSaleUseCase := usecase.NewFlashSaleUseCase(flashSaleRepo, flashSaleUsageRepo)
+	flashSaleUseCase := usecase.NewFlashSaleUseCase(flashSaleRepo, flashSaleUsageRepo, app.config.Kafka.Brokers)
 	handler.NewFlashSaleHandler(flashSaleUseCase, app.logger, r, app.auth)
 
 	promoRepo := repository.NewPromoRepository(store)
