@@ -14,8 +14,8 @@ import (
 	"kaffein/product-service/config"
 	"kaffein/product-service/internal/repository"
 	grpcclient "kaffein/product-service/pkg/grpc/client"
-	kafkaevent "kaffein/product-service/pkg/kafka/event"
 	"kaffein/product-service/pkg/kafka"
+	kafkaevent "kaffein/product-service/pkg/kafka/event"
 
 	"github.com/rs/zerolog/log"
 )

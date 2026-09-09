@@ -6,7 +6,7 @@ import (
 	"kaffein/dynamic-pricing-service/pkg/logger"
 	"kaffein/dynamic-pricing-service/pkg/postgresql"
 	"kaffein/dynamic-pricing-service/pkg/redis"
-		"os/signal"
+	"os/signal"
 	"sync"
 	"syscall"
 	"time"

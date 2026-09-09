@@ -139,7 +139,7 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]domain.
 			return nil, 0, err
 		}
 		users = append(users, user)
-}
+	}
 
 	return users, count, rows.Err()
 }

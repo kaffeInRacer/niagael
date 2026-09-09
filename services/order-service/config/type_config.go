@@ -16,11 +16,11 @@ type Config struct {
 }
 
 type KafkaConfig struct {
-	Brokers        []string `yaml:"brokers"`
-	GroupID        string   `yaml:"group_id"`
-	CasbinTopic    string   `yaml:"casbin_topic"`
-	OrderTopic     string   `yaml:"order_topic"`
-	UserTopic      string   `yaml:"user_topic"`
+	Brokers     []string `yaml:"brokers"`
+	GroupID     string   `yaml:"group_id"`
+	CasbinTopic string   `yaml:"casbin_topic"`
+	OrderTopic  string   `yaml:"order_topic"`
+	UserTopic   string   `yaml:"user_topic"`
 }
 
 type JWTConfig struct {

@@ -9,8 +9,8 @@ import (
 )
 
 type (
-	Writer = kafka.Writer
-	Reader = kafka.Reader
+	Writer  = kafka.Writer
+	Reader  = kafka.Reader
 	Message = kafka.Message
 )
 

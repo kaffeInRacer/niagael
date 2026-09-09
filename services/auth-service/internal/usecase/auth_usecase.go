@@ -12,8 +12,8 @@ import (
 	"kaffein/auth-service/internal/interfaces/IRepository"
 	"kaffein/auth-service/internal/interfaces/IUseCase"
 	"kaffein/auth-service/internal/token"
-	"kaffein/auth-service/utils/constants"
 	"kaffein/auth-service/pkg/kafka/event"
+	"kaffein/auth-service/utils/constants"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"

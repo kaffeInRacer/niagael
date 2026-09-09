@@ -12,9 +12,7 @@ import (
 	"kaffein/auth-service/pkg/kafka/event"
 )
 
-var (
-	
-)
+var ()
 
 type Policy struct {
 	ID       int64  `json:"id"`

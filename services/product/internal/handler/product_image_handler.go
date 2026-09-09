@@ -2,10 +2,10 @@ package handler
 
 import (
 	"fmt"
+	"kaffein/product-service/internal/dto"
 	"kaffein/product-service/internal/interfaces/IUseCase"
 	"kaffein/product-service/pkg/minio/storage"
 	"kaffein/product-service/utils/constants"
-	"kaffein/product-service/internal/dto"
 	"kaffein/product-service/utils/validator"
 	"net/http"
 

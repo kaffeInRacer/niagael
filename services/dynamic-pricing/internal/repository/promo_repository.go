@@ -82,7 +82,7 @@ func (r *promoRepository) List(ctx context.Context, params dto.ListPromoParams) 
 			return nil, err
 		}
 		promos = append(promos, p)
-}
+	}
 
 	return promos, rows.Err()
 }

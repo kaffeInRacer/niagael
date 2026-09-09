@@ -6,8 +6,8 @@ import (
 	"kaffein/dynamic-pricing-service/internal/domain"
 	"kaffein/dynamic-pricing-service/internal/dto"
 	"kaffein/dynamic-pricing-service/internal/interfaces/IRepository"
-	"kaffein/dynamic-pricing-service/utils/constants"
 	"kaffein/dynamic-pricing-service/pkg/kafka/event"
+	"kaffein/dynamic-pricing-service/utils/constants"
 
 	"github.com/google/uuid"
 )

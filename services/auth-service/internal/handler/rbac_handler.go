@@ -62,7 +62,7 @@ func (h *rbacHandler) getResources(c *gin.Context) {
 
 func (h *rbacHandler) addPolicy(c *gin.Context) {
 	var req AddPolicyRequest
-	if !bind(c, &req) {
+	if !bindJSON(c, &req) {
 		return
 	}
 
@@ -82,7 +82,7 @@ func (h *rbacHandler) addPolicy(c *gin.Context) {
 
 func (h *rbacHandler) deletePolicy(c *gin.Context) {
 	var req DeletePolicyRequest
-	if !bind(c, &req) {
+	if !bindJSON(c, &req) {
 		return
 	}
 
