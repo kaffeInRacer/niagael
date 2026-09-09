@@ -32,11 +32,7 @@
       </AdminDataTable>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="promo-modal-title">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 my-8">
-        <div class="px-6 py-4 border-b">
-          <h3 id="promo-modal-title" class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit Promo' : 'Add Promo' }}</h3>
-        </div>
+    <ModalDialog :show="showModal" :title="editingId ? 'Edit Promo' : 'Add Promo'" aria-id="promo-modal-title" size="lg" scroll-body @close="showModal = false">
         <form @submit.prevent="savePromo" class="px-6 py-4 space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -113,8 +109,7 @@
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalDialog>
   </div>
 </template>
 
@@ -122,6 +117,7 @@
 import { ref } from 'vue'
 import api from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
+import ModalDialog from '../../components/ModalDialog.vue'
 import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
 import { formatDate, formatPrice, isPromoActive, localDateTimeToIso, toLocalDateTimeInput } from '../../utils/format'
 
