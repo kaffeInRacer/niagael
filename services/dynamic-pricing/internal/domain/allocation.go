@@ -89,7 +89,3 @@ func AllocationFingerprint(userID, promoCode string, subtotal int64, items []All
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
-
-func FlashSaleDiscountedUnitPrice(unitPrice int64, discountPercent int) int64 {
-	return unitPrice * int64(100-discountPercent) / 100
-}
