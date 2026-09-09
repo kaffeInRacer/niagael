@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -35,14 +36,33 @@ func (r *BuyersRepository) Snapshot(ctx context.Context, authPool *pgxpool.Pool)
 	}
 	defer rows.Close()
 
+	batch := &pgx.Batch{}
 	for rows.Next() {
 		var id, email string
 		if err := rows.Scan(&id, &email); err != nil {
 			return err
 		}
-		if err := r.Upsert(ctx, id, email); err != nil {
+		batch.Queue(`INSERT INTO buyers (id, email, updated_at)
+			VALUES ($1::uuid, $2, NOW())
+			ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, updated_at = NOW()`, id, email)
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	conn, err := r.db.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+
+	br := conn.SendBatch(ctx, batch)
+	defer br.Close()
+
+	for range batch.Len() {
+		if _, err := br.Exec(); err != nil {
 			return err
 		}
 	}
-	return rows.Err()
+	return nil
 }
