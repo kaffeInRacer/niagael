@@ -3,9 +3,6 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"log"
-
-	"github.com/segmentio/kafka-go"
 )
 
 type UserEvent struct {
@@ -21,56 +18,25 @@ type BuyersRepo interface {
 	Delete(ctx context.Context, id string) error
 }
 
-type CasbinPolicyConsumer struct {
-	reader *kafka.Reader
+type BuyersConsumer struct {
 	buyers BuyersRepo
 }
 
-func NewCasbinPolicyConsumer(brokers []string, topic, groupID string, buyers BuyersRepo) *CasbinPolicyConsumer {
-	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:               brokers,
-		Topic:                 topic,
-		GroupID:               groupID,
-		MinBytes:              1,
-		MaxBytes:              10e6,
-		WatchPartitionChanges: true,
-	})
-	return &CasbinPolicyConsumer{reader: reader, buyers: buyers}
+func NewBuyersConsumer(buyers BuyersRepo) *BuyersConsumer {
+	return &BuyersConsumer{buyers: buyers}
 }
 
-func (c *CasbinPolicyConsumer) Run(ctx context.Context) {
-	go func() {
-		for {
-			msg, err := c.reader.ReadMessage(ctx)
-			if err != nil {
-				if ctx.Err() != nil {
-					return
-				}
-				log.Printf("kafka user-events read error: %v", err)
-				continue
-			}
-			if err := c.handle(ctx, msg.Value); err != nil {
-				log.Printf("kafka user-events handle error: %v", err)
-			}
-		}
-	}()
-}
-
-func (c *CasbinPolicyConsumer) handle(ctx context.Context, data []byte) error {
-	var event UserEvent
-	if err := json.Unmarshal(data, &event); err != nil {
+// Handle processes one user-events message. It is wired to event.Consume.
+func (c *BuyersConsumer) Handle(ctx context.Context, data []byte) error {
+	var e UserEvent
+	if err := json.Unmarshal(data, &e); err != nil {
 		return nil
 	}
-
-	if event.Type == "deleted" {
-		return c.buyers.Delete(ctx, event.ID)
+	if e.Type == "deleted" {
+		return c.buyers.Delete(ctx, e.ID)
 	}
-	if event.Email == "" {
+	if e.Email == "" {
 		return nil
 	}
-	return c.buyers.Upsert(ctx, event.ID, event.Email)
-}
-
-func (c *CasbinPolicyConsumer) Close() error {
-	return c.reader.Close()
+	return c.buyers.Upsert(ctx, e.ID, e.Email)
 }
