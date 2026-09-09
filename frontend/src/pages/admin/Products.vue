@@ -55,11 +55,7 @@
 
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 my-8">
-        <div class="px-6 py-4 border-b">
-          <h3 id="product-modal-title" class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit Product' : 'Add Product' }}</h3>
-        </div>
+    <ModalDialog :show="showModal" :title="editingId ? 'Edit Product' : 'Add Product'" aria-id="product-modal-title" size="lg" scroll-body @close="showModal = false">
         <form @submit.prevent="saveProduct" class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
@@ -105,22 +101,9 @@
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalDialog>
 
-    <div v-if="showVariantModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="variant-modal-title">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 my-8">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
-          <div>
-            <h3 id="variant-modal-title" class="text-lg font-semibold text-gray-800">Variants</h3>
-            <p class="text-sm text-gray-500">{{ selectedProduct?.name }}</p>
-          </div>
-          <button type="button" @click="showVariantModal = false" class="text-gray-400 hover:text-gray-600" aria-label="Close variants">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <ModalDialog :show="showVariantModal" title="Variants" aria-id="variant-modal-title" size="xl" scroll-body @close="showVariantModal = false">
 
         <div class="px-6 py-4">
           <div v-if="!showVariantForm" class="space-y-4">
@@ -299,8 +282,7 @@
             </form>
           </div>
         </div>
-      </div>
-    </div>
+    </ModalDialog>
   </div>
 </template>
 
@@ -308,6 +290,7 @@
 import { ref, onMounted } from 'vue'
 import api from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
+import ModalDialog from '../../components/ModalDialog.vue'
 import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
 import { formatPrice } from '../../utils/format'
 
