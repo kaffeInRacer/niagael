@@ -32,6 +32,7 @@ func (r *flashSaleRepository) List(ctx context.Context, params dto.ListFlashSale
 		AND (NULLIF($3::text, '') IS NULL OR product_id = NULLIF($3::text, '')::uuid)
 		AND (NULLIF($4::text, '') IS NULL OR discount_percent >= NULLIF($4::text, '')::numeric)
 		AND (NULLIF($5::text, '') IS NULL OR discount_percent <= NULLIF($5::text, '')::numeric)
+		AND (NULLIF($11::text, '') IS NULL OR name = $11::text)
 		AND (NOT $6::boolean OR (stock > 0 AND NOW() BETWEEN start_time AND end_time))
 		AND deleted_at IS NULL
 		ORDER BY
@@ -58,6 +59,7 @@ func (r *flashSaleRepository) List(ctx context.Context, params dto.ListFlashSale
 		params.OrderDir,
 		params.PageSize,
 		params.PageOffset,
+		params.Name,
 	)
 	if err != nil {
 		return nil, err
@@ -99,6 +101,7 @@ func (r *flashSaleRepository) ListCount(ctx context.Context, params dto.ListFlas
 		AND (NULLIF($4::text, '') IS NULL OR discount_percent >= NULLIF($4::text, '')::numeric)
 		AND (NULLIF($5::text, '') IS NULL OR discount_percent <= NULLIF($5::text, '')::numeric)
 		AND (NOT $6::boolean OR (stock > 0 AND NOW() BETWEEN start_time AND end_time))
+		AND (NULLIF($7::text, '') IS NULL OR name = $7::text)
 		AND deleted_at IS NULL
 	`
 
@@ -110,6 +113,7 @@ func (r *flashSaleRepository) ListCount(ctx context.Context, params dto.ListFlas
 		params.MinDiscountPercent,
 		params.MaxDiscountPercent,
 		params.CurrentOnly,
+		params.Name,
 	).Scan(&count)
 	if err != nil {
 		return 0, err
