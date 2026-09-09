@@ -35,7 +35,7 @@ func (h *productImageHandler) Create(c *gin.Context) {
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": constants.ErrFileRequired})
 		return
 	}
 
@@ -43,7 +43,7 @@ func (h *productImageHandler) Create(c *gin.Context) {
 
 	src, err := file.Open()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrFailedOpenFile})
 		return
 	}
 	defer src.Close()
@@ -52,13 +52,13 @@ func (h *productImageHandler) Create(c *gin.Context) {
 	_, err = h.storage.Upload(c.Request.Context(), fileName, src, file.Size, file.Header.Get("Content-Type"))
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to upload file to minio")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrFailedUploadFile})
 		return
 	}
 
 	if err := h.usecase.Create(c.Request.Context(), productId, fileName, sortOrder); err != nil {
 		h.logger.Error().Err(err).Msg("failed to create product image")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -76,7 +76,7 @@ func (h *productImageHandler) Delete(c *gin.Context) {
 		}
 
 		h.logger.Error().Err(err).Msg("failed to delete product image")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
@@ -89,7 +89,7 @@ func (h *productImageHandler) ListByProductId(c *gin.Context) {
 	images, err := h.usecase.ListByProductId(c.Request.Context(), productId)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("failed to list product images")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
 
