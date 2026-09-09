@@ -44,6 +44,10 @@ func (h *addressHandler) List(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if errors := h.v.ValidateStruct(&params); errors != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
+		return
+	}
 	if !auth.RequireOwner(c, params.UserId) {
 		return
 	}
