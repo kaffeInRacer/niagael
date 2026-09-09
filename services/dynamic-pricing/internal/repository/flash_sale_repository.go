@@ -93,10 +93,12 @@ func (r *flashSaleRepository) List(ctx context.Context, params dto.ListFlashSale
 
 func (r *flashSaleRepository) ListSessions(ctx context.Context, params dto.ListFlashSaleParams) ([]dto.FlashSaleSession, int64, error) {
 	const countQuery = `
-		SELECT COUNT(DISTINCT name) FROM flash_sale WHERE deleted_at IS NULL
+		SELECT COUNT(DISTINCT name) FROM flash_sale
+		WHERE deleted_at IS NULL
+		AND (NULLIF($1::text, '') IS NULL OR name ILIKE '%' || $1::text || '%')
 	`
 	var count int64
-	if err := r.db.QueryRow(ctx, countQuery).Scan(&count); err != nil {
+	if err := r.db.QueryRow(ctx, countQuery, params.Search).Scan(&count); err != nil {
 		return nil, 0, err
 	}
 
