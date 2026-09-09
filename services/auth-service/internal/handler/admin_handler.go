@@ -53,7 +53,7 @@ func positiveInt(raw string, fallback int) int {
 func parseID(c *gin.Context) (uuid.UUID, bool) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": constants.ErrInvalidUserID})
 		return uuid.Nil, false
 	}
 	return id, true
@@ -148,5 +148,5 @@ func (h *adminHandler) fail(c *gin.Context, err error) {
 		return
 	}
 	h.logger.Error().Err(err).Msg("admin request failed")
-	c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+	c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 }
