@@ -32,11 +32,7 @@
       </AdminDataTable>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div class="px-6 py-4 border-b">
-          <h3 id="user-modal-title" class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit User' : 'Add User' }}</h3>
-        </div>
+    <ModalDialog :show="showModal" :title="editingId ? 'Edit User' : 'Add User'" aria-id="user-modal-title" @close="showModal = false">
         <form @submit.prevent="saveUser" class="px-6 py-4 space-y-4">
           <div>
             <label for="user-email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
@@ -96,14 +92,14 @@
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalDialog>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import AdminDataTable from '../../components/AdminDataTable.vue'
+import ModalDialog from '../../components/ModalDialog.vue'
 import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
 import { formatDate } from '../../utils/format'
 import { userAdminApi } from '../../api'
