@@ -164,7 +164,7 @@ func (h *productHandler) List(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
 		return
 	}
-	params.PageOffset *= params.PageSize
+	params.PageOffset = (params.Page - 1) * params.PageSize
 
 	products, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
@@ -220,7 +220,7 @@ func (h *productHandler) ListBuyer(c *gin.Context) {
 	active := true
 	params.IsActive = &active
 	params.PublicOnly = true
-	params.PageOffset *= params.PageSize
+	params.PageOffset = (params.Page - 1) * params.PageSize
 
 	products, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
