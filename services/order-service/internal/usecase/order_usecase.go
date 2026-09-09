@@ -395,7 +395,7 @@ func (uc *orderUseCase) UpdateStatus(ctx context.Context, id string, status stri
 		if status == "refunded" {
 			eventType = "order.refunded"
 		}
-		event := kafka.OrderEvent{Type: eventType, OrderID: id, UserID: userID}
+		event := kafka.OutboxEvent{Type: eventType, OrderID: id, UserID: userID}
 		for _, item := range items {
 			event.Items = append(event.Items, kafka.OrderEventItem{
 				ProductID: item.ProductId,
