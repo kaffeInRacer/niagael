@@ -4,8 +4,8 @@ import (
 	"context"
 	"kaffein/order-service/internal/domain"
 	"kaffein/order-service/internal/repository"
+	"kaffein/order-service/pkg/kafka"
 	"kaffein/order-service/pkg/postgresql"
-	"kaffein/order-service/proto/product"
 	"time"
 )
 
@@ -26,10 +26,10 @@ func (app *application) startOrderExpiryJob(ctx context.Context) {
 
 func (app *application) cancelExpiredOrders(ctx context.Context) {
 	store := postgresql.NewStore(app.pgx)
+	outboxRepo := repository.NewOutboxRepository(app.pgx, store)
 	orderRepo := repository.NewOrderRepository(store)
 	orderItemRepo := repository.NewOrderItemRepository(store)
 
-	// Find orders that are pending and past their expire_time
 	query := `
 		SELECT id, user_id, address_id, total_amount, status, expire_time, created_at 
 		FROM "orders" 
@@ -88,7 +88,12 @@ func (app *application) cancelExpiredOrders(ctx context.Context) {
 	app.logger.Info().Int("count", len(expiredOrders)).Msg("cancelling expired orders")
 
 	for _, order := range expiredOrders {
-		// Update order status to cancelled
+		orderItems, err := orderItemRepo.ReadByOrderId(ctx, order.Id)
+		if err != nil {
+			app.logger.Error().Err(err).Str("order_id", order.Id).Msg("failed to get order items")
+			continue
+		}
+
 		orderDomain := domain.Order{
 			Id:          order.Id,
 			UserId:      order.UserId,
@@ -103,34 +108,23 @@ func (app *application) cancelExpiredOrders(ctx context.Context) {
 			continue
 		}
 
-		// Get order items for stock release
-		orderItems, err := orderItemRepo.ReadByOrderId(ctx, order.Id)
-		if err != nil {
-			app.logger.Error().Err(err).Str("order_id", order.Id).Msg("failed to get order items")
-			continue
+		event := kafka.OrderEvent{
+			Type:    "order.expired",
+			OrderID: order.Id,
+			UserID:  order.UserId,
 		}
-
-		// Prepare stock items for release
-		var stockItems []*productpb.StockItem
 		for _, item := range orderItems {
-			var variantId string
-			if item.VariantId != nil {
-				variantId = *item.VariantId
-			}
-			stockItem := &productpb.StockItem{
-				ProductId: item.ProductId,
-				VariantId: variantId,
-				Quantity:  int32(item.Quantity),
-			}
-			stockItems = append(stockItems, stockItem)
+			event.Items = append(event.Items, kafka.OrderEventItem{
+				ProductID: item.ProductId,
+				VariantID: item.VariantId,
+				Quantity:  item.Quantity,
+			})
 		}
-
-		// Release stock
-		if _, err := app.productClient.ReleaseStock(ctx, order.Id, stockItems); err != nil {
-			app.logger.Error().Err(err).Str("order_id", order.Id).Msg("failed to release stock")
+		if err := outboxRepo.Insert(ctx, "order-events", order.Id, event); err != nil {
+			app.logger.Error().Err(err).Str("order_id", order.Id).Msg("failed to insert outbox event")
 			continue
 		}
 
-		app.logger.Info().Str("order_id", order.Id).Msg("cancelled expired order and released stock")
+		app.logger.Info().Str("order_id", order.Id).Msg("cancelled expired order")
 	}
 }

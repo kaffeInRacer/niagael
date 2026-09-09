@@ -8,7 +8,6 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// Mapping ekstensi (dari tag) ke MIME type
 var extToMime = map[string]string{
 	"jpg":  "image/jpeg",
 	"jpeg": "image/jpeg",

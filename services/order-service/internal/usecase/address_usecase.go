@@ -48,7 +48,7 @@ func (uc *addressUseCase) Create(ctx context.Context, args dto.CreateAddressDto)
 		PostalCode: arg.PostalCode,
 		Country:    arg.Country,
 		IsDefault:  arg.IsDefault,
-		CreatedAt:  time.Now().Format(time.RFC3339),
+		CreatedAt:  time.Now(),
 	}, nil
 }
 

@@ -8,6 +8,7 @@ import (
 
 type VariantRepository interface {
 	ListByProductId(ctx context.Context, productId string) ([]domain.ProductVariant, error)
+	ListActiveByProductId(ctx context.Context, productId string) ([]domain.ProductVariant, error)
 	ListByProductIds(ctx context.Context, productIds []string) ([]domain.ProductVariant, error)
 	Create(ctx context.Context, args dto.CreateVariantDto) error
 	Update(ctx context.Context, args dto.UpdateVariantDto) error

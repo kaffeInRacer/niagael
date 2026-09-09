@@ -6,8 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// DiscountedPrice returns price after applying a percentage discount.
-// discountPercent is clamped between 0 and 100.
 func DiscountedPrice(price int64, discountPercent int32) int64 {
 	if discountPercent <= 0 {
 		return price
@@ -18,8 +16,6 @@ func DiscountedPrice(price int64, discountPercent int32) int64 {
 	return price - (price * int64(discountPercent) / 100)
 }
 
-// GenerateOrderRef returns a human friendly order reference in the
-// form ORD-ABCDE-12345. Letters exclude ambiguous characters (I, O, Q).
 func GenerateOrderRef() string {
 	const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ"
 	const nums = "0123456789"

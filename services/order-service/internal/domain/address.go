@@ -11,7 +11,7 @@ type Address struct {
 	PostalCode string     `json:"postal_code"`
 	Country    string     `json:"country"`
 	IsDefault  bool       `json:"is_default"`
-	CreatedAt  string     `json:"created_at"`
+	CreatedAt  time.Time  `json:"created_at"`
 	UpdatedAt  *time.Time `json:"updated_at"`
 	DeletedAt  *time.Time `json:"deleted_at"`
 }

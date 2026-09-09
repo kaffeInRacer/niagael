@@ -11,6 +11,12 @@ type Config struct {
 	Kafka    KafkaConfig    `yaml:"kafka"`
 }
 
+type KafkaConfig struct {
+	Brokers     []string `yaml:"brokers"`
+	CasbinTopic string   `yaml:"casbin_topic"`
+	UserTopic   string   `yaml:"user_topic"`
+}
+
 type HTTPConfig struct {
 	ServiceName     string        `yaml:"service_name"`
 	Mode            string        `yaml:"mode"`
@@ -50,9 +56,4 @@ type JWTConfig struct {
 	AccessTTL    time.Duration `yaml:"access_ttl"`
 	RefreshTTL   time.Duration `yaml:"refresh_ttl"`
 	CookieSecure bool          `yaml:"cookie_secure"`
-}
-
-type KafkaConfig struct {
-	Brokers []string `yaml:"brokers"`
-	Topic   string   `yaml:"topic"`
 }

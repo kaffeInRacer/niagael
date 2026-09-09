@@ -2,11 +2,13 @@ package handler
 
 import (
 	"kaffein/dynamic-pricing-service/internal/auth"
+	"kaffein/dynamic-pricing-service/internal/domain"
 	"kaffein/dynamic-pricing-service/internal/dto"
 	"kaffein/dynamic-pricing-service/internal/interfaces/IUseCase"
 	"kaffein/dynamic-pricing-service/utils/constants"
 	"kaffein/dynamic-pricing-service/utils/validator"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
@@ -25,14 +27,12 @@ func NewFlashSaleHandler(usecase IUseCase.FlashSaleUseCase, logger zerolog.Logge
 		v:       validator.Get(),
 	}
 
-	// Buyer: read-only flash sales
 	flashSales := engine.Group("/flash-sales")
 	{
-		flashSales.GET("", h.List)
-		flashSales.GET("/:id", h.ReadById)
+		flashSales.GET("", h.ListCurrent)
+		flashSales.GET("/:id", h.ReadCurrentById)
 	}
 
-	// Admin: full CRUD flash sales
 	adminFlashSales := engine.Group("/admin/flash-sales")
 	{
 		adminFlashSales.Use(authorization.Authenticate())
@@ -48,6 +48,14 @@ func NewFlashSaleHandler(usecase IUseCase.FlashSaleUseCase, logger zerolog.Logge
 }
 
 func (h *flashSaleHandler) List(c *gin.Context) {
+	h.list(c, false)
+}
+
+func (h *flashSaleHandler) ListCurrent(c *gin.Context) {
+	h.list(c, true)
+}
+
+func (h *flashSaleHandler) list(c *gin.Context, currentOnly bool) {
 	var params dto.ListFlashSaleParams
 	if err := c.ShouldBindQuery(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -58,6 +66,11 @@ func (h *flashSaleHandler) List(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
 		return
 	}
+	if currentOnly {
+		active := true
+		params.IsActive = &active
+		params.CurrentOnly = true
+	}
 	params.PageOffset *= params.PageSize
 
 	flashSales, count, err := h.usecase.List(c.Request.Context(), params)
@@ -67,8 +80,16 @@ func (h *flashSaleHandler) List(c *gin.Context) {
 		return
 	}
 
+	data := any(flashSales)
+	if currentOnly {
+		publicFlashSales := make([]dto.PublicFlashSaleResponse, 0, len(flashSales))
+		for _, flashSale := range flashSales {
+			publicFlashSales = append(publicFlashSales, dto.ToPublicFlashSaleResponse(flashSale))
+		}
+		data = publicFlashSales
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"data":  flashSales,
+		"data":  data,
 		"count": count,
 	})
 }
@@ -174,4 +195,24 @@ func (h *flashSaleHandler) ReadById(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": flashSale})
+}
+
+func (h *flashSaleHandler) ReadCurrentById(c *gin.Context) {
+	id := c.Param("id")
+	flashSale, err := h.usecase.ReadById(c.Request.Context(), id)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("failed to read flash sale by id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+	if !currentFlashSale(flashSale, time.Now()) {
+		c.JSON(http.StatusNotFound, gin.H{"error": constants.ErrFlashSaleNotFound})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": dto.ToPublicFlashSaleResponse(*flashSale)})
+}
+
+func currentFlashSale(flashSale *domain.FlashSale, now time.Time) bool {
+	return flashSale != nil && flashSale.IsActive && flashSale.Stock > 0 &&
+		!now.Before(flashSale.StartTime) && !now.After(flashSale.EndTime)
 }

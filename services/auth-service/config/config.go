@@ -26,7 +26,13 @@ func Load(path string) (*Config, error) {
 	cfg.Redis.Addr = env.GetString("REDIS_ADDR", cfg.Redis.Addr)
 	cfg.Redis.Password = env.GetString("REDIS_PASSWORD", cfg.Redis.Password)
 	cfg.JWT.Issuer = env.GetString("JWT_ISSUER", cfg.JWT.Issuer)
+	cfg.Kafka.Brokers = env.GetStringSlice("KAFKA_BROKERS", cfg.Kafka.Brokers)
+	cfg.Kafka.CasbinTopic = env.GetString("KAFKA_CASBIN_TOPIC", cfg.Kafka.CasbinTopic)
+	cfg.Kafka.UserTopic = env.GetString("KAFKA_USER_TOPIC", cfg.Kafka.UserTopic)
 	cfg.JWT.Secret = env.GetString("JWT_SECRET", cfg.JWT.Secret)
+	if strings.TrimSpace(cfg.JWT.Secret) == "" || strings.TrimSpace(cfg.JWT.Issuer) == "" {
+		return nil, fmt.Errorf("JWT secret and issuer are required")
+	}
 	if value, ok := os.LookupEnv("JWT_COOKIE_SECURE"); ok && value != "" {
 		cookieSecure, err := strconv.ParseBool(value)
 		if err != nil {
@@ -34,9 +40,5 @@ func Load(path string) (*Config, error) {
 		}
 		cfg.JWT.CookieSecure = cookieSecure
 	}
-	if value := os.Getenv("KAFKA_BROKERS"); value != "" {
-		cfg.Kafka.Brokers = strings.Split(value, ",")
-	}
-	cfg.Kafka.Topic = env.GetString("KAFKA_CASBIN_TOPIC", cfg.Kafka.Topic)
 	return cfg, nil
 }

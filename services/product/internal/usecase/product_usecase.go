@@ -14,10 +14,11 @@ type productUseCase struct {
 	repo        IRepository.ProductRepository
 	imageRepo   IRepository.ProductImageRepository
 	variantRepo IRepository.VariantRepository
+	stockRepo   IRepository.StockRepository
 }
 
-func NewProductUseCase(repo IRepository.ProductRepository, imageRepo IRepository.ProductImageRepository, variantRepo IRepository.VariantRepository) *productUseCase {
-	return &productUseCase{repo: repo, imageRepo: imageRepo, variantRepo: variantRepo}
+func NewProductUseCase(repo IRepository.ProductRepository, imageRepo IRepository.ProductImageRepository, variantRepo IRepository.VariantRepository, stockRepo IRepository.StockRepository) *productUseCase {
+	return &productUseCase{repo: repo, imageRepo: imageRepo, variantRepo: variantRepo, stockRepo: stockRepo}
 }
 
 func (uc *productUseCase) List(ctx context.Context, params dto.ListProductParams) ([]domain.Product, int64, error) {
@@ -30,14 +31,17 @@ func (uc *productUseCase) List(ctx context.Context, params dto.ListProductParams
 	for _, product := range products {
 		ids = append(ids, product.Id)
 	}
+
 	images, err := uc.imageRepo.ListByProductIds(ctx, ids)
 	if err != nil {
 		return nil, 0, err
 	}
+
 	byProduct := make(map[string][]domain.ProductImage)
 	for _, image := range images {
 		byProduct[image.ProductId] = append(byProduct[image.ProductId], image)
 	}
+
 	for i := range products {
 		products[i].Images = byProduct[products[i].Id]
 	}
@@ -46,10 +50,12 @@ func (uc *productUseCase) List(ctx context.Context, params dto.ListProductParams
 	if err != nil {
 		return nil, 0, err
 	}
+
 	byProductVariants := make(map[string][]domain.ProductVariant)
 	for _, v := range variants {
 		byProductVariants[v.ProductId] = append(byProductVariants[v.ProductId], v)
 	}
+
 	for i := range products {
 		products[i].Variants = byProductVariants[products[i].Id]
 	}
@@ -101,6 +107,7 @@ func (uc *productUseCase) ReadById(ctx context.Context, id string) (*domain.Prod
 	if err != nil {
 		return nil, err
 	}
+
 	if product == nil {
 		return nil, nil
 	}
@@ -109,8 +116,12 @@ func (uc *productUseCase) ReadById(ctx context.Context, id string) (*domain.Prod
 	if err != nil {
 		return nil, err
 	}
+
 	product.Images = images
-	variants, err := uc.variantRepo.ListByProductId(ctx, id)
+	arr := make([]string, 0)
+	arr = append(arr, id)
+	variants, err := uc.variantRepo.ListByProductIds(ctx, arr)
+
 	if err != nil {
 		return nil, err
 	}
@@ -124,6 +135,7 @@ func (uc *productUseCase) ReadBySlug(ctx context.Context, slug string) (*domain.
 	if err != nil {
 		return nil, err
 	}
+
 	if product == nil {
 		return nil, nil
 	}
@@ -132,11 +144,13 @@ func (uc *productUseCase) ReadBySlug(ctx context.Context, slug string) (*domain.
 	if err != nil {
 		return nil, err
 	}
+
 	product.Images = images
-	variants, err := uc.variantRepo.ListByProductId(ctx, product.Id)
+	variants, err := uc.variantRepo.ListByProductIds(ctx, []string{product.Id})
 	if err != nil {
 		return nil, err
 	}
+
 	product.Variants = variants
 
 	return product, nil
@@ -157,6 +171,7 @@ func (uc *productUseCase) BatchById(ctx context.Context, ids []string) ([]domain
 	for _, variant := range variants {
 		byProduct[variant.ProductId] = append(byProduct[variant.ProductId], variant)
 	}
+
 	for i := range products {
 		products[i].Variants = byProduct[products[i].Id]
 	}
@@ -164,23 +179,14 @@ func (uc *productUseCase) BatchById(ctx context.Context, ids []string) ([]domain
 	return products, nil
 }
 
-func (uc *productUseCase) ReserveStock(ctx context.Context, productId string, variantId string, quantity int32) error {
-	if variantId != "" {
-		return uc.variantRepo.ReserveStock(ctx, variantId, quantity)
-	}
-	return uc.repo.ReserveStock(ctx, productId, "", quantity)
+func (uc *productUseCase) ReserveStock(ctx context.Context, orderID string, items []domain.StockItem) error {
+	return uc.stockRepo.ReserveWithTx(ctx, orderID, items)
 }
 
-func (uc *productUseCase) ReleaseStock(ctx context.Context, productId string, variantId string, quantity int32) error {
-	if variantId != "" {
-		return uc.variantRepo.ReleaseStock(ctx, variantId, quantity)
-	}
-	return uc.repo.ReleaseStock(ctx, productId, "", quantity)
+func (uc *productUseCase) ReleaseStock(ctx context.Context, orderID string, items []domain.StockItem) error {
+	return uc.stockRepo.ReleaseWithTx(ctx, orderID, items)
 }
 
-func (uc *productUseCase) ConfirmStock(ctx context.Context, productId string, variantId string, quantity int32) error {
-	if variantId != "" {
-		return uc.variantRepo.ConfirmStock(ctx, variantId, quantity)
-	}
-	return uc.repo.ConfirmStock(ctx, productId, "", quantity)
+func (uc *productUseCase) ConfirmStock(ctx context.Context, orderID string, items []domain.StockItem) error {
+	return uc.stockRepo.ConfirmWithTx(ctx, orderID, items)
 }

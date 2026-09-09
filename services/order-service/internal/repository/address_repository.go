@@ -94,7 +94,6 @@ func (r *addressRepository) Delete(ctx context.Context, id string) error {
 		SET deleted_at = NOW()
 		WHERE id = $1 AND deleted_at IS NULL
 	`
-
 	cmdTag, err := r.db.Exec(ctx, query, id)
 	if err != nil {
 		return err
@@ -127,9 +126,11 @@ func (r *addressRepository) ReadById(ctx context.Context, id string) (*domain.Ad
 		&a.CreatedAt,
 		&a.UpdatedAt,
 	)
+
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}

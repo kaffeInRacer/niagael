@@ -2,32 +2,38 @@ package main
 
 import (
 	"context"
+	"math"
 	"net"
 	"time"
 
 	"kaffein/dynamic-pricing-service/internal/dto"
 	"kaffein/dynamic-pricing-service/internal/interfaces/IRepository"
 	"kaffein/dynamic-pricing-service/internal/interfaces/IUseCase"
+	"kaffein/dynamic-pricing-service/internal/repository"
 	"kaffein/dynamic-pricing-service/internal/usecase"
 	"kaffein/dynamic-pricing-service/proto/dynamic-pricing"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type grpcServer struct {
 	dynamicpricingpb.UnimplementedDynamicPricingServiceServer
 	flashSaleUseCase IUseCase.FlashSaleUseCase
 	promoUseCase     IUseCase.PromoUseCase
+	allocationRepo   IRepository.PricingAllocationRepository
 }
 
-func NewGrpcServer(flashSaleUseCase IUseCase.FlashSaleUseCase, promoUseCase IUseCase.PromoUseCase) *grpcServer {
+func NewGrpcServer(flashSaleUseCase IUseCase.FlashSaleUseCase, promoUseCase IUseCase.PromoUseCase, allocationRepo IRepository.PricingAllocationRepository) *grpcServer {
 	return &grpcServer{
 		flashSaleUseCase: flashSaleUseCase,
 		promoUseCase:     promoUseCase,
+		allocationRepo:   allocationRepo,
 	}
 }
 
-func (app *application) startGrpcServer(ctx context.Context, flashSaleRepo IRepository.FlashSaleRepository, flashSaleUsageRepo IRepository.FlashSaleUsageRepository, promoRepo IRepository.PromoRepository, promoUsageRepo IRepository.PromoUsageRepository) {
+func (app *application) startGrpcServer(ctx context.Context, flashSaleRepo IRepository.FlashSaleRepository, flashSaleUsageRepo IRepository.FlashSaleUsageRepository, promoRepo IRepository.PromoRepository, promoUsageRepo IRepository.PromoUsageRepository, allocationRepo IRepository.PricingAllocationRepository) {
 	lis, err := net.Listen("tcp", app.config.GRPC.Server)
 	if err != nil {
 		app.logger.Fatal().Err(err).Msg("failed to listen for gRPC")
@@ -37,7 +43,7 @@ func (app *application) startGrpcServer(ctx context.Context, flashSaleRepo IRepo
 	promoUseCase := usecase.NewPromoUseCase(promoRepo, promoUsageRepo)
 
 	s := grpc.NewServer()
-	dynamicpricingpb.RegisterDynamicPricingServiceServer(s, NewGrpcServer(flashSaleUseCase, promoUseCase))
+	dynamicpricingpb.RegisterDynamicPricingServiceServer(s, NewGrpcServer(flashSaleUseCase, promoUseCase, allocationRepo))
 
 	go func() {
 		app.logger.Info().Str("addr", app.config.GRPC.Server).Msg("starting gRPC server")
@@ -82,6 +88,7 @@ func (s *grpcServer) GetFlashSaleByVariantId(ctx context.Context, req *dynamicpr
 	if err != nil {
 		return nil, err
 	}
+
 	if fs == nil {
 		return &dynamicpricingpb.FlashSale{}, nil
 	}
@@ -214,41 +221,12 @@ func (s *grpcServer) ApplyPromo(ctx context.Context, req *dynamicpricingpb.Apply
 	}, nil
 }
 
-func (s *grpcServer) DecrementFlashSaleStock(ctx context.Context, req *dynamicpricingpb.DecrementFlashSaleStockRequest) (*dynamicpricingpb.DecrementFlashSaleStockResponse, error) {
-	err := s.flashSaleUseCase.DecrementStock(ctx, req.FlashSaleId, int(req.Quantity))
-	if err != nil {
-		return &dynamicpricingpb.DecrementFlashSaleStockResponse{
-			Success: false,
-			Message: err.Error(),
-		}, nil
-	}
-
-	return &dynamicpricingpb.DecrementFlashSaleStockResponse{
-		Success: true,
-		Message: "success",
-	}, nil
-}
-
-func (s *grpcServer) IncrementFlashSaleUsage(ctx context.Context, req *dynamicpricingpb.IncrementFlashSaleUsageRequest) (*dynamicpricingpb.IncrementFlashSaleUsageResponse, error) {
-	err := s.flashSaleUseCase.IncrementUsage(ctx, req.FlashSaleId, req.UserId, int(req.Quantity))
-	if err != nil {
-		return &dynamicpricingpb.IncrementFlashSaleUsageResponse{
-			Success: false,
-			Message: err.Error(),
-		}, nil
-	}
-
-	return &dynamicpricingpb.IncrementFlashSaleUsageResponse{
-		Success: true,
-		Message: "success",
-	}, nil
-}
-
 func (s *grpcServer) GetPromoUsage(ctx context.Context, req *dynamicpricingpb.GetPromoUsageRequest) (*dynamicpricingpb.PromoUsageResponse, error) {
 	usage, err := s.promoUseCase.GetUsage(ctx, req.PromoId, req.UserId)
 	if err != nil {
 		return nil, err
 	}
+
 	if usage == nil {
 		return &dynamicpricingpb.PromoUsageResponse{}, nil
 	}
@@ -259,4 +237,85 @@ func (s *grpcServer) GetPromoUsage(ctx context.Context, req *dynamicpricingpb.Ge
 		UserId:   usage.UserId,
 		Quantity: int32(usage.Quantity),
 	}, nil
+}
+
+func (s *grpcServer) AllocatePricing(ctx context.Context, req *dynamicpricingpb.AllocatePricingRequest) (*dynamicpricingpb.AllocatePricingResponse, error) {
+	if req.OrderId == "" || req.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "order_id and user_id are required")
+	}
+
+	allocation := repository.PricingAllocation{
+		OrderID:   req.OrderId,
+		UserID:    req.UserId,
+		PromoCode: req.PromoCode,
+		Subtotal:  req.Subtotal,
+		Items:     make([]repository.PricingAllocationItem, len(req.Items)),
+	}
+
+	var calculatedSubtotal int64
+	for i, item := range req.Items {
+
+		if item == nil || item.ItemId == "" || item.Quantity <= 0 || item.UnitPrice < 0 {
+			return nil, status.Error(codes.InvalidArgument, "valid item_id, quantity, and unit_price are required")
+		}
+
+		if item.UnitPrice > math.MaxInt64/int64(item.Quantity) {
+			return nil, status.Error(codes.InvalidArgument, "pricing item total exceeds int64")
+		}
+
+		itemSubtotal := item.UnitPrice * int64(item.Quantity)
+		if calculatedSubtotal > math.MaxInt64-itemSubtotal {
+			return nil, status.Error(codes.InvalidArgument, "subtotal exceeds int64")
+		}
+
+		allocation.Items[i] = repository.PricingAllocationItem{
+			ItemID:      item.ItemId,
+			FlashSaleID: item.FlashSaleId,
+			Quantity:    int(item.Quantity),
+			UnitPrice:   item.UnitPrice,
+		}
+		calculatedSubtotal += itemSubtotal
+	}
+
+	if calculatedSubtotal != req.Subtotal {
+		return nil, status.Error(codes.InvalidArgument, "subtotal does not match pricing items")
+	}
+
+	allocated, err := s.allocationRepo.AllocateWithTx(ctx, allocation)
+	if err != nil {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	}
+
+	response := &dynamicpricingpb.AllocatePricingResponse{
+		PromoId:             allocated.PromoID,
+		PromoCode:           allocated.PromoCode,
+		PromoName:           allocated.PromoName,
+		PromoDiscountType:   allocated.PromoDiscountType,
+		PromoDiscountAmount: allocated.PromoDiscountAmount,
+	}
+	for _, item := range allocated.Items {
+		if item.AllocatedQuantity == 0 {
+			continue
+		}
+		response.Items = append(response.Items, &dynamicpricingpb.PricingAllocationItem{
+			ItemId:          item.ItemID,
+			FlashSaleId:     item.FlashSaleID,
+			Quantity:        int32(item.AllocatedQuantity),
+			Name:            item.Name,
+			DiscountPercent: int32(item.DiscountPercent),
+		})
+	}
+	return response, nil
+}
+
+func (s *grpcServer) ReleasePricing(ctx context.Context, req *dynamicpricingpb.ReleasePricingRequest) (*dynamicpricingpb.ReleasePricingResponse, error) {
+	if req.OrderId == "" || req.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, "order_id and user_id are required")
+	}
+
+	if err := s.allocationRepo.ReleaseWithTx(ctx, req.OrderId, req.UserId); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &dynamicpricingpb.ReleasePricingResponse{Success: true}, nil
 }

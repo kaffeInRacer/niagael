@@ -27,13 +27,13 @@ type DeletePolicyRequest struct {
 	Action   string `json:"action" binding:"required"`
 }
 
-func NewRBACHandler(usecase IUseCase.RBACUseCase, logger zerolog.Logger, engine *gin.Engine, auth, admin gin.HandlerFunc) *rbacHandler {
+func NewRBACHandler(usecase IUseCase.RBACUseCase, logger zerolog.Logger, engine *gin.Engine, auth, admin, read, create, remove gin.HandlerFunc) *rbacHandler {
 	h := &rbacHandler{usecase: usecase, logger: logger}
 	routes := engine.Group("/admin/rbac", auth, admin)
-	routes.GET("/policies", h.listPolicies)
-	routes.GET("/resources", h.getResources)
-	routes.POST("/policies", h.addPolicy)
-	routes.DELETE("/policies", h.deletePolicy)
+	routes.GET("/policies", read, h.listPolicies)
+	routes.GET("/resources", read, h.getResources)
+	routes.POST("/policies", create, h.addPolicy)
+	routes.DELETE("/policies", remove, h.deletePolicy)
 	return h
 }
 

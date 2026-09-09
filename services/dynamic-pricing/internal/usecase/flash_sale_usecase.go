@@ -2,9 +2,12 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"kaffein/dynamic-pricing-service/internal/domain"
 	"kaffein/dynamic-pricing-service/internal/dto"
 	"kaffein/dynamic-pricing-service/internal/interfaces/IRepository"
+	"kaffein/dynamic-pricing-service/utils/constants"
+	"kaffein/dynamic-pricing-service/utils/events"
 
 	"github.com/google/uuid"
 )
@@ -46,7 +49,15 @@ func (uc *flashSaleUseCase) Create(ctx context.Context, args dto.CreateFlashSale
 		IsActive:        args.IsActive,
 	}
 
-	return uc.repo.Create(ctx, arg)
+	if err := uc.repo.Create(ctx, arg); err != nil {
+		return err
+	}
+	publishFlashSaleChange("updated", map[string]any{
+		"id": arg.Id, "name": arg.Name, "product_id": arg.ProductId,
+		"variant_id": arg.VariantId, "discount_percent": arg.DiscountPercent,
+		"start_time": arg.StartTime, "end_time": arg.EndTime, "is_active": arg.IsActive,
+	})
+	return nil
 }
 
 func (uc *flashSaleUseCase) CreateBulk(ctx context.Context, args dto.CreateFlashSaleBulkDto) error {
@@ -70,7 +81,17 @@ func (uc *flashSaleUseCase) CreateBulk(ctx context.Context, args dto.CreateFlash
 		Items:     items,
 	}
 
-	return uc.repo.CreateBulk(ctx, bulk)
+	if err := uc.repo.CreateBulk(ctx, bulk); err != nil {
+		return err
+	}
+	for _, item := range bulk.Items {
+		publishFlashSaleChange("updated", map[string]any{
+			"id": item.Id, "name": bulk.Name, "product_id": item.ProductId,
+			"variant_id": item.VariantId, "discount_percent": item.DiscountPercent,
+			"start_time": bulk.StartTime, "end_time": bulk.EndTime, "is_active": bulk.IsActive,
+		})
+	}
+	return nil
 }
 
 func (uc *flashSaleUseCase) Update(ctx context.Context, id string, args dto.UpdateFlashSaleDto) error {
@@ -87,11 +108,36 @@ func (uc *flashSaleUseCase) Update(ctx context.Context, id string, args dto.Upda
 		IsActive:        args.IsActive,
 	}
 
-	return uc.repo.Update(ctx, arg)
+	if err := uc.repo.Update(ctx, arg); err != nil {
+		return err
+	}
+	publishFlashSaleChange("updated", map[string]any{
+		"id": arg.Id, "name": arg.Name, "product_id": arg.ProductId,
+		"variant_id": arg.VariantId, "discount_percent": arg.DiscountPercent,
+		"start_time": arg.StartTime, "end_time": arg.EndTime, "is_active": arg.IsActive,
+	})
+	return nil
 }
 
 func (uc *flashSaleUseCase) Delete(ctx context.Context, id string) error {
-	return uc.repo.Delete(ctx, id)
+	fs, err := uc.repo.ReadById(ctx, id)
+	if err != nil {
+		return err
+	}
+	if err := uc.repo.Delete(ctx, id); err != nil {
+		return err
+	}
+	if fs != nil {
+		publishFlashSaleChange("deleted", map[string]any{
+			"id": id, "product_id": fs.ProductId, "variant_id": fs.VariantId,
+		})
+	}
+	return nil
+}
+
+func publishFlashSaleChange(eventType string, payload map[string]any) {
+	payload["type"] = eventType
+	events.Publish(constants.FlashSaleTopic, "flash-sale-changed", payload)
 }
 
 func (uc *flashSaleUseCase) ReadById(ctx context.Context, id string) (*domain.FlashSale, error) {
@@ -115,9 +161,15 @@ func (uc *flashSaleUseCase) ReadByVariantIds(ctx context.Context, items []dto.Va
 }
 
 func (uc *flashSaleUseCase) DecrementStock(ctx context.Context, id string, quantity int) error {
+	if quantity <= 0 {
+		return errors.New("quantity must be greater than zero")
+	}
 	return uc.repo.DecrementStock(ctx, id, quantity)
 }
 
 func (uc *flashSaleUseCase) IncrementUsage(ctx context.Context, flashSaleId string, userId string, quantity int) error {
+	if quantity <= 0 {
+		return errors.New("quantity must be greater than zero")
+	}
 	return uc.usageRepo.IncrementUsage(ctx, flashSaleId, userId, quantity)
 }

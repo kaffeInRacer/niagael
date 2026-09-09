@@ -6,9 +6,9 @@ import (
 	"syscall"
 
 	"github.com/rs/zerolog/log"
-	"github.com/segmentio/kafka-go"
 	"kaffein/auth-service/config"
 	"kaffein/auth-service/pkg/logger"
+	"kaffein/auth-service/utils/events"
 	"kaffein/auth-service/pkg/postgresql"
 	redisclient "kaffein/auth-service/pkg/redis"
 )
@@ -32,23 +32,13 @@ func main() {
 	}
 	defer rdb.Close()
 
-	var kafkaWriter *kafka.Writer
-	if len(cfg.Kafka.Brokers) > 0 && cfg.Kafka.Topic != "" {
-		kafkaWriter = &kafka.Writer{
-			Addr:         kafka.TCP(cfg.Kafka.Brokers...),
-			Topic:        cfg.Kafka.Topic,
-			Balancer:     &kafka.LeastBytes{},
-			RequiredAcks: kafka.RequireAll,
-		}
-		defer kafkaWriter.Close()
-	}
+	events.Init(cfg.Kafka.Brokers)
 
 	app := &application{
 		config: cfg,
 		logger: l,
 		pgx:    db,
 		redis:  rdb,
-		kafka:  kafkaWriter,
 	}
 	if err := app.ServeHTTP(ctx); err != nil {
 		l.Fatal().Err(err).Msg("HTTP server failed")

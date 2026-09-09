@@ -4,7 +4,8 @@ export function createServerSideAjax({
   defaultOrderBy = 'created_at',
   defaultOrderDir = 'desc',
   getFilters = () => ({}),
-  onError = () => {}
+  onError = () => {},
+  onSuccess = () => {}
 }) {
   return async (request, callback) => {
     const pageSize = request.length > 0 ? request.length : 10
@@ -35,6 +36,7 @@ export function createServerSideAjax({
         recordsTotal: count,
         recordsFiltered: count
       })
+      onSuccess(response)
     } catch (error) {
       onError(error)
       callback({
@@ -45,4 +47,13 @@ export function createServerSideAjax({
       })
     }
   }
+}
+
+export function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
 }

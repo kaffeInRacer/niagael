@@ -1,4 +1,3 @@
-// Package redis menyediakan Redis Client initialization.
 package rdb
 
 import (
@@ -20,7 +19,6 @@ type Cache struct {
 	ttl    time.Duration
 }
 
-// NewCache membuat Redis Client baru dari konfigurasi.
 func NewCache(cfg *config.Config, prefix string, ttl time.Duration) (*Cache, error) {
 	if cfg.Redis.Addr == "" {
 		return nil, fmt.Errorf(constants.ErrRedisAddrEmpty)

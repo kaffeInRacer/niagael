@@ -1,25 +1,21 @@
 package constants
 
 const (
-	// Configuration errors
 	ErrConfigFileNotFound = "config file not found: %s"
 	ErrConfigParse        = "parse config %s: %w"
 	ErrConfigPath         = "config path not found: %s"
 
-	// Postgres errors
 	ErrPostgresDSNEmpty   = "postgres dsn is empty"
 	ErrPostgresParseDSN   = "parse postgres dsn: %w"
 	ErrPostgresCreatePool = "create postgres pool: %w"
 	ErrPostgresPing       = "ping postgres: %w"
 
-	// Redis errors
 	ErrRedisAddrEmpty    = "redis addr is empty"
 	ErrRedisCreateClient = "create redis client: %w"
 	ErrRedisPing         = "ping redis: %w"
 	ErrRedisGet          = "failed to get key %s: %w"
 	ErrRedisMarshal      = "failed to marshal value for key %s: %w"
 
-	// Validation
 	ErrFieldRequired             = "%s cannot be empty"
 	ErrFieldNumeric              = "%s must contain only numbers"
 	ErrFieldImage                = "%s must be a valid image file within the allowed size limit"
@@ -42,15 +38,6 @@ const (
 	ErrValidationBoolean         = "{0} must be true or false"
 	ErrValidationOneOf           = "{0} must be one of: {1}"
 
-	// MinIO errors
-	ErrMinioCreateClient = "create minio client: %w"
-	ErrMinioBucketExists = "check bucket: %w"
-	ErrMinioUpload       = "upload file: %w"
-	ErrMinioDelete       = "delete file: %w"
-	ErrMinioGetURL       = "get presigned url: %w"
-	ErrMinioExists       = "check file exists: %w"
-
-	// Domain errors
 	ErrProductNotFound              = "product not found"
 	ErrCategoryNotFound             = "category not found"
 	ErrVariantNotFound              = "variant not found"

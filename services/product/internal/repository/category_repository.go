@@ -206,7 +206,7 @@ func (r *categoryRepository) ListWithProductCount(ctx context.Context, params dt
 			c.id, c.name, c.slug, c.description, c.is_active, c.created_at, c.updated_at,
 			COUNT(p.id) as product_count
 		FROM category c
-		LEFT JOIN product p ON p.category_id = c.id AND p.deleted_at IS NULL
+		LEFT JOIN product p ON p.category_id = c.id AND p.deleted_at IS NULL AND (NOT $7::boolean OR p.is_active = true)
 		WHERE (NULLIF($1::text, '') IS NULL OR c.name ILIKE '%' || $1::text || '%')
 		AND ($2::boolean IS NULL OR c.is_active = $2::boolean)
 		AND c.deleted_at IS NULL
@@ -232,6 +232,7 @@ func (r *categoryRepository) ListWithProductCount(ctx context.Context, params dt
 		params.OrderDir,
 		params.PageSize,
 		params.PageOffset,
+		params.ActiveProductsOnly,
 	)
 	if err != nil {
 		return nil, err

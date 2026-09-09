@@ -62,15 +62,18 @@ func (r *orderItemRepository) ReadByOrderId(ctx context.Context, orderId string)
 	var items []domain.OrderItem
 	for rows.Next() {
 		var item domain.OrderItem
+
 		if err := rows.Scan(
 			&item.Id, &item.OrderId, &item.ProductId, &item.VariantId,
 			&item.ProductName, &item.ProductPrice, &item.Quantity,
-			&item.FlashSaleId, &item.FlashSaleName, &item.FlashSaleDiscountPercent, &item.FlashSaleDiscountPrice, &item.FlashSaleOriginalPrice, &item.FlashSaleQuantity,
+			&item.FlashSaleId, &item.FlashSaleName, &item.FlashSaleDiscountPercent,
+			&item.FlashSaleDiscountPrice, &item.FlashSaleOriginalPrice, &item.FlashSaleQuantity,
 			&item.PromoId, &item.PromoCode, &item.PromoName, &item.PromoDiscountType, &item.PromoDiscountAmount,
 			&item.FinalPrice, &item.CreatedAt, &item.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
+
 		items = append(items, item)
 	}
 

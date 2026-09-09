@@ -65,12 +65,11 @@ func (h *authHandler) login(c *gin.Context) {
 }
 
 func (h *authHandler) refresh(c *gin.Context) {
-	raw, err := c.Cookie(refreshTokenCookie)
-	if err != nil {
-		parts := strings.Fields(c.GetHeader("Authorization"))
-		if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
-			raw = parts[1]
-		} else {
+	raw := bearerToken(c.GetHeader("Authorization"))
+	if raw == "" {
+		raw, _ = c.Cookie(refreshTokenCookie)
+		raw = strings.TrimSpace(raw)
+		if raw == "" {
 			var req dto.RefreshRequest
 			if !bind(c, &req) {
 				return
@@ -88,12 +87,22 @@ func (h *authHandler) refresh(c *gin.Context) {
 }
 
 func (h *authHandler) logout(c *gin.Context) {
-	h.clearTokenCookies(c)
 	err := h.usecase.Logout(c.Request.Context(), c.MustGet(middleware.SessionIDKey).(uuid.UUID), c.MustGet(middleware.ExpirationKey).(int64))
 	if err != nil {
 		h.logger.Error().Err(err).Msg("session revoke failed during logout")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "logout failed"})
+		return
 	}
+	h.clearTokenCookies(c)
 	c.Status(http.StatusNoContent)
+}
+
+func bearerToken(header string) string {
+	parts := strings.Fields(header)
+	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+		return parts[1]
+	}
+	return ""
 }
 
 func (h *authHandler) setTokenCookies(c *gin.Context, result *dto.TokenResponse) {

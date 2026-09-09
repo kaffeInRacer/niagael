@@ -17,6 +17,7 @@ type Session struct {
 type SessionRepository interface {
 	Save(context.Context, uuid.UUID, Session, time.Duration) error
 	Get(context.Context, uuid.UUID) (*Session, error)
+	Rotate(context.Context, uuid.UUID, Session, uuid.UUID, Session, time.Duration) (bool, error)
 	Revoke(context.Context, uuid.UUID) error
 	RevokeWithTTL(context.Context, uuid.UUID, time.Duration) error
 	IsRevoked(context.Context, uuid.UUID) (bool, error)

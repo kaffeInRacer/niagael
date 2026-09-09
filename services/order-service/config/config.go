@@ -14,18 +14,15 @@ import (
 func Load(path string) (*Config, error) {
 	st := &Config{}
 
-	// 1. Baca file config.yaml
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf(constants.ErrConfigFileNotFound, path)
 	}
 
-	// 2. Parse YAML dulu ke struct (sebagai data dasar)
 	if err := yaml.Unmarshal(data, st); err != nil {
 		return nil, fmt.Errorf(constants.ErrConfigParse, path, err)
 	}
 
-	// 3. Timpa (override) data YAML dengan Environment Variables (jika ENV ada)
 	st.HTTP.ServiceName = env.GetString("SERVICE_NAME", st.HTTP.ServiceName)
 	st.HTTP.Mode = env.GetString("HTTP_MODE", st.HTTP.Mode)
 	st.HTTP.Addr = env.GetString("HTTP_ADDR", st.HTTP.Addr)
@@ -61,13 +58,19 @@ func Load(path string) (*Config, error) {
 	st.JWT.Secret = env.GetString("JWT_SECRET", st.JWT.Secret)
 	st.JWT.Issuer = env.GetString("JWT_ISSUER", st.JWT.Issuer)
 	st.JWT.RedisDB = env.GetInt("JWT_REDIS_DB", st.JWT.RedisDB)
-
+	st.RBAC.PolicyReloadInterval = env.GetDuration("RBAC_POLICY_RELOAD_INTERVAL", st.RBAC.PolicyReloadInterval)
+	st.Kafka.Brokers = env.GetStringSlice("KAFKA_BROKERS", st.Kafka.Brokers)
 	st.Kafka.GroupID = env.GetString("KAFKA_GROUP_ID", st.Kafka.GroupID)
 	st.Kafka.CasbinTopic = env.GetString("KAFKA_CASBIN_TOPIC", st.Kafka.CasbinTopic)
-	if brokers := os.Getenv("KAFKA_BROKERS"); brokers != "" {
-		st.Kafka.Brokers = strings.Split(brokers, ",")
+	st.Kafka.OrderTopic = env.GetString("KAFKA_ORDER_TOPIC", st.Kafka.OrderTopic)
+	st.Kafka.UserTopic = env.GetString("KAFKA_USER_TOPIC", st.Kafka.UserTopic)
+	if strings.TrimSpace(st.JWT.Secret) == "" {
+		return nil, fmt.Errorf("JWT_SECRET is required")
+	}
+	if !strings.EqualFold(st.HTTP.Mode, "development") &&
+		(strings.TrimSpace(st.Midtrans.ServerKey) == "" || strings.TrimSpace(st.Midtrans.ClientKey) == "") {
+		return nil, fmt.Errorf("MIDTRANS_SERVER_KEY and MIDTRANS_CLIENT_KEY are required outside development")
 	}
 
-	// 4. Return pointer variabel `st`
 	return st, nil
 }

@@ -81,27 +81,6 @@ message Promo {
   bool is_active = 15;
 }
 
-message DecrementFlashSaleStockRequest {
-  string flash_sale_id = 1;
-  int32 quantity = 2;
-}
-
-message DecrementFlashSaleStockResponse {
-  bool success = 1;
-  string message = 2;
-}
-
-message IncrementFlashSaleUsageRequest {
-  string flash_sale_id = 1;
-  string user_id = 2;
-  int32 quantity = 3;
-}
-
-message IncrementFlashSaleUsageResponse {
-  bool success = 1;
-  string message = 2;
-}
-
 message GetPromoUsageRequest {
   string promo_id = 1;
   string user_id = 2;
@@ -114,6 +93,44 @@ message PromoUsageResponse {
   int32 quantity = 4;
 }
 
+message PricingAllocationItemRequest {
+  string item_id = 1;
+  string flash_sale_id = 2;
+  int32 quantity = 3;
+  int64 unit_price = 4;
+}
+
+message AllocatePricingRequest {
+  string order_id = 1;
+  string user_id = 2;
+  string promo_code = 3;
+  int64 subtotal = 4;
+  repeated PricingAllocationItemRequest items = 5;
+}
+
+message PricingAllocationItem {
+  string item_id = 1;
+  string flash_sale_id = 2;
+  int32 quantity = 3;
+  string name = 4;
+  int32 discount_percent = 5;
+}
+
+message AllocatePricingResponse {
+  repeated PricingAllocationItem items = 1;
+  string promo_id = 2;
+  string promo_code = 3;
+  string promo_name = 4;
+  string promo_discount_type = 5;
+  int64 promo_discount_amount = 6;
+}
+
+message ReleasePricingRequest {
+  string order_id = 1;
+  string user_id = 2;
+}
+message ReleasePricingResponse { bool success = 1; }
+
 service DynamicPricingService {
   rpc GetFlashSaleByProductId (GetFlashSaleByProductIdRequest) returns (FlashSale);
   rpc GetFlashSaleByVariantId (GetFlashSaleByVariantIdRequest) returns (FlashSale);
@@ -121,7 +138,7 @@ service DynamicPricingService {
   rpc GetFlashSalesByVariantIds (GetFlashSalesByVariantIdsRequest) returns (GetFlashSalesByVariantIdsResponse);
   rpc GetPromoByCode (GetPromoByCodeRequest) returns (Promo);
   rpc ApplyPromo (ApplyPromoRequest) returns (ApplyPromoResponse);
-  rpc DecrementFlashSaleStock (DecrementFlashSaleStockRequest) returns (DecrementFlashSaleStockResponse);
-  rpc IncrementFlashSaleUsage (IncrementFlashSaleUsageRequest) returns (IncrementFlashSaleUsageResponse);
   rpc GetPromoUsage (GetPromoUsageRequest) returns (PromoUsageResponse);
+  rpc AllocatePricing (AllocatePricingRequest) returns (AllocatePricingResponse);
+  rpc ReleasePricing (ReleasePricingRequest) returns (ReleasePricingResponse);
 }

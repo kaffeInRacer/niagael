@@ -2,9 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"kaffein/dynamic-pricing-service/internal/domain"
 	"kaffein/dynamic-pricing-service/internal/interfaces/IRepository"
 	"kaffein/dynamic-pricing-service/pkg/postgresql"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type flashSaleUsageRepository struct {
@@ -33,6 +36,9 @@ func (r *flashSaleUsageRepository) GetUsage(ctx context.Context, flashSaleId str
 		&usage.CreatedAt,
 		&usage.UpdatedAt,
 	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}

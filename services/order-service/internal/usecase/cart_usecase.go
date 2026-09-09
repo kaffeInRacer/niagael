@@ -69,7 +69,7 @@ func (uc *cartUseCase) AddItem(ctx context.Context, args dto.AddCartItemDto) (*d
 		VariantId: variantId,
 		Quantity:  args.Quantity,
 	}
-	if err := uc.repo.AddItem(ctx, args.UserId, uuid.New().String(), item, int(availableStock)); err != nil {
+	if err := uc.repo.AddItemWithTx(ctx, args.UserId, uuid.New().String(), item, int(availableStock)); err != nil {
 		return nil, err
 	}
 	return uc.ReadByUserId(ctx, args.UserId)

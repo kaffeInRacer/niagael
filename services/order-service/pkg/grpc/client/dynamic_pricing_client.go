@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"kaffein/order-service/proto/dynamic-pricing"
 
 	"google.golang.org/grpc"
@@ -52,24 +53,24 @@ func (c *DynamicPricingClient) ApplyPromo(ctx context.Context, code string, user
 	})
 }
 
-func (c *DynamicPricingClient) DecrementFlashSaleStock(ctx context.Context, flashSaleId string, quantity int32) (*dynamicpricingpb.DecrementFlashSaleStockResponse, error) {
-	return c.client.DecrementFlashSaleStock(ctx, &dynamicpricingpb.DecrementFlashSaleStockRequest{
-		FlashSaleId: flashSaleId,
-		Quantity:    quantity,
-	})
-}
-
-func (c *DynamicPricingClient) IncrementFlashSaleUsage(ctx context.Context, flashSaleId string, userId string, quantity int32) (*dynamicpricingpb.IncrementFlashSaleUsageResponse, error) {
-	return c.client.IncrementFlashSaleUsage(ctx, &dynamicpricingpb.IncrementFlashSaleUsageRequest{
-		FlashSaleId: flashSaleId,
-		UserId:      userId,
-		Quantity:    quantity,
-	})
-}
-
 func (c *DynamicPricingClient) GetPromoUsage(ctx context.Context, promoId string, userId string) (*dynamicpricingpb.PromoUsageResponse, error) {
 	return c.client.GetPromoUsage(ctx, &dynamicpricingpb.GetPromoUsageRequest{
 		PromoId: promoId,
 		UserId:  userId,
 	})
+}
+
+func (c *DynamicPricingClient) AllocatePricing(ctx context.Context, request *dynamicpricingpb.AllocatePricingRequest) (*dynamicpricingpb.AllocatePricingResponse, error) {
+	return c.client.AllocatePricing(ctx, request)
+}
+
+func (c *DynamicPricingClient) ReleasePricing(ctx context.Context, orderId string, userId string) error {
+	response, err := c.client.ReleasePricing(ctx, &dynamicpricingpb.ReleasePricingRequest{OrderId: orderId, UserId: userId})
+	if err != nil {
+		return err
+	}
+	if response == nil || !response.Success {
+		return errors.New("pricing release failed")
+	}
+	return nil
 }

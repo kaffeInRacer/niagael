@@ -23,41 +23,58 @@ func NewOrderRepository(store *postgresql.Store) IRepository.OrderRepository {
 	}
 }
 
-func (r *orderRepository) CreateWithItems(ctx context.Context, order domain.Order, items []domain.OrderItem) error {
+func (r *orderRepository) CreateWithItemsWithTx(ctx context.Context, order domain.Order, items []domain.OrderItem) error {
 	return r.store.ExecTx(ctx, func(tx postgresql.DBTX) error {
-		const orderQuery = `
-			INSERT INTO orders (id, order_ref, user_id, address_id, total_amount, status, snap_token, expire_time, created_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
-		`
-		if _, err := tx.Exec(ctx, orderQuery, order.Id, order.OrderRef, order.UserId, order.AddressId, order.TotalAmount, order.Status, order.SnapToken, order.ExpireTime); err != nil {
+		return insertOrderWithItems(ctx, tx, order, items)
+	})
+}
+
+func insertOrderWithItems(ctx context.Context, tx postgresql.DBTX, order domain.Order, items []domain.OrderItem) error {
+	const orderQuery = `
+		INSERT INTO orders (id, order_ref, user_id, address_id, total_amount, status, snap_token, expire_time, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+	`
+	if _, err := tx.Exec(ctx, orderQuery,
+		order.Id,
+		order.OrderRef,
+		order.UserId,
+		order.AddressId,
+		order.TotalAmount,
+		order.Status,
+		order.SnapToken,
+		order.ExpireTime,
+	); err != nil {
+		return err
+	}
+
+	const itemQuery = `
+		INSERT INTO order_item (
+			id, order_id, product_id, variant_id,
+			product_name, product_price, quantity,
+			flash_sale_id, flash_sale_name, flash_sale_discount_percent, flash_sale_discount_price, flash_sale_original_price, flash_sale_quantity,
+			promo_id, promo_code, promo_name, promo_discount_type, promo_discount_amount,
+			final_price, created_at
+		) VALUES (
+			$1, $2, $3, $4,
+			$5, $6, $7,
+			$8, $9, $10, $11, $12, $13,
+			$14, $15, $16, $17, $18,
+			$19, NOW()
+		)
+	`
+	for _, item := range items {
+		if _, err := tx.Exec(ctx, itemQuery,
+			item.Id, item.OrderId, item.ProductId, item.VariantId,
+			item.ProductName, item.ProductPrice, item.Quantity,
+			item.FlashSaleId, item.FlashSaleName, item.FlashSaleDiscountPercent, item.FlashSaleDiscountPrice, item.FlashSaleOriginalPrice, item.FlashSaleQuantity,
+			item.PromoId, item.PromoCode, item.PromoName, item.PromoDiscountType, item.PromoDiscountAmount,
+			item.FinalPrice,
+		); err != nil {
 			return err
 		}
+	}
 
-		const itemQuery = `
-			INSERT INTO order_item (
-				id, order_id, product_id, variant_id,
-				product_name, product_price, quantity,
-				flash_sale_id, flash_sale_name, flash_sale_discount_percent, flash_sale_discount_price, flash_sale_original_price, flash_sale_quantity,
-				promo_id, promo_code, promo_name, promo_discount_type, promo_discount_amount,
-				final_price, created_at
-			) VALUES (
-				$1, $2, $3, $4, $5, $6, $7, $8, $9,
-				$10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW()
-			)
-		`
-		for _, item := range items {
-			if _, err := tx.Exec(ctx, itemQuery,
-				item.Id, item.OrderId, item.ProductId, item.VariantId,
-				item.ProductName, item.ProductPrice, item.Quantity,
-				item.FlashSaleId, item.FlashSaleName, item.FlashSaleDiscountPercent, item.FlashSaleDiscountPrice, item.FlashSaleOriginalPrice, item.FlashSaleQuantity,
-				item.PromoId, item.PromoCode, item.PromoName, item.PromoDiscountType, item.PromoDiscountAmount,
-				item.FinalPrice,
-			); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	return nil
 }
 
 func (r *orderRepository) Create(ctx context.Context, args domain.Order) error {
@@ -65,7 +82,17 @@ func (r *orderRepository) Create(ctx context.Context, args domain.Order) error {
 		INSERT INTO orders (id, order_ref, user_id, address_id, total_amount, status, snap_token, expire_time, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
 	`
-	_, err := r.db.Exec(ctx, query, args.Id, args.OrderRef, args.UserId, args.AddressId, args.TotalAmount, args.Status, args.SnapToken, args.ExpireTime)
+	_, err := r.db.Exec(ctx, query,
+		args.Id,
+		args.OrderRef,
+		args.UserId,
+		args.AddressId,
+		args.TotalAmount,
+		args.Status,
+		args.SnapToken,
+		args.ExpireTime,
+	)
+
 	return err
 }
 
@@ -91,9 +118,11 @@ func (r *orderRepository) UpdateStatus(ctx context.Context, id string, fromStatu
 	if err != nil {
 		return err
 	}
+
 	if cmdTag.RowsAffected() == 0 {
 		return errors.New(constants.ErrInvalidOrderStatusTransition)
 	}
+
 	return nil
 }
 
@@ -120,6 +149,7 @@ func (r *orderRepository) ReadById(ctx context.Context, id string) (*domain.Orde
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -203,16 +233,17 @@ func (r *orderRepository) ReadItemsByOrderId(ctx context.Context, orderId string
 
 func (r *orderRepository) List(ctx context.Context, params dto.ListOrderParams) ([]domain.Order, error) {
 	const query = `
-		SELECT id, order_ref, user_id, address_id, total_amount, status, snap_token, expire_time, created_at, updated_at
-		FROM orders
+		SELECT o.id, o.order_ref, o.user_id, o.address_id, o.total_amount, o.status, o.snap_token, o.expire_time, o.created_at, o.updated_at, COALESCE(b.email, '')
+		FROM orders o
+		LEFT JOIN buyers b ON b.id::text = o.user_id
 		WHERE (
 			NULLIF($1::text, '') IS NULL
-			OR id::text ILIKE '%' || $1::text || '%'
-			OR user_id ILIKE '%' || $1::text || '%'
+			OR o.id::text ILIKE '%' || $1::text || '%'
+			OR o.user_id ILIKE '%' || $1::text || '%'
 		)
-		AND (NULLIF($2::text, '') IS NULL OR user_id = $2::text)
-		AND (NULLIF($3::text, '') IS NULL OR status = $3::text)
-		AND deleted_at IS NULL
+		AND (NULLIF($2::text, '') IS NULL OR o.user_id = $2::text)
+		AND (NULLIF($3::text, '') IS NULL OR o.status = $3::text)
+		AND o.deleted_at IS NULL
 		ORDER BY
 		  CASE WHEN $4::text = 'total_amount' AND $5::text = 'asc'  THEN total_amount END ASC,
 		  CASE WHEN $4::text = 'created_at'   AND $5::text = 'asc'  THEN created_at   END ASC,
@@ -250,6 +281,7 @@ func (r *orderRepository) List(ctx context.Context, params dto.ListOrderParams) 
 			&o.ExpireTime,
 			&o.CreatedAt,
 			&o.UpdatedAt,
+			&o.BuyerEmail,
 		); err != nil {
 			return nil, err
 		}

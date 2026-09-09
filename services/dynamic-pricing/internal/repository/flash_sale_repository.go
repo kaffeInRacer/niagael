@@ -32,19 +32,20 @@ func (r *flashSaleRepository) List(ctx context.Context, params dto.ListFlashSale
 		AND (NULLIF($3::text, '') IS NULL OR product_id = NULLIF($3::text, '')::uuid)
 		AND (NULLIF($4::text, '') IS NULL OR discount_percent >= NULLIF($4::text, '')::numeric)
 		AND (NULLIF($5::text, '') IS NULL OR discount_percent <= NULLIF($5::text, '')::numeric)
+		AND (NOT $6::boolean OR (stock > 0 AND NOW() BETWEEN start_time AND end_time))
 		AND deleted_at IS NULL
 		ORDER BY
-		  CASE WHEN $6::text = 'name'       AND $7::text = 'asc'  THEN name       END ASC,
-		  CASE WHEN $6::text = 'start_time' AND $7::text = 'asc'  THEN start_time END ASC,
-		  CASE WHEN $6::text = 'end_time'   AND $7::text = 'asc'  THEN end_time   END ASC,
-		  CASE WHEN $6::text = 'created_at' AND $7::text = 'asc'  THEN created_at END ASC,
-		  CASE WHEN $6::text = 'name'       AND $7::text = 'desc' THEN name       END DESC,
-		  CASE WHEN $6::text = 'start_time' AND $7::text = 'desc' THEN start_time END DESC,
-		  CASE WHEN $6::text = 'end_time'   AND $7::text = 'desc' THEN end_time   END DESC,
-		  CASE WHEN $6::text = 'created_at' AND $7::text = 'desc' THEN created_at END DESC,
+		  CASE WHEN $7::text = 'name'       AND $8::text = 'asc'  THEN name       END ASC,
+		  CASE WHEN $7::text = 'start_time' AND $8::text = 'asc'  THEN start_time END ASC,
+		  CASE WHEN $7::text = 'end_time'   AND $8::text = 'asc'  THEN end_time   END ASC,
+		  CASE WHEN $7::text = 'created_at' AND $8::text = 'asc'  THEN created_at END ASC,
+		  CASE WHEN $7::text = 'name'       AND $8::text = 'desc' THEN name       END DESC,
+		  CASE WHEN $7::text = 'start_time' AND $8::text = 'desc' THEN start_time END DESC,
+		  CASE WHEN $7::text = 'end_time'   AND $8::text = 'desc' THEN end_time   END DESC,
+		  CASE WHEN $7::text = 'created_at' AND $8::text = 'desc' THEN created_at END DESC,
 		created_at DESC
-		LIMIT $8::int
-		OFFSET $9::int
+		LIMIT $9::int
+		OFFSET $10::int
 	`
 	rows, err := r.db.Query(ctx, query,
 		params.Search,
@@ -52,6 +53,7 @@ func (r *flashSaleRepository) List(ctx context.Context, params dto.ListFlashSale
 		params.ProductId,
 		params.MinDiscountPercent,
 		params.MaxDiscountPercent,
+		params.CurrentOnly,
 		params.OrderBy,
 		params.OrderDir,
 		params.PageSize,
@@ -96,6 +98,7 @@ func (r *flashSaleRepository) ListCount(ctx context.Context, params dto.ListFlas
 		AND (NULLIF($3::text, '') IS NULL OR product_id = NULLIF($3::text, '')::uuid)
 		AND (NULLIF($4::text, '') IS NULL OR discount_percent >= NULLIF($4::text, '')::numeric)
 		AND (NULLIF($5::text, '') IS NULL OR discount_percent <= NULLIF($5::text, '')::numeric)
+		AND (NOT $6::boolean OR (stock > 0 AND NOW() BETWEEN start_time AND end_time))
 		AND deleted_at IS NULL
 	`
 
@@ -106,6 +109,7 @@ func (r *flashSaleRepository) ListCount(ctx context.Context, params dto.ListFlas
 		params.ProductId,
 		params.MinDiscountPercent,
 		params.MaxDiscountPercent,
+		params.CurrentOnly,
 	).Scan(&count)
 	if err != nil {
 		return 0, err
@@ -306,7 +310,6 @@ func (r *flashSaleRepository) ReadByVariantId(ctx context.Context, productId str
 	return &fs, nil
 }
 
-// ReadByProductIds retrieves flash sales for multiple product IDs in a single query (no variants)
 func (r *flashSaleRepository) ReadByProductIds(ctx context.Context, productIds []string) ([]domain.FlashSale, error) {
 	if len(productIds) == 0 {
 		return nil, nil
@@ -354,13 +357,11 @@ func (r *flashSaleRepository) ReadByProductIds(ctx context.Context, productIds [
 	return flashSales, rows.Err()
 }
 
-// ReadByVariantIds retrieves flash sales for multiple variant IDs in a single query
 func (r *flashSaleRepository) ReadByVariantIds(ctx context.Context, items []dto.VariantIdPair) ([]domain.FlashSale, error) {
 	if len(items) == 0 {
 		return nil, nil
 	}
 
-	// Build the query dynamically for multiple product_id + variant_id pairs
 	const query = `
 		SELECT id, name, product_id, variant_id, discount_percent, stock, max_per_user, start_time, end_time, is_active, created_at, updated_at
 		FROM flash_sale

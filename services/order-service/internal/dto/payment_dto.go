@@ -17,5 +17,4 @@ type MidtransCallbackDto struct {
 	VaNumber          string `json:"va_number"`
 	GrossAmount       string `json:"gross_amount"`
 	SignatureKey      string `json:"signature_key"`
-	PaymentAmount     int64
 }

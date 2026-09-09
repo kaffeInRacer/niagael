@@ -8,10 +8,12 @@ import (
 	"kaffein/order-service/internal/interfaces/IRepository"
 	"kaffein/order-service/internal/interfaces/IUseCase"
 	grpcclient "kaffein/order-service/pkg/grpc/client"
+	"kaffein/order-service/pkg/kafka"
 	"kaffein/order-service/proto/dynamic-pricing"
 	"kaffein/order-service/proto/product"
 	"kaffein/order-service/utils"
 	"kaffein/order-service/utils/constants"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,70 +23,66 @@ type orderUseCase struct {
 	repo          IRepository.OrderRepository
 	productClient *grpcclient.ProductClient
 	pricingClient *grpcclient.DynamicPricingClient
+	outbox        OutboxRepo
+}
+
+type OutboxRepo interface {
+	Insert(ctx context.Context, topic, key string, payload any) error
 }
 
 func NewOrderUseCase(
 	repo IRepository.OrderRepository,
 	productClient *grpcclient.ProductClient,
 	pricingClient *grpcclient.DynamicPricingClient,
+	outbox OutboxRepo,
 ) IUseCase.OrderUseCase {
 	return &orderUseCase{
 		repo:          repo,
 		productClient: productClient,
 		pricingClient: pricingClient,
+		outbox:        outbox,
 	}
 }
 
 func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*domain.Order, error) {
+	for _, item := range args.Items {
+		if item.Quantity <= 0 || item.Quantity > math.MaxInt32 {
+			return nil, errors.New("quantity must be between 1 and 2147483647")
+		}
+	}
+
 	orderId := uuid.New().String()
 	orderRef := utils.GenerateOrderRef()
 
-	// Collect all product IDs for batch fetch
 	var productIds []string
 	for _, item := range args.Items {
 		productIds = append(productIds, item.ProductId)
 	}
 
-	// Fetch all products in single query (avoid N+1)
 	products, err := uc.productClient.GetProducts(ctx, productIds)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create product map for quick lookup
 	productMap := make(map[string]*productpb.Product)
 	for _, p := range products {
 		productMap[p.Id] = p
 	}
 
-	// Validate all products exist
 	for _, item := range args.Items {
 		if _, ok := productMap[item.ProductId]; !ok {
 			return nil, errors.New(constants.ErrProductNotFound)
 		}
 	}
 
-	// Fetch promo if provided (for snapshot and validation)
-	var promo *dynamicpricingpb.Promo
-	if args.PromoCode != "" {
-		promo, err = uc.pricingClient.GetPromoByCode(ctx, args.PromoCode)
-		if err != nil {
-			return nil, err
-		}
-		if promo == nil {
-			return nil, errors.New(constants.ErrPromoNotFound)
-		}
-	}
-
 	var totalAmount int64
+	var subtotal int64
 	var orderItems []domain.OrderItem
 	var stockItems []*productpb.StockItem
-	hasFlashSale := false
 
 	for _, item := range args.Items {
 		product := productMap[item.ProductId]
 
-		// Find variant (per variant logic)
 		var variant *productpb.ProductVariant
 		if item.VariantId != "" {
 			for _, v := range product.Variants {
@@ -98,7 +96,6 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 			}
 		}
 
-		// Determine price and stock (variant > product)
 		var unitPrice int64
 		var availableStock int64
 		if variant != nil {
@@ -108,13 +105,18 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 			unitPrice = product.Price
 			availableStock = product.Stock - product.StockReserved
 		}
+		if unitPrice < 0 || unitPrice > math.MaxInt64/int64(item.Quantity) {
+			return nil, errors.New("order item total exceeds int64")
+		}
+		itemSubtotal := unitPrice * int64(item.Quantity)
+		if subtotal > math.MaxInt64-itemSubtotal {
+			return nil, errors.New("order subtotal exceeds int64")
+		}
 
-		// Check available stock (stock minus reserved)
 		if availableStock < int64(item.Quantity) {
 			return nil, errors.New(constants.ErrInsufficientStock)
 		}
 
-		// Prepare stock item for reservation
 		stockItem := &productpb.StockItem{
 			ProductId: item.ProductId,
 			VariantId: item.VariantId,
@@ -122,7 +124,6 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 		}
 		stockItems = append(stockItems, stockItem)
 
-		// Auto check flash sale for this variant
 		var flashSaleId, flashSaleName *string
 		var flashSaleDiscountPrice, flashSaleOriginalPrice *int64
 		var flashSaleDiscountPercent *int
@@ -130,24 +131,21 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 
 		var flashSale *dynamicpricingpb.FlashSale
 		if variant != nil {
-			// Check flash sale by variant
 			flashSale, err = uc.pricingClient.GetFlashSaleByVariantId(ctx, item.ProductId, item.VariantId)
 		} else {
-			// Check flash sale by product
 			flashSale, err = uc.pricingClient.GetFlashSaleByProductId(ctx, item.ProductId)
 		}
 
-		if err == nil && flashSale != nil && flashSale.IsActive && flashSale.DiscountPercent > 0 {
-			hasFlashSale = true
-
-			// Flash sale is active, calculate allocation
+		if err != nil {
+			return nil, err
+		}
+		if flashSale != nil && flashSale.IsActive && flashSale.DiscountPercent > 0 {
 			fsId := flashSale.Id
 			fsName := flashSale.Name
 			fsDiscountPercent := int(flashSale.DiscountPercent)
 			fsDiscountPrice := utils.DiscountedPrice(unitPrice, flashSale.DiscountPercent)
 			fsOriginalPrice := unitPrice
 
-			// Calculate how many items get flash sale price
 			fsQuantity := item.Quantity
 			if flashSale.MaxPerUser > 0 && fsQuantity > int(flashSale.MaxPerUser) {
 				fsQuantity = int(flashSale.MaxPerUser)
@@ -164,17 +162,13 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 			flashSaleQuantity = &fsQuantity
 		}
 
-		// Calculate final price
 		var finalPrice int64
 		if flashSaleDiscountPrice != nil && flashSaleQuantity != nil {
-			// Items at flash sale price
 			flashSaleTotal := *flashSaleDiscountPrice * int64(*flashSaleQuantity)
-			// Remaining items at normal price
 			normalQuantity := item.Quantity - *flashSaleQuantity
 			normalTotal := unitPrice * int64(normalQuantity)
 			finalPrice = flashSaleTotal + normalTotal
 		} else {
-			// No flash sale, all items at normal price
 			finalPrice = unitPrice * int64(item.Quantity)
 		}
 
@@ -203,82 +197,59 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 
 		orderItems = append(orderItems, orderItem)
 		totalAmount += finalPrice
+		subtotal += itemSubtotal
 	}
 
-	// Validate and apply promo
-	var promoSnapshot *PromoSnapshot
-	if promo != nil {
-		// Check if promo can combine with flash sale
-		if hasFlashSale && !promo.CanCombineFlashSale {
-			return nil, errors.New(constants.ErrPromoCannotCombineFlashSale)
+	allocationRequest := &dynamicpricingpb.AllocatePricingRequest{
+		OrderId: orderId, UserId: args.UserId, PromoCode: args.PromoCode, Subtotal: subtotal,
+	}
+	for _, item := range orderItems {
+		requestItem := &dynamicpricingpb.PricingAllocationItemRequest{
+			ItemId: item.Id, Quantity: int32(item.Quantity), UnitPrice: item.ProductPrice,
 		}
-
-		// Validate promo
-		if !promo.IsActive {
-			return nil, errors.New(constants.ErrPromoNotActive)
+		if item.FlashSaleId != nil {
+			requestItem.FlashSaleId = *item.FlashSaleId
 		}
-
-		now := time.Now()
-		startDate, _ := time.Parse(time.RFC3339, promo.StartDate)
-		endDate, _ := time.Parse(time.RFC3339, promo.EndDate)
-		if now.Before(startDate) || now.After(endDate) {
-			return nil, errors.New(constants.ErrPromoExpired)
-		}
-
-		if promo.Quantity > 0 && promo.UsedCount >= promo.Quantity {
-			return nil, errors.New(constants.ErrPromoLimitReached)
-		}
-
-		// Check per-user usage limit
-		if promo.MaxUsagePerUser > 0 {
-			usage, err := uc.pricingClient.GetPromoUsage(ctx, promo.Id, args.UserId)
-			if err == nil && usage != nil && usage.Quantity >= int32(promo.MaxUsagePerUser) {
-				return nil, errors.New(constants.ErrPromoLimitReached)
-			}
-		}
-
-		if totalAmount < promo.MinPurchase {
-			return nil, errors.New(constants.ErrPromoMinPurchase)
-		}
-
-		// Calculate discount
-		var discount int64
-		switch promo.DiscountType {
-		case "percentage":
-			discount = totalAmount * promo.DiscountValue / 100
-			if promo.MaxDiscount > 0 && discount > promo.MaxDiscount {
-				discount = promo.MaxDiscount
-			}
-		case "fixed":
-			discount = promo.DiscountValue
-			if discount > totalAmount {
-				discount = totalAmount
-			}
-		}
-
-		// Save promo snapshot
-		promoSnapshot = &PromoSnapshot{
-			Id:             promo.Id,
-			Code:           promo.Code,
-			Name:           promo.Name,
-			DiscountType:   promo.DiscountType,
-			DiscountAmount: discount,
-		}
-
-		// Apply discount to total
-		totalAmount -= discount
+		allocationRequest.Items = append(allocationRequest.Items, requestItem)
 	}
 
-	// Add promo snapshot to order items
+	allocation, err := uc.pricingClient.AllocatePricing(ctx, allocationRequest)
+	if err != nil {
+		return nil, errors.Join(err, uc.compensate(ctx, orderId, args.UserId, stockItems))
+	}
+
+	allocatedItems := make(map[string]*dynamicpricingpb.PricingAllocationItem, len(allocation.Items))
+	for _, item := range allocation.Items {
+		allocatedItems[item.ItemId] = item
+	}
+	totalAmount = 0
 	for i := range orderItems {
-		if promoSnapshot != nil {
-			orderItems[i].PromoId = &promoSnapshot.Id
-			orderItems[i].PromoCode = &promoSnapshot.Code
-			orderItems[i].PromoName = &promoSnapshot.Name
-			orderItems[i].PromoDiscountType = &promoSnapshot.DiscountType
-			orderItems[i].PromoDiscountAmount = &promoSnapshot.DiscountAmount
+		item := &orderItems[i]
+		item.FlashSaleId = nil
+		item.FlashSaleName = nil
+		item.FlashSaleDiscountPercent = nil
+		item.FlashSaleDiscountPrice = nil
+		item.FlashSaleOriginalPrice = nil
+		item.FlashSaleQuantity = nil
+		item.FinalPrice = item.ProductPrice * int64(item.Quantity)
+		if allocated := allocatedItems[item.Id]; allocated != nil {
+			flashSaleID, name := allocated.FlashSaleId, allocated.Name
+			discountPercent, quantity := int(allocated.DiscountPercent), int(allocated.Quantity)
+			discountPrice, originalPrice := utils.DiscountedPrice(item.ProductPrice, allocated.DiscountPercent), item.ProductPrice
+			item.FlashSaleId, item.FlashSaleName = &flashSaleID, &name
+			item.FlashSaleDiscountPercent, item.FlashSaleQuantity = &discountPercent, &quantity
+			item.FlashSaleDiscountPrice, item.FlashSaleOriginalPrice = &discountPrice, &originalPrice
+			item.FinalPrice = discountPrice*int64(quantity) + item.ProductPrice*int64(item.Quantity-quantity)
 		}
+		if allocation.PromoId != "" {
+			promoID, code, name := allocation.PromoId, allocation.PromoCode, allocation.PromoName
+			discountType, discount := allocation.PromoDiscountType, allocation.PromoDiscountAmount
+			item.PromoId, item.PromoCode, item.PromoName = &promoID, &code, &name
+			item.PromoDiscountType, item.PromoDiscountAmount = &discountType, &discount
+		}
+		totalAmount += item.FinalPrice
 	}
+	totalAmount -= allocation.PromoDiscountAmount
 
 	order := domain.Order{
 		Id:          orderId,
@@ -290,45 +261,33 @@ func (uc *orderUseCase) Create(ctx context.Context, args dto.CreateOrderDto) (*d
 		CreatedAt:   time.Now(),
 	}
 
-	if err := uc.repo.CreateWithItems(ctx, order, orderItems); err != nil {
-		return nil, err
-	}
-
-	// Reserve stock via gRPC
 	_, err = uc.productClient.ReserveStock(ctx, orderId, stockItems)
 	if err != nil {
-		// If stock reservation fails, we should delete the order
-		// For now, we'll just return the error
-		return nil, err
+		return nil, errors.Join(err, uc.compensate(ctx, orderId, args.UserId, stockItems))
 	}
 
-	// Decrement flash sale stock and record usage
-	for _, item := range orderItems {
-		if item.FlashSaleId != nil && item.FlashSaleQuantity != nil {
-			// Decrement flash sale stock
-			_, err = uc.pricingClient.DecrementFlashSaleStock(ctx, *item.FlashSaleId, int32(*item.FlashSaleQuantity))
-			if err != nil {
-				// Log error but don't fail the order
-				// Flash sale stock will be handled separately
-			}
-
-			// Record flash sale usage
-			_, err = uc.pricingClient.IncrementFlashSaleUsage(ctx, *item.FlashSaleId, args.UserId, int32(*item.FlashSaleQuantity))
-			if err != nil {
-				// Log error but don't fail the order
-			}
-		}
+	if err := uc.repo.CreateWithItemsWithTx(ctx, order, orderItems); err != nil {
+		return nil, errors.Join(err, uc.compensate(ctx, orderId, args.UserId, stockItems))
 	}
 
 	return &order, nil
 }
 
-type PromoSnapshot struct {
-	Id             string
-	Code           string
-	Name           string
-	DiscountType   string
-	DiscountAmount int64
+func (uc *orderUseCase) releaseStock(orderID string, items []*productpb.StockItem) error {
+	rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(context.Background()), 5*time.Second)
+	defer cancel()
+	_, err := uc.productClient.ReleaseStock(rollbackCtx, orderID, items)
+	return err
+}
+
+func (uc *orderUseCase) compensate(ctx context.Context, orderID, userID string, stockItems []*productpb.StockItem) error {
+	return errors.Join(uc.releaseStock(orderID, stockItems), uc.releasePricing(orderID, userID))
+}
+
+func (uc *orderUseCase) releasePricing(orderID, userID string) error {
+	rollbackCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return uc.pricingClient.ReleasePricing(rollbackCtx, orderID, userID)
 }
 
 func (uc *orderUseCase) List(ctx context.Context, params dto.ListOrderParams) ([]domain.Order, int64, error) {
@@ -415,5 +374,36 @@ func (uc *orderUseCase) UpdateStatus(ctx context.Context, id string, status stri
 	if !ok {
 		return errors.New(constants.ErrInvalidOrderStatusTransition)
 	}
-	return uc.repo.UpdateStatus(ctx, id, fromStatuses, status)
+	if err := uc.repo.UpdateStatus(ctx, id, fromStatuses, status); err != nil {
+		return err
+	}
+
+	if status == "cancelled" || status == "refunded" {
+		items, err := uc.repo.ReadItemsByOrderId(ctx, id)
+		if err != nil {
+			return err
+		}
+		order, err := uc.repo.ReadById(ctx, id)
+		if err != nil {
+			return err
+		}
+		userID := ""
+		if order != nil {
+			userID = order.UserId
+		}
+		eventType := "order.cancelled"
+		if status == "refunded" {
+			eventType = "order.refunded"
+		}
+		event := kafka.OrderEvent{Type: eventType, OrderID: id, UserID: userID}
+		for _, item := range items {
+			event.Items = append(event.Items, kafka.OrderEventItem{
+				ProductID: item.ProductId,
+				VariantID: item.VariantId,
+				Quantity:  item.Quantity,
+			})
+		}
+		return uc.outbox.Insert(ctx, "order-events", id, event)
+	}
+	return nil
 }

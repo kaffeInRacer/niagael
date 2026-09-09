@@ -15,6 +15,7 @@ import (
 	"kaffein/auth-service/internal/interfaces/IUseCase"
 	"kaffein/auth-service/internal/token"
 	"kaffein/auth-service/utils/constants"
+	"kaffein/auth-service/utils/events"
 )
 
 type authUseCase struct {
@@ -37,7 +38,21 @@ func (u *authUseCase) Register(ctx context.Context, req dto.RegisterRequest) (*d
 	if err := u.users.Create(ctx, user); err != nil {
 		return nil, err
 	}
+	publishUser("registered", user)
 	return user, nil
+}
+
+func publishUser(eventType string, user *domain.User) {
+	if user == nil {
+		return
+	}
+	events.Publish(constants.UserTopic, user.ID.String(), map[string]any{
+		"type":      eventType,
+		"id":        user.ID.String(),
+		"email":     user.Email,
+		"role":      user.Role,
+		"is_active": user.IsActive,
+	})
 }
 
 func (u *authUseCase) Login(ctx context.Context, req dto.LoginRequest) (*dto.TokenResponse, error) {
@@ -86,10 +101,20 @@ func (u *authUseCase) Refresh(ctx context.Context, raw string) (*dto.TokenRespon
 	if !user.IsActive {
 		return nil, errors.New(constants.ErrUserDisabled)
 	}
-	if err := u.sessions.Revoke(ctx, claims.SessionID); err != nil {
+	access, refresh, sid, accessExpiry, err := u.tokens.Pair(user.ID, user.Role)
+	if err != nil {
 		return nil, err
 	}
-	return u.issue(ctx, user)
+	rotated, err := u.sessions.Rotate(ctx, claims.SessionID, *session, sid, IRepository.Session{
+		UserID: user.ID, Role: user.Role, RefreshToken: refresh, AccessExpiresAt: accessExpiry,
+	}, u.cfg.RefreshTTL)
+	if err != nil {
+		return nil, err
+	}
+	if !rotated {
+		return nil, errors.New(constants.ErrInvalidToken)
+	}
+	return &dto.TokenResponse{AccessToken: access, RefreshToken: refresh, TokenType: "Bearer", ExpiresIn: int64(u.cfg.AccessTTL.Seconds())}, nil
 }
 
 func (u *authUseCase) Logout(ctx context.Context, sid uuid.UUID, expiration int64) error {
@@ -126,6 +151,7 @@ func (u *adminUseCase) ChangeRole(ctx context.Context, id uuid.UUID, role string
 	if err := u.sessions.RevokeUser(ctx, id); err != nil {
 		return nil, err
 	}
+	publishUser("role-changed", user)
 	return user, nil
 }
 
@@ -137,5 +163,52 @@ func (u *adminUseCase) ChangeStatus(ctx context.Context, id uuid.UUID, active bo
 	if err := u.sessions.RevokeUser(ctx, id); err != nil {
 		return nil, err
 	}
+	publishUser("status-changed", user)
 	return user, nil
+}
+
+func (u *adminUseCase) CreateUser(ctx context.Context, req dto.CreateUserRequest) (*domain.User, error) {
+	if !domain.ValidRole(req.Role) {
+		return nil, errors.New(constants.ErrInvalidRole)
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	user := &domain.User{
+		ID:           uuid.New(),
+		Email:        strings.ToLower(strings.TrimSpace(req.Email)),
+		PasswordHash: string(hash),
+		Role:         req.Role,
+	}
+	if err := u.users.Create(ctx, user); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (u *adminUseCase) UpdateUserEmail(ctx context.Context, id uuid.UUID, email string) (*domain.User, error) {
+	user, err := u.users.UpdateEmail(ctx, id, strings.ToLower(strings.TrimSpace(email)))
+	if err != nil {
+		return nil, err
+	}
+	if err := u.sessions.RevokeUser(ctx, id); err != nil {
+		return nil, err
+	}
+	publishUser("email-changed", user)
+	return user, nil
+}
+
+func (u *adminUseCase) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	if err := u.users.Delete(ctx, id); err != nil {
+		return err
+	}
+	if err := u.sessions.RevokeUser(ctx, id); err != nil {
+		return err
+	}
+	events.Publish(constants.UserTopic, id.String(), map[string]any{
+		"type": "deleted",
+		"id":   id.String(),
+	})
+	return nil
 }

@@ -11,13 +11,26 @@ type Config struct {
 	Redis    RedisConfig    `yaml:"redis"`
 	Midtrans MidtransConfig `yaml:"midtrans"`
 	JWT      JWTConfig      `yaml:"jwt"`
+	RBAC     RBACConfig     `yaml:"rbac"`
 	Kafka    KafkaConfig    `yaml:"kafka"`
+}
+
+type KafkaConfig struct {
+	Brokers        []string `yaml:"brokers"`
+	GroupID        string   `yaml:"group_id"`
+	CasbinTopic    string   `yaml:"casbin_topic"`
+	OrderTopic     string   `yaml:"order_topic"`
+	UserTopic      string   `yaml:"user_topic"`
 }
 
 type JWTConfig struct {
 	Secret  string `yaml:"secret"`
 	Issuer  string `yaml:"issuer"`
 	RedisDB int    `yaml:"redis_db"`
+}
+
+type RBACConfig struct {
+	PolicyReloadInterval time.Duration `yaml:"policy_reload_interval"`
 }
 
 type GrpcConfig struct {
@@ -64,10 +77,4 @@ type MidtransConfig struct {
 	ServerKey   string `yaml:"server_key"`
 	ClientKey   string `yaml:"client_key"`
 	Environment string `yaml:"environment"`
-}
-
-type KafkaConfig struct {
-	Brokers     []string `yaml:"brokers"`
-	GroupID     string   `yaml:"group_id"`
-	CasbinTopic string   `yaml:"casbin_topic"`
 }

@@ -35,11 +35,24 @@ redis:
   max_conn_idle_time: 10m
 
 jwt:
-  secret: "your_jwt_secret_key_here"
+  # Required. Set JWT_SECRET in the environment or config.yaml (ignored by Git).
+  secret: ""
   issuer: "auth-service"
   redis_db: 3
 
+rbac:
+  policy_reload_interval: 5s
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  group_id: "order-service"
+  casbin_topic: "rbac-policies"
+  order_topic: "order-events"
+  user_topic: "user-events"
+
 midtrans:
-  server_key: "SB-Mid-server-your_server_key"
-  client_key: "SB-Mid-client-your_client_key"
+  # Required outside development. Prefer MIDTRANS_SERVER_KEY and MIDTRANS_CLIENT_KEY.
+  server_key: ""
+  client_key: ""
   environment: "sandbox"

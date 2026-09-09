@@ -39,25 +39,22 @@ func (app *application) routes(ctx context.Context) *gin.Engine {
 		app.config.Midtrans.Environment,
 	)
 
-	// Cart
 	cartRepo := repository.NewCartRepository(store)
 	cartUseCase := usecase.NewCartUseCase(cartRepo, app.productClient, app.pricingClient)
 	handler.NewCartHandler(cartUseCase, app.logger, r, app.auth)
 
-	// Address
 	addressRepo := repository.NewAddressRepository(store)
 	addressUseCase := usecase.NewAddressUseCase(addressRepo)
 	handler.NewAddressHandler(addressUseCase, app.logger, r, app.auth)
 
-	// Order
 	orderRepo := repository.NewOrderRepository(store)
 	orderItemRepo := repository.NewOrderItemRepository(store)
-	orderUseCase := usecase.NewOrderUseCase(orderRepo, app.productClient, app.pricingClient)
+	outboxRepo := repository.NewOutboxRepository(app.pgx, store)
+	orderUseCase := usecase.NewOrderUseCase(orderRepo, app.productClient, app.pricingClient, outboxRepo)
 	handler.NewOrderHandler(orderUseCase, addressUseCase, app.logger, r, app.auth)
 
-	// Payment
 	paymentRepo := repository.NewPaymentRepository(store)
-	paymentUseCase := usecase.NewPaymentUseCase(paymentRepo, orderRepo, orderItemRepo, midtransClient, app.productClient)
+	paymentUseCase := usecase.NewPaymentUseCase(paymentRepo, orderRepo, orderItemRepo, midtransClient, app.productClient, app.pricingClient, outboxRepo)
 	handler.NewPaymentHandler(paymentUseCase, orderUseCase, app.logger, r, app.auth)
 
 	return r

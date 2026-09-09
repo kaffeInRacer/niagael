@@ -2,11 +2,13 @@ package handler
 
 import (
 	"kaffein/dynamic-pricing-service/internal/auth"
+	"kaffein/dynamic-pricing-service/internal/domain"
 	"kaffein/dynamic-pricing-service/internal/dto"
 	"kaffein/dynamic-pricing-service/internal/interfaces/IUseCase"
 	"kaffein/dynamic-pricing-service/utils/constants"
 	"kaffein/dynamic-pricing-service/utils/validator"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
@@ -25,15 +27,13 @@ func NewPromoHandler(usecase IUseCase.PromoUseCase, logger zerolog.Logger, engin
 		v:       validator.Get(),
 	}
 
-	// Buyer: read promos + apply
 	promos := engine.Group("/promos")
 	{
-		promos.GET("", h.List)
-		promos.GET("/:id", h.ReadById)
+		promos.GET("", h.ListCurrent)
+		promos.GET("/:id", h.ReadCurrentById)
 		promos.POST("/apply/:code/:userId", authorization.Authenticate(), authorization.Authorize("promos", "apply"), h.ApplyPromo)
 	}
 
-	// Admin: full CRUD promos
 	adminPromos := engine.Group("/admin/promos")
 	{
 		adminPromos.Use(authorization.Authenticate())
@@ -48,6 +48,14 @@ func NewPromoHandler(usecase IUseCase.PromoUseCase, logger zerolog.Logger, engin
 }
 
 func (h *promoHandler) List(c *gin.Context) {
+	h.list(c, false)
+}
+
+func (h *promoHandler) ListCurrent(c *gin.Context) {
+	h.list(c, true)
+}
+
+func (h *promoHandler) list(c *gin.Context, currentOnly bool) {
 	var params dto.ListPromoParams
 	if err := c.ShouldBindQuery(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -58,6 +66,11 @@ func (h *promoHandler) List(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
 		return
 	}
+	if currentOnly {
+		active := true
+		params.IsActive = &active
+		params.CurrentOnly = true
+	}
 	params.PageOffset *= params.PageSize
 
 	promos, count, err := h.usecase.List(c.Request.Context(), params)
@@ -67,8 +80,16 @@ func (h *promoHandler) List(c *gin.Context) {
 		return
 	}
 
+	data := any(promos)
+	if currentOnly {
+		publicPromos := make([]dto.PublicPromoResponse, 0, len(promos))
+		for _, promo := range promos {
+			publicPromos = append(publicPromos, dto.ToPublicPromoResponse(promo))
+		}
+		data = publicPromos
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"data":  promos,
+		"data":  data,
 		"count": count,
 	})
 }
@@ -153,6 +174,26 @@ func (h *promoHandler) ReadById(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": promo})
+}
+
+func (h *promoHandler) ReadCurrentById(c *gin.Context) {
+	id := c.Param("id")
+	promo, err := h.usecase.ReadById(c.Request.Context(), id)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("failed to read promo by id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+	if !currentPromo(promo, time.Now()) {
+		c.JSON(http.StatusNotFound, gin.H{"error": constants.ErrPromoNotFound})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": dto.ToPublicPromoResponse(*promo)})
+}
+
+func currentPromo(promo *domain.Promo, now time.Time) bool {
+	return promo != nil && promo.IsActive && !now.Before(promo.StartDate) && !now.After(promo.EndDate) &&
+		(promo.Quantity == 0 || promo.UsedCount < promo.Quantity)
 }
 
 func (h *promoHandler) ApplyPromo(c *gin.Context) {

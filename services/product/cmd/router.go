@@ -38,23 +38,21 @@ func (app *application) routes(ctx context.Context) *gin.Engine {
 		app.logger.Fatal().Err(err).Msg("failed to initialize minio storage")
 	}
 
-	// Init repositories
 	categoryRepo := repository.NewCategoryRepository(store)
 	productRepo := repository.NewProductRepository(store)
 	productImageRepo := repository.NewProductImageRepository(store)
 	variantRepo := repository.NewVariantRepository(store)
+	stockRepo := repository.NewStockRepository(store)
 
-	// Init usecases
 	categoryUseCase := usecase.NewCategoryUseCase(categoryRepo)
-	productUseCase := usecase.NewProductUseCase(productRepo, productImageRepo, variantRepo)
+	productUseCase := usecase.NewProductUseCase(productRepo, productImageRepo, variantRepo, stockRepo)
 	productImageUseCase := usecase.NewProductImageUseCase(productImageRepo)
 	variantUseCase := usecase.NewVariantUseCase(variantRepo)
 
 	productImageHandler := handler.NewProductImageHandler(productImageUseCase, storage, app.logger)
-	// Init handlers (each registers its own routes)
 	handler.NewCategoryHandler(categoryUseCase, app.logger, r, app.auth)
 	handler.NewVariantHandler(variantUseCase, app.logger, r, app.auth)
-	handler.NewProductHandler(productUseCase, app.pricingClient, app.logger, r, productImageHandler, app.auth)
+	handler.NewProductHandler(productUseCase, app.pricingClient, app.logger, r, productImageHandler, app.auth, repository.NewFlashSaleProjectionRepository(app.pgx))
 
 	app.startGrpcServer(ctx, productUseCase)
 	return r

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kaffein/product-service/internal/interfaces/IUseCase"
 	"kaffein/product-service/pkg/minio/storage"
+	"kaffein/product-service/utils/constants"
 	"kaffein/product-service/utils/validator"
 	"net/http"
 	"strconv"
@@ -65,9 +66,15 @@ func (h *productImageHandler) Create(c *gin.Context) {
 }
 
 func (h *productImageHandler) Delete(c *gin.Context) {
+	productId := c.Param("id")
 	id := c.Param("image_id")
 
-	if err := h.usecase.Delete(c.Request.Context(), id); err != nil {
+	if err := h.usecase.Delete(c.Request.Context(), productId, id); err != nil {
+		if err.Error() == constants.ErrImageNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+
 		h.logger.Error().Err(err).Msg("failed to delete product image")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return

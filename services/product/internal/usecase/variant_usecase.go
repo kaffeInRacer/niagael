@@ -21,6 +21,10 @@ func (uc *variantUseCase) ListByProductId(ctx context.Context, productId string)
 	return uc.repo.ListByProductId(ctx, productId)
 }
 
+func (uc *variantUseCase) ListActiveByProductId(ctx context.Context, productId string) ([]domain.ProductVariant, error) {
+	return uc.repo.ListActiveByProductId(ctx, productId)
+}
+
 func (uc *variantUseCase) Create(ctx context.Context, productId string, args dto.CreateVariantDto) error {
 	arg := dto.CreateVariantDto{
 		Id:         uuid.New().String(),

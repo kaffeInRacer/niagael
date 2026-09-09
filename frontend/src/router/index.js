@@ -84,9 +84,16 @@ const routes = [
         component: () => import('../pages/admin/Orders.vue')
       },
       {
+        path: 'users',
+        name: 'AdminUsers',
+        component: () => import('../pages/admin/Users.vue'),
+        meta: { roles: ['admin'] }
+      },
+      {
         path: 'roles',
         name: 'AdminRoles',
-        component: () => import('../pages/admin/Roles.vue')
+        component: () => import('../pages/admin/Roles.vue'),
+        meta: { roles: ['admin'] }
       }
     ]
   }
@@ -109,8 +116,11 @@ router.beforeEach(async (to) => {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
 
-  const roles = to.matched.flatMap(record => record.meta.roles || [])
-  if (roles.length > 0 && !roles.some(role => auth.roles.includes(role))) {
+  const deniedByRole = to.matched.some(record => {
+    const allowedRoles = record.meta.roles || []
+    return allowedRoles.length > 0 && !allowedRoles.some(role => auth.roles.includes(role))
+  })
+  if (deniedByRole) {
     return '/'
   }
 })

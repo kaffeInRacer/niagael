@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"errors"
 	"kaffein/order-service/internal/auth"
+	"kaffein/order-service/internal/domain"
 	"kaffein/order-service/internal/dto"
 	"kaffein/order-service/internal/interfaces/IUseCase"
 	"kaffein/order-service/utils/constants"
@@ -30,7 +32,7 @@ func NewPaymentHandler(usecase IUseCase.PaymentUseCase, orderUseCase IUseCase.Or
 	payments := engine.Group("/payments")
 	{
 		payments.Use(authorization.Authenticate())
-		payments.POST("/:orderId", authorization.Authorize("orders", "create"), h.Create)
+		payments.POST("/:orderId", authorization.Authorize("payments", "create"), h.Create)
 	}
 
 	webhooks := engine.Group("/webhooks")
@@ -93,6 +95,10 @@ func (h *paymentHandler) Callback(c *gin.Context) {
 	if err := h.usecase.Callback(c.Request.Context(), args); err != nil {
 		if err.Error() == constants.ErrInvalidPaymentSignature {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+		if errors.Is(err, domain.ErrInvalidPaymentAmount) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		h.logger.Error().Err(err).Msg("failed to process payment callback")

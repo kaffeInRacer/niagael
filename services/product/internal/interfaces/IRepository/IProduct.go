@@ -22,7 +22,7 @@ type ProductRepository interface {
 
 type ProductImageRepository interface {
 	Create(ctx context.Context, args dto.CreateProductImageDto) error
-	Delete(ctx context.Context, id string) error
+	Delete(ctx context.Context, productId string, id string) error
 	ListByProductId(ctx context.Context, productId string) ([]domain.ProductImage, error)
 	ListByProductIds(ctx context.Context, productIds []string) ([]domain.ProductImage, error)
 }

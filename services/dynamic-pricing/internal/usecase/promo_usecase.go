@@ -114,7 +114,10 @@ func (uc *promoUseCase) ApplyPromo(ctx context.Context, code string, userId stri
 
 	if promo.MaxUsagePerUser > 0 {
 		usage, err := uc.usageRepo.GetUsage(ctx, promo.Id, userId)
-		if err == nil && usage != nil && usage.Quantity >= promo.MaxUsagePerUser {
+		if err != nil {
+			return 0, err
+		}
+		if usage != nil && usage.Quantity >= promo.MaxUsagePerUser {
 			return 0, errors.New(constants.ErrPromoMaxUsagePerUser)
 		}
 	}
@@ -137,15 +140,9 @@ func (uc *promoUseCase) ApplyPromo(ctx context.Context, code string, userId stri
 		}
 	}
 
-	// Applying a code in the cart is a quote and must not consume promo quota.
 	return discount, nil
 }
 
 func (uc *promoUseCase) GetUsage(ctx context.Context, promoId string, userId string) (*domain.PromoUsage, error) {
-	usage, err := uc.usageRepo.GetUsage(ctx, promoId, userId)
-	if err != nil {
-		// If no usage found, return nil (not an error)
-		return nil, nil
-	}
-	return usage, nil
+	return uc.usageRepo.GetUsage(ctx, promoId, userId)
 }

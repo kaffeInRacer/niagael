@@ -28,8 +28,8 @@ func (uc *productImageUseCase) Create(ctx context.Context, productId string, fil
 	return uc.repo.Create(ctx, arg)
 }
 
-func (uc *productImageUseCase) Delete(ctx context.Context, id string) error {
-	return uc.repo.Delete(ctx, id)
+func (uc *productImageUseCase) Delete(ctx context.Context, productId string, id string) error {
+	return uc.repo.Delete(ctx, productId, id)
 }
 
 func (uc *productImageUseCase) ListByProductId(ctx context.Context, productId string) ([]domain.ProductImage, error) {

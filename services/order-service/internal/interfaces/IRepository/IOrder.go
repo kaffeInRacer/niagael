@@ -8,7 +8,7 @@ import (
 
 type OrderRepository interface {
 	Create(ctx context.Context, args domain.Order) error
-	CreateWithItems(ctx context.Context, order domain.Order, items []domain.OrderItem) error
+	CreateWithItemsWithTx(ctx context.Context, order domain.Order, items []domain.OrderItem) error
 	Update(ctx context.Context, id string, args domain.Order) error
 	UpdateStatus(ctx context.Context, id string, fromStatuses []string, status string) error
 	ReadById(ctx context.Context, id string) (*domain.Order, error)

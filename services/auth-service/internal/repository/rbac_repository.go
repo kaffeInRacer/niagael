@@ -2,11 +2,17 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/segmentio/kafka-go"
+
+	"kaffein/auth-service/utils/events"
+)
+
+var (
+	ErrPolicyExists   = errors.New("policy already exists")
+	ErrPolicyNotFound = errors.New("policy not found")
 )
 
 type Policy struct {
@@ -17,42 +23,13 @@ type Policy struct {
 	Action   string `json:"action"`
 }
 
-type PolicyEvent struct {
-	Type     string `json:"type"`
-	Service  string `json:"service"`
-	Role     string `json:"role"`
-	Resource string `json:"resource"`
-	Action   string `json:"action"`
-}
-
 type RBACRepository struct {
-	db     *pgxpool.Pool
-	writer *kafka.Writer
+	db          *pgxpool.Pool
+	casbinTopic string
 }
 
-func NewRBACRepository(db *pgxpool.Pool, writer *kafka.Writer) *RBACRepository {
-	return &RBACRepository{db: db, writer: writer}
-}
-
-func (r *RBACRepository) publishEvent(ctx context.Context, eventType, service, role, resource, action string) {
-	if r.writer == nil {
-		return
-	}
-	event := PolicyEvent{
-		Type:     eventType,
-		Service:  service,
-		Role:     role,
-		Resource: resource,
-		Action:   action,
-	}
-	data, err := json.Marshal(event)
-	if err != nil {
-		return
-	}
-	r.writer.WriteMessages(ctx, kafka.Message{
-		Key:   []byte(fmt.Sprintf("%s:%s:%s:%s", service, role, resource, action)),
-		Value: data,
-	})
+func NewRBACRepository(db *pgxpool.Pool, casbinTopic string) *RBACRepository {
+	return &RBACRepository{db: db, casbinTopic: casbinTopic}
 }
 
 func (r *RBACRepository) GetAllPolicies(ctx context.Context) ([]Policy, error) {
@@ -70,25 +47,24 @@ func (r *RBACRepository) GetAllPolicies(ctx context.Context) ([]Policy, error) {
 		}
 		policies = append(policies, p)
 	}
+
 	return policies, rows.Err()
 }
 
 func (r *RBACRepository) AddPolicy(ctx context.Context, service, role, resource, action string) error {
-	var exists bool
-	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM casbin_rule WHERE ptype = 'p' AND v0 = $1 AND v1 = $2 AND v2 = $3 AND service = $4)`, role, resource, action, service).Scan(&exists)
-	if err != nil {
-		return fmt.Errorf("check existing policy: %w", err)
-	}
-	if exists {
-		return fmt.Errorf("policy already exists")
-	}
-
-	_, err = r.db.Exec(ctx, `INSERT INTO casbin_rule (ptype, v0, v1, v2, v3, v4, v5, service) VALUES ('p', $1, $2, $3, '', '', '', $4)`, role, resource, action, service)
+	result, err := r.db.Exec(ctx, `INSERT INTO casbin_rule (ptype, v0, v1, v2, v3, v4, v5, service)
+		VALUES ('p', $1, $2, $3, '', '', '', $4)
+		ON CONFLICT (ptype, v0, v1, v2, v3, v4, v5, service) DO NOTHING`, role, resource, action, service)
 	if err != nil {
 		return fmt.Errorf("insert policy: %w", err)
 	}
 
-	r.publishEvent(ctx, "add", service, role, resource, action)
+	if result.RowsAffected() == 0 {
+		return ErrPolicyExists
+	}
+
+	events.Publish(r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
+
 	return nil
 }
 
@@ -100,10 +76,11 @@ func (r *RBACRepository) DeletePolicy(ctx context.Context, service, role, resour
 
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		return fmt.Errorf("policy not found")
+		return ErrPolicyNotFound
 	}
 
-	r.publishEvent(ctx, "delete", service, role, resource, action)
+	events.Publish(r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
+
 	return nil
 }
 
@@ -112,6 +89,8 @@ func (r *RBACRepository) DeleteAllPoliciesForRole(ctx context.Context, service, 
 	if err != nil {
 		return fmt.Errorf("delete policies for role: %w", err)
 	}
+
+	events.Publish(r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
 
 	return nil
 }
@@ -131,8 +110,10 @@ func (r *RBACRepository) GetResources(ctx context.Context) (map[string][]string,
 		}
 		result[service] = append(result[service], resource)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }

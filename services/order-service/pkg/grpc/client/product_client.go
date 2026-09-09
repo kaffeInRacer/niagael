@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"kaffein/order-service/proto/product"
 
 	"google.golang.org/grpc"
@@ -42,22 +43,52 @@ func (c *ProductClient) GetProducts(ctx context.Context, ids []string) ([]*produ
 }
 
 func (c *ProductClient) ReserveStock(ctx context.Context, orderId string, items []*productpb.StockItem) (*productpb.ReserveStockResponse, error) {
-	return c.client.ReserveStock(ctx, &productpb.ReserveStockRequest{
+	resp, err := c.client.ReserveStock(ctx, &productpb.ReserveStockRequest{
 		OrderId: orderId,
 		Items:   items,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil || !resp.Success {
+		if resp != nil && resp.Message != "" {
+			return resp, errors.New(resp.Message)
+		}
+		return resp, errors.New("stock reservation failed")
+	}
+	return resp, nil
 }
 
 func (c *ProductClient) ReleaseStock(ctx context.Context, orderId string, items []*productpb.StockItem) (*productpb.ReleaseStockResponse, error) {
-	return c.client.ReleaseStock(ctx, &productpb.ReleaseStockRequest{
+	resp, err := c.client.ReleaseStock(ctx, &productpb.ReleaseStockRequest{
 		OrderId: orderId,
 		Items:   items,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil || !resp.Success {
+		if resp != nil && resp.Message != "" {
+			return resp, errors.New(resp.Message)
+		}
+		return resp, errors.New("stock release failed")
+	}
+	return resp, nil
 }
 
 func (c *ProductClient) ConfirmStock(ctx context.Context, orderId string, items []*productpb.StockItem) (*productpb.ConfirmStockResponse, error) {
-	return c.client.ConfirmStock(ctx, &productpb.ConfirmStockRequest{
+	resp, err := c.client.ConfirmStock(ctx, &productpb.ConfirmStockRequest{
 		OrderId: orderId,
 		Items:   items,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil || !resp.Success {
+		if resp != nil && resp.Message != "" {
+			return resp, errors.New(resp.Message)
+		}
+		return resp, errors.New("stock confirmation failed")
+	}
+	return resp, nil
 }

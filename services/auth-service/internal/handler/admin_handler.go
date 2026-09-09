@@ -17,12 +17,15 @@ type adminHandler struct {
 	logger  zerolog.Logger
 }
 
-func NewAdminHandler(usecase IUseCase.AdminUseCase, logger zerolog.Logger, engine *gin.Engine, auth, admin gin.HandlerFunc) *adminHandler {
+func NewAdminHandler(usecase IUseCase.AdminUseCase, logger zerolog.Logger, engine *gin.Engine, auth, admin, read, update, create, delete gin.HandlerFunc) *adminHandler {
 	h := &adminHandler{usecase: usecase, logger: logger}
 	routes := engine.Group("/admin/users", auth, admin)
-	routes.GET("", h.list)
-	routes.PATCH("/:id/role", h.role)
-	routes.PATCH("/:id/status", h.status)
+	routes.GET("", read, h.list)
+	routes.POST("", create, h.create)
+	routes.PATCH("/:id/role", update, h.role)
+	routes.PATCH("/:id/status", update, h.status)
+	routes.PUT("/:id/email", update, h.email)
+	routes.DELETE("/:id", delete, h.delete)
 	return h
 }
 
@@ -73,6 +76,48 @@ func (h *adminHandler) role(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+func (h *adminHandler) create(c *gin.Context) {
+	var req dto.CreateUserRequest
+	if !bind(c, &req) {
+		return
+	}
+	user, err := h.usecase.CreateUser(c.Request.Context(), req)
+	if err != nil {
+		h.fail(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, user)
+}
+
+func (h *adminHandler) email(c *gin.Context) {
+	id, ok := parseID(c)
+	if !ok {
+		return
+	}
+	var req dto.UpdateUserRequest
+	if !bind(c, &req) {
+		return
+	}
+	user, err := h.usecase.UpdateUserEmail(c.Request.Context(), id, req.Email)
+	if err != nil {
+		h.fail(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
+
+func (h *adminHandler) delete(c *gin.Context) {
+	id, ok := parseID(c)
+	if !ok {
+		return
+	}
+	if err := h.usecase.DeleteUser(c.Request.Context(), id); err != nil {
+		h.fail(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
 func (h *adminHandler) status(c *gin.Context) {
 	id, ok := parseID(c)
 	if !ok {
@@ -91,12 +136,15 @@ func (h *adminHandler) status(c *gin.Context) {
 }
 
 func (h *adminHandler) fail(c *gin.Context, err error) {
-	if err.Error() == constants.ErrUserNotFound {
+	switch err.Error() {
+	case constants.ErrUserNotFound:
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
-	}
-	if err.Error() == constants.ErrInvalidRole {
+	case constants.ErrInvalidRole:
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	case constants.ErrEmailExists:
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
 	}
 	h.logger.Error().Err(err).Msg("admin request failed")

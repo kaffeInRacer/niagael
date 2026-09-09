@@ -29,7 +29,14 @@ redis:
 
 jwt:
   issuer: "auth-service"
-  secret: "your_jwt_secret_key_here"
+  # Required. Set JWT_SECRET in the environment or config.yaml (ignored by Git).
+  secret: ""
   access_ttl: 15m
   refresh_ttl: 168h
   cookie_secure: false
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  casbin_topic: "rbac-policies"
+  user_topic: "user-events"

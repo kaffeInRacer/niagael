@@ -11,8 +11,6 @@ import (
 	"kaffein/product-service/utils/constants"
 )
 
-var ErrInsufficientStock = errors.New("insufficient stock")
-
 type productRepository struct {
 	db postgresql.DBTX
 }
@@ -25,8 +23,8 @@ func NewProductRepository(store *postgresql.Store) IRepository.ProductRepository
 
 func (r *productRepository) List(ctx context.Context, params dto.ListProductParams) ([]domain.Product, error) {
 	const query = `
-		SELECT p.id, p.category_id, c.name as category_name, p.name, p.slug, 
-		       p.description, p.price, p.stock, p.stock_reserved, 
+		SELECT p.id, p.category_id, c.name as category_name, c.is_active, p.name, p.slug,
+		       p.description, p.price, p.stock, p.stock_reserved,
 		       p.is_active, p.is_promo_excluded, p.created_at, p.updated_at
 		FROM product p
 		LEFT JOIN category c ON p.category_id = c.id
@@ -36,19 +34,20 @@ func (r *productRepository) List(ctx context.Context, params dto.ListProductPara
 		AND (NULLIF($4::text, '') IS NULL OR p.category_id = NULLIF($4::text, '')::uuid)
 		AND (NULLIF($5::text, '') IS NULL OR p.price >= NULLIF($5::text, '')::numeric)
 		AND (NULLIF($6::text, '') IS NULL OR p.price <= NULLIF($6::text, '')::numeric)
+		AND (NOT $7::boolean OR (c.is_active = true AND c.deleted_at IS NULL))
 		AND p.deleted_at IS NULL
 		ORDER BY
-		  CASE WHEN $7::text = 'name'       AND $8::text = 'asc'  THEN p.name       END ASC,
-		  CASE WHEN $7::text = 'price'      AND $8::text = 'asc'  THEN p.price      END ASC,
-		  CASE WHEN $7::text = 'created_at' AND $8::text = 'asc'  THEN p.created_at END ASC,
-		  CASE WHEN $7::text = 'updated_at' AND $8::text = 'asc'  THEN p.updated_at END ASC,
-		  CASE WHEN $7::text = 'name'       AND $8::text = 'desc' THEN p.name       END DESC,
-		  CASE WHEN $7::text = 'price'      AND $8::text = 'desc' THEN p.price      END DESC,
-		  CASE WHEN $7::text = 'created_at' AND $8::text = 'desc' THEN p.created_at END DESC,
-		  CASE WHEN $7::text = 'updated_at' AND $8::text = 'desc' THEN p.updated_at END DESC,
+		  CASE WHEN $8::text = 'name'       AND $9::text = 'asc'  THEN p.name       END ASC,
+		  CASE WHEN $8::text = 'price'      AND $9::text = 'asc'  THEN p.price      END ASC,
+		  CASE WHEN $8::text = 'created_at' AND $9::text = 'asc'  THEN p.created_at END ASC,
+		  CASE WHEN $8::text = 'updated_at' AND $9::text = 'asc'  THEN p.updated_at END ASC,
+		  CASE WHEN $8::text = 'name'       AND $9::text = 'desc' THEN p.name       END DESC,
+		  CASE WHEN $8::text = 'price'      AND $9::text = 'desc' THEN p.price      END DESC,
+		  CASE WHEN $8::text = 'created_at' AND $9::text = 'desc' THEN p.created_at END DESC,
+		  CASE WHEN $8::text = 'updated_at' AND $9::text = 'desc' THEN p.updated_at END DESC,
 		p.created_at DESC
-		LIMIT $9::int
-		OFFSET $10::int
+		LIMIT $10::int
+		OFFSET $11::int
 	`
 	rows, err := r.db.Query(ctx, query,
 		params.Search,
@@ -57,6 +56,7 @@ func (r *productRepository) List(ctx context.Context, params dto.ListProductPara
 		params.CategoryID,
 		params.MinPrice,
 		params.MaxPrice,
+		params.PublicOnly,
 		params.OrderBy,
 		params.OrderDir,
 		params.PageSize,
@@ -74,6 +74,7 @@ func (r *productRepository) List(ctx context.Context, params dto.ListProductPara
 			&product.Id,
 			&product.CategoryId,
 			&product.CategoryName,
+			&product.CategoryActive,
 			&product.Name,
 			&product.Slug,
 			&product.Description,
@@ -97,12 +98,14 @@ func (r *productRepository) ListCount(ctx context.Context, params dto.ListProduc
 	const query = `
 		SELECT COUNT(*)
 		FROM product p
+		LEFT JOIN category c ON p.category_id = c.id
 		WHERE (NULLIF($1::text, '') IS NULL OR p.name ILIKE '%' || $1::text || '%')
 		AND ($2::boolean IS NULL OR p.is_active = $2::boolean)
 		AND ($3::boolean IS NULL OR p.is_promo_excluded = $3::boolean)
 		AND (NULLIF($4::text, '') IS NULL OR p.category_id = NULLIF($4::text, '')::uuid)
 		AND (NULLIF($5::text, '') IS NULL OR p.price >= NULLIF($5::text, '')::numeric)
 		AND (NULLIF($6::text, '') IS NULL OR p.price <= NULLIF($6::text, '')::numeric)
+		AND (NOT $7::boolean OR (c.is_active = true AND c.deleted_at IS NULL))
 		AND p.deleted_at IS NULL
 	`
 
@@ -114,6 +117,7 @@ func (r *productRepository) ListCount(ctx context.Context, params dto.ListProduc
 		params.CategoryID,
 		params.MinPrice,
 		params.MaxPrice,
+		params.PublicOnly,
 	).Scan(&count)
 	if err != nil {
 		return 0, err
@@ -138,7 +142,7 @@ func (r *productRepository) Create(ctx context.Context, args dto.CreateProductDt
 func (r *productRepository) Update(ctx context.Context, args dto.UpdateProductDto) error {
 	const query = `
 		UPDATE product
-		SET category_id = $2, name = $3, slug = $4, description = $5, 
+		SET category_id = $2, name = $3, slug = $4, description = $5,
 		    price = $6, stock = $7, is_active = $8, updated_at = NOW()
 		WHERE id = $1 AND deleted_at IS NULL
 	`
@@ -175,8 +179,8 @@ func (r *productRepository) Delete(ctx context.Context, id string) error {
 
 func (r *productRepository) ReadById(ctx context.Context, id string) (*domain.Product, error) {
 	const query = `
-		SELECT p.id, p.category_id, c.name as category_name, p.name, p.slug, 
-		       p.description, p.price, p.stock, p.stock_reserved, 
+		SELECT p.id, p.category_id, c.name as category_name, c.is_active, p.name, p.slug,
+		       p.description, p.price, p.stock, p.stock_reserved,
 		       p.is_active, p.is_promo_excluded, p.created_at, p.updated_at
 		FROM product p
 		LEFT JOIN category c ON p.category_id = c.id
@@ -188,6 +192,7 @@ func (r *productRepository) ReadById(ctx context.Context, id string) (*domain.Pr
 		&product.Id,
 		&product.CategoryId,
 		&product.CategoryName,
+		&product.CategoryActive,
 		&product.Name,
 		&product.Slug,
 		&product.Description,
@@ -211,8 +216,8 @@ func (r *productRepository) ReadById(ctx context.Context, id string) (*domain.Pr
 
 func (r *productRepository) ReadBySlug(ctx context.Context, slug string) (*domain.Product, error) {
 	const query = `
-		SELECT p.id, p.category_id, c.name as category_name, p.name, p.slug, 
-		       p.description, p.price, p.stock, p.stock_reserved, 
+		SELECT p.id, p.category_id, c.name as category_name, c.is_active, p.name, p.slug,
+		       p.description, p.price, p.stock, p.stock_reserved,
 		       p.is_active, p.is_promo_excluded, p.created_at, p.updated_at
 		FROM product p
 		LEFT JOIN category c ON p.category_id = c.id
@@ -224,6 +229,7 @@ func (r *productRepository) ReadBySlug(ctx context.Context, slug string) (*domai
 		&product.Id,
 		&product.CategoryId,
 		&product.CategoryName,
+		&product.CategoryActive,
 		&product.Name,
 		&product.Slug,
 		&product.Description,
@@ -247,8 +253,8 @@ func (r *productRepository) ReadBySlug(ctx context.Context, slug string) (*domai
 
 func (r *productRepository) BatchById(ctx context.Context, ids []string) ([]domain.Product, error) {
 	const query = `
-		SELECT p.id, p.category_id, c.name as category_name, p.name, p.slug, 
-		       p.description, p.price, p.stock, p.stock_reserved, 
+		SELECT p.id, p.category_id, c.name as category_name, c.is_active, p.name, p.slug,
+		       p.description, p.price, p.stock, p.stock_reserved,
 		       p.is_active, p.is_promo_excluded, p.created_at, p.updated_at
 		FROM product p
 		LEFT JOIN category c ON p.category_id = c.id
@@ -267,6 +273,7 @@ func (r *productRepository) BatchById(ctx context.Context, ids []string) ([]doma
 			&product.Id,
 			&product.CategoryId,
 			&product.CategoryName,
+			&product.CategoryActive,
 			&product.Name,
 			&product.Slug,
 			&product.Description,
@@ -289,8 +296,8 @@ func (r *productRepository) BatchById(ctx context.Context, ids []string) ([]doma
 func (r *productRepository) ReserveStock(ctx context.Context, productId string, variantId string, quantity int32) error {
 	if variantId != "" {
 		query := `
-			UPDATE product_variant 
-			SET stock_reserved = stock_reserved + $1 
+			UPDATE product_variant
+			SET stock_reserved = stock_reserved + $1
 			WHERE id = $2 AND stock - stock_reserved >= $1 AND deleted_at IS NULL
 		`
 		result, err := r.db.Exec(ctx, query, quantity, variantId)
@@ -299,14 +306,14 @@ func (r *productRepository) ReserveStock(ctx context.Context, productId string, 
 		}
 		rowsAffected := result.RowsAffected()
 		if rowsAffected == 0 {
-			return ErrInsufficientStock
+			return errors.New(constants.ErrInsufficientStock)
 		}
 		return nil
 	}
 
 	query := `
-		UPDATE product 
-		SET stock_reserved = stock_reserved + $1 
+		UPDATE product
+		SET stock_reserved = stock_reserved + $1
 		WHERE id = $2 AND stock - stock_reserved >= $1 AND deleted_at IS NULL
 	`
 	result, err := r.db.Exec(ctx, query, quantity, productId)
@@ -315,7 +322,7 @@ func (r *productRepository) ReserveStock(ctx context.Context, productId string, 
 	}
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		return ErrInsufficientStock
+		return errors.New(constants.ErrInsufficientStock)
 	}
 	return nil
 }
@@ -323,39 +330,65 @@ func (r *productRepository) ReserveStock(ctx context.Context, productId string, 
 func (r *productRepository) ReleaseStock(ctx context.Context, productId string, variantId string, quantity int32) error {
 	if variantId != "" {
 		query := `
-			UPDATE product_variant 
-			SET stock_reserved = GREATEST(0, stock_reserved - $1) 
-			WHERE id = $2 AND deleted_at IS NULL
+			UPDATE product_variant
+			SET stock_reserved = stock_reserved - $1
+			WHERE id = $2 AND stock_reserved >= $1 AND deleted_at IS NULL
 		`
-		_, err := r.db.Exec(ctx, query, quantity, variantId)
-		return err
+		result, err := r.db.Exec(ctx, query, quantity, variantId)
+		if err != nil {
+			return err
+		}
+		if result.RowsAffected() == 0 {
+			return errors.New(constants.ErrVariantNotFound)
+		}
+		return nil
 	}
 
 	query := `
-		UPDATE product 
-		SET stock_reserved = GREATEST(0, stock_reserved - $1) 
-		WHERE id = $2 AND deleted_at IS NULL
+		UPDATE product
+		SET stock_reserved = stock_reserved - $1
+		WHERE id = $2 AND stock_reserved >= $1 AND deleted_at IS NULL
 	`
-	_, err := r.db.Exec(ctx, query, quantity, productId)
-	return err
+	result, err := r.db.Exec(ctx, query, quantity, productId)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return errors.New(constants.ErrProductNotFound)
+	}
+	return nil
 }
 
 func (r *productRepository) ConfirmStock(ctx context.Context, productId string, variantId string, quantity int32) error {
 	if variantId != "" {
 		query := `
-			UPDATE product_variant 
-			SET stock = stock - $1, stock_reserved = GREATEST(0, stock_reserved - $1) 
+			UPDATE product_variant
+			SET stock = stock - $1, stock_reserved = GREATEST(0, stock_reserved - $1)
 			WHERE id = $2 AND stock_reserved >= $1 AND deleted_at IS NULL
 		`
-		_, err := r.db.Exec(ctx, query, quantity, variantId)
-		return err
+		result, err := r.db.Exec(ctx, query, quantity, variantId)
+		if err != nil {
+			return err
+		}
+		if result.RowsAffected() == 0 {
+			return errors.New(constants.ErrInsufficientStock)
+		}
+		return nil
 	}
 
 	query := `
-		UPDATE product 
-		SET stock = stock - $1, stock_reserved = GREATEST(0, stock_reserved - $1) 
+		UPDATE product
+		SET stock = stock - $1, stock_reserved = GREATEST(0, stock_reserved - $1)
 		WHERE id = $2 AND stock_reserved >= $1 AND deleted_at IS NULL
 	`
-	_, err := r.db.Exec(ctx, query, quantity, productId)
-	return err
+	result, err := r.db.Exec(ctx, query, quantity, productId)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return errors.New(constants.ErrInsufficientStock)
+	}
+
+	return nil
 }

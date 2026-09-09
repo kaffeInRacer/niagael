@@ -14,4 +14,6 @@ type UserRepository interface {
 	List(context.Context, int, int) ([]domain.User, int64, error)
 	UpdateRole(context.Context, uuid.UUID, string) (*domain.User, error)
 	UpdateStatus(context.Context, uuid.UUID, bool) (*domain.User, error)
+	UpdateEmail(context.Context, uuid.UUID, string) (*domain.User, error)
+	Delete(context.Context, uuid.UUID) error
 }

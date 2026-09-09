@@ -23,8 +23,14 @@
                 class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-colors"
                 :class="stepClass(index)"
               >
-                <svg v-if="index < currentStep" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg v-if="stepIcon(index) === 'check'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg v-else-if="stepIcon(index) === 'x'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <svg v-else-if="stepIcon(index) === 'refresh'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 <span v-else>{{ index + 1 }}</span>
               </div>
@@ -35,25 +41,26 @@
                 {{ step.label }}
               </span>
             </div>
-            <div
-              v-if="index < steps.length - 1"
-              class="flex-1 h-0.5 mx-3 mb-5 rounded"
-              :class="index < currentStep ? 'bg-green-500' : 'bg-gray-200'"
-            ></div>
+              <div
+                v-if="index < steps.length - 1"
+                class="flex-1 h-0.5 mx-3 mb-5 rounded"
+                :class="lineClass(index)"
+              ></div>
           </li>
         </ol>
 
-        <div v-if="isCancelled" class="mt-6 bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-          <p class="text-sm font-semibold text-red-600">This order has been cancelled</p>
+        <div v-if="isCancelled" class="mt-6 rounded-xl p-4 text-center border" :class="order.status === 'refunded' ? 'bg-orange-50 border-orange-200' : 'bg-red-50 border-red-200'">
+          <p class="text-sm font-semibold" :class="order.status === 'refunded' ? 'text-orange-600' : 'text-red-600'">
+            {{ order.status === 'refunded' ? 'This order has been refunded' : 'This order has been cancelled' }}
+          </p>
         </div>
       </div>
 
       <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8 mt-6">
         <div class="flex justify-between items-start gap-4">
           <div class="min-w-0">
-            <h1 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Order ID</h1>
-            <p class="text-lg font-bold text-gray-900 font-mono mt-1">{{ order.order_ref }}</p>
-            <p class="text-xs text-gray-400 font-mono mt-0.5 break-all">{{ order.id }}</p>
+            <h1 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Ref Order</h1>
+            <p class="text-lg font-bold text-gray-900 font-mono mt-1">{{ order.order_ref || order.id }}</p>
             <p class="text-xs text-gray-400 mt-1">{{ formatDate(order.created_at) }}</p>
           </div>
           <span
@@ -182,6 +189,7 @@ const paymentError = ref(null)
 const steps = [
   { key: 'placed', label: 'Order Placed' },
   { key: 'paid', label: 'Payment' },
+  { key: 'processing', label: 'Processing' },
   { key: 'shipped', label: 'Shipping' },
   { key: 'delivered', label: 'Delivered' }
 ]
@@ -189,17 +197,51 @@ const steps = [
 const statusStepMap = {
   pending: 0,
   paid: 1,
-  shipped: 2,
-  delivered: 3
+  processing: 2,
+  shipped: 3,
+  delivered: 4
 }
 
 const currentStep = computed(() => statusStepMap[order.value?.status] ?? 0)
-const isCancelled = computed(() => order.value?.status === 'cancelled')
+const isCancelled = computed(() => ['cancelled', 'refunded'].includes(order.value?.status))
+
+const effectiveStep = computed(() => {
+  const status = order.value?.status
+  if (status === 'refunded') return 2
+  if (status === 'cancelled') return order.value?.snap_token ? 2 : 1
+  return currentStep.value
+})
 
 const stepClass = (index) => {
-  if (index < currentStep.value) return 'bg-green-500 border-green-500 text-white'
-  if (index === currentStep.value) return 'bg-blue-600 border-blue-600 text-white'
+  if (order.value?.status === 'delivered') return 'bg-green-500 border-green-500 text-white'
+  if (isCancelled.value) {
+    if (index < effectiveStep.value) return 'bg-green-500 border-green-500 text-white'
+    if (index === effectiveStep.value) {
+      return order.value?.status === 'refunded'
+        ? 'bg-orange-500 border-orange-500 text-white'
+        : 'bg-red-500 border-red-500 text-white'
+    }
+    return 'bg-white border-gray-200 text-gray-400'
+  }
+  if (index < effectiveStep.value) return 'bg-green-500 border-green-500 text-white'
+  if (index === effectiveStep.value) return 'bg-blue-600 border-blue-600 text-white'
   return 'bg-white border-gray-200 text-gray-400'
+}
+
+const stepIcon = (index) => {
+  const status = order.value?.status
+  if (status === 'delivered') return 'check'
+  if (isCancelled.value) {
+    if (index < effectiveStep.value) return 'check'
+    if (index === effectiveStep.value) return status === 'refunded' ? 'refresh' : 'x'
+    return 'number'
+  }
+  return index < effectiveStep.value ? 'check' : 'number'
+}
+
+const lineClass = (index) => {
+  if (order.value?.status === 'delivered') return 'bg-green-500'
+  return index < effectiveStep.value ? 'bg-green-500' : 'bg-gray-200'
 }
 
 const formatPrice = (price) => {

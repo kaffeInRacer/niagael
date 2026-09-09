@@ -6,6 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rs/zerolog"
 	"kaffein/auth-service/internal/interfaces/IRepository"
 	"kaffein/auth-service/internal/token"
 	"kaffein/auth-service/utils/constants"
@@ -18,14 +20,12 @@ const (
 	ExpirationKey = "exp"
 )
 
-func Auth(tokens *token.Manager, sessions IRepository.SessionRepository) gin.HandlerFunc {
+func Auth(tokens *token.Manager, sessions IRepository.SessionRepository, users IRepository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		raw, err := c.Cookie("access_token")
-		if err != nil {
-			parts := strings.Fields(c.GetHeader("Authorization"))
-			if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
-				raw = parts[1]
-			}
+		raw := bearerToken(c.GetHeader("Authorization"))
+		if raw == "" {
+			raw, _ = c.Cookie("access_token")
+			raw = strings.TrimSpace(raw)
 		}
 		if raw == "" {
 			abort(c, http.StatusUnauthorized, constants.ErrUnauthorized)
@@ -42,12 +42,25 @@ func Auth(tokens *token.Manager, sessions IRepository.SessionRepository) gin.Han
 			return
 		}
 		userID, _ := uuid.Parse(claims.Subject)
+		user, err := users.ByID(c.Request.Context(), userID)
+		if err != nil || user == nil || !user.IsActive || len(claims.Roles) != 1 || claims.Roles[0] != user.Role {
+			abort(c, http.StatusUnauthorized, constants.ErrInvalidToken)
+			return
+		}
 		c.Set(UserIDKey, userID)
 		c.Set(RolesKey, claims.Roles)
 		c.Set(SessionIDKey, claims.SessionID)
 		c.Set(ExpirationKey, claims.ExpiresAt.Unix())
 		c.Next()
 	}
+}
+
+func bearerToken(header string) string {
+	parts := strings.Fields(header)
+	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+		return parts[1]
+	}
+	return ""
 }
 
 func Admin() gin.HandlerFunc {
@@ -64,6 +77,32 @@ func Admin() gin.HandlerFunc {
 			}
 		}
 		abort(c, http.StatusForbidden, constants.ErrForbidden)
+	}
+}
+
+func Authorize(db *pgxpool.Pool, logger zerolog.Logger, resource, action string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roles, ok := c.Get(RolesKey)
+		if !ok {
+			abort(c, http.StatusForbidden, constants.ErrForbidden)
+			return
+		}
+
+		var allowed bool
+		err := db.QueryRow(c.Request.Context(), `SELECT EXISTS (
+			SELECT 1 FROM casbin_rule
+			WHERE ptype = 'p' AND service = 'auth' AND v0 = ANY($1) AND v1 = $2 AND v2 = $3
+		)`, roles.([]string), resource, action).Scan(&allowed)
+		if err != nil {
+			logger.Error().Err(err).Str("resource", resource).Str("action", action).Msg("RBAC authorization query failed")
+			abort(c, http.StatusInternalServerError, "internal server error")
+			return
+		}
+		if !allowed {
+			abort(c, http.StatusForbidden, constants.ErrForbidden)
+			return
+		}
+		c.Next()
 	}
 }
 

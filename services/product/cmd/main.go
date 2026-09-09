@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"kaffein/product-service/config"
+	"kaffein/product-service/internal/repository"
 	grpcclient "kaffein/product-service/pkg/grpc/client"
+	"kaffein/product-service/pkg/kafka"
 
 	"github.com/rs/zerolog/log"
 )
@@ -47,7 +49,7 @@ func main() {
 	}
 	defer redisClient.Client.Close()
 
-	authService, err := auth.New(ctx, c.JWT.Secret, c.JWT.Issuer, c.JWT.RedisDB, authPool, redisClient.Client, c.Kafka.Brokers, c.Kafka.CasbinTopic, c.Kafka.GroupID)
+	authService, err := auth.New(ctx, c, authPool, redisClient.Client, l)
 	if err != nil {
 		l.Fatal().Err(err).Msg("failed to initialize authorization")
 	}
@@ -70,6 +72,13 @@ func main() {
 	}
 
 	l.Info().Str("mode", c.HTTP.Mode).Msg("application started")
+
+	if len(c.Kafka.Brokers) > 0 && c.Kafka.FlashSaleTopic != "" {
+		projectionRepo := repository.NewFlashSaleProjectionRepository(pool)
+		fsConsumer := kafka.NewFlashSaleConsumer(c.Kafka.Brokers, c.Kafka.FlashSaleTopic, c.Kafka.GroupID+"-flashsale", projectionRepo)
+		fsConsumer.Run(ctx)
+		defer fsConsumer.Close()
+	}
 
 	l.Info().
 		Str("addr", c.HTTP.Addr).

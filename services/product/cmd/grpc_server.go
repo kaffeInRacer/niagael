@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type grpcServer struct {
@@ -69,6 +71,7 @@ func productToProto(product domain.Product) *productpb.Product {
 		if !variant.IsActive {
 			continue
 		}
+
 		attributes := make(map[string]string)
 		_ = json.Unmarshal(variant.Attributes, &attributes)
 		variants = append(variants, &productpb.ProductVariant{
@@ -117,19 +120,17 @@ func (s *grpcServer) GetProducts(ctx context.Context, req *productpb.GetProducts
 }
 
 func (s *grpcServer) GetProductsByCategory(ctx context.Context, req *productpb.GetProductsByCategoryRequest) (*productpb.ProductsResponse, error) {
-	// TODO: Implement GetProductsByCategory
 	return &productpb.ProductsResponse{}, nil
 }
 
 func (s *grpcServer) ReserveStock(ctx context.Context, req *productpb.ReserveStockRequest) (*productpb.ReserveStockResponse, error) {
-	for _, item := range req.Items {
-		err := s.productUseCase.ReserveStock(ctx, item.ProductId, item.VariantId, item.Quantity)
-		if err != nil {
-			return &productpb.ReserveStockResponse{
-				Success: false,
-				Message: err.Error(),
-			}, nil
-		}
+	items, err := stockItems(req.OrderId, req.Items)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.productUseCase.ReserveStock(ctx, req.OrderId, items); err != nil {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
 	}
 
 	return &productpb.ReserveStockResponse{
@@ -139,14 +140,13 @@ func (s *grpcServer) ReserveStock(ctx context.Context, req *productpb.ReserveSto
 }
 
 func (s *grpcServer) ReleaseStock(ctx context.Context, req *productpb.ReleaseStockRequest) (*productpb.ReleaseStockResponse, error) {
-	for _, item := range req.Items {
-		err := s.productUseCase.ReleaseStock(ctx, item.ProductId, item.VariantId, item.Quantity)
-		if err != nil {
-			return &productpb.ReleaseStockResponse{
-				Success: false,
-				Message: err.Error(),
-			}, nil
-		}
+	items, err := stockItems(req.OrderId, req.Items)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.productUseCase.ReleaseStock(ctx, req.OrderId, items); err != nil {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
 	}
 
 	return &productpb.ReleaseStockResponse{
@@ -156,18 +156,32 @@ func (s *grpcServer) ReleaseStock(ctx context.Context, req *productpb.ReleaseSto
 }
 
 func (s *grpcServer) ConfirmStock(ctx context.Context, req *productpb.ConfirmStockRequest) (*productpb.ConfirmStockResponse, error) {
-	for _, item := range req.Items {
-		err := s.productUseCase.ConfirmStock(ctx, item.ProductId, item.VariantId, item.Quantity)
-		if err != nil {
-			return &productpb.ConfirmStockResponse{
-				Success: false,
-				Message: err.Error(),
-			}, nil
-		}
+	items, err := stockItems(req.OrderId, req.Items)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.productUseCase.ConfirmStock(ctx, req.OrderId, items); err != nil {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
 	}
 
 	return &productpb.ConfirmStockResponse{
 		Success: true,
 		Message: "stock confirmed successfully",
 	}, nil
+}
+
+func stockItems(orderID string, source []*productpb.StockItem) ([]domain.StockItem, error) {
+	if orderID == "" || len(source) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "order ID and items are required")
+	}
+
+	items := make([]domain.StockItem, 0, len(source))
+	for _, item := range source {
+		if item == nil || item.ProductId == "" || item.Quantity <= 0 {
+			return nil, status.Error(codes.InvalidArgument, "product ID and positive quantity are required")
+		}
+		items = append(items, domain.StockItem{ProductID: item.ProductId, VariantID: item.VariantId, Quantity: item.Quantity})
+	}
+	return items, nil
 }

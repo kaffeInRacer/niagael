@@ -9,15 +9,27 @@ type Config struct {
 	Postgres PostgresConfig `yaml:"postgres"`
 	AuthDB   PostgresConfig `yaml:"auth_db"`
 	Redis    RedisConfig    `yaml:"redis"`
-	Kafka    KafkaConfig    `yaml:"kafka"`
 	Minio    MinIOConfig    `yaml:"minio"`
 	JWT      JWTConfig      `yaml:"jwt"`
+	RBAC     RBACConfig     `yaml:"rbac"`
+	Kafka    KafkaConfig    `yaml:"kafka"`
+}
+
+type KafkaConfig struct {
+	Brokers        []string `yaml:"brokers"`
+	GroupID        string   `yaml:"group_id"`
+	CasbinTopic    string   `yaml:"casbin_topic"`
+	FlashSaleTopic string   `yaml:"flash_sale_topic"`
 }
 
 type JWTConfig struct {
 	Secret  string `yaml:"secret"`
 	Issuer  string `yaml:"issuer"`
 	RedisDB int    `yaml:"redis_db"`
+}
+
+type RBACConfig struct {
+	PolicyReloadInterval time.Duration `yaml:"policy_reload_interval"`
 }
 
 type HttpConfig struct {
@@ -58,13 +70,6 @@ type LoggerConfig struct {
 	Format string `yaml:"format"`
 	Stdout bool   `yaml:"stdout"`
 	Path   string `yaml:"path"`
-}
-
-type KafkaConfig struct {
-	Brokers     []string          `yaml:"brokers"`
-	GroupID     string            `yaml:"group_id"`
-	Topics      map[string]string `yaml:"topics"`
-	CasbinTopic string            `yaml:"casbin_topic"`
 }
 
 type MinIOConfig struct {

@@ -1,6 +1,10 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"kaffein/dynamic-pricing-service/internal/domain"
+)
 
 type CreatePromoDto struct {
 	Id                  string
@@ -37,10 +41,34 @@ type UpdatePromoDto struct {
 }
 
 type ListPromoParams struct {
-	Search     string `form:"search" validate:"omitempty,max=100"`
-	IsActive   *bool  `form:"is_active" validate:"omitempty"`
-	OrderBy    string `form:"order_by" validate:"def_enum=name code start_date created_at"`
-	OrderDir   string `form:"order_dir" validate:"def_enum=desc asc"`
-	PageSize   int32  `form:"page_size" validate:"clamp=10 100"`
-	PageOffset int32  `form:"page" validate:"clamp=0"`
+	Search      string `form:"search" validate:"omitempty,max=100"`
+	IsActive    *bool  `form:"is_active" validate:"omitempty"`
+	OrderBy     string `form:"order_by" validate:"def_enum=name code start_date created_at"`
+	OrderDir    string `form:"order_dir" validate:"def_enum=desc asc"`
+	PageSize    int32  `form:"page_size" validate:"clamp=10 100"`
+	PageOffset  int32  `form:"page" validate:"clamp=0"`
+	CurrentOnly bool   `form:"-"`
+}
+
+type PublicPromoResponse struct {
+	Id                  string    `json:"id"`
+	Name                string    `json:"name"`
+	Description         string    `json:"description"`
+	DiscountType        string    `json:"discount_type"`
+	DiscountValue       int64     `json:"discount_value"`
+	MinPurchase         int64     `json:"min_purchase"`
+	MaxDiscount         int64     `json:"max_discount"`
+	CanCombineFlashSale bool      `json:"can_combine_flash_sale"`
+	StartDate           time.Time `json:"start_date"`
+	EndDate             time.Time `json:"end_date"`
+}
+
+func ToPublicPromoResponse(p domain.Promo) PublicPromoResponse {
+	return PublicPromoResponse{
+		Id: p.Id, Name: p.Name, Description: p.Description,
+		DiscountType: p.DiscountType, DiscountValue: p.DiscountValue,
+		MinPurchase: p.MinPurchase, MaxDiscount: p.MaxDiscount,
+		CanCombineFlashSale: p.CanCombineFlashSale,
+		StartDate:           p.StartDate, EndDate: p.EndDate,
+	}
 }

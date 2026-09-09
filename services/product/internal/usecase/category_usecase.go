@@ -27,6 +27,7 @@ func (uc *categoryUseCase) List(ctx context.Context, params dto.ListCategoryPara
 	} else {
 		categories, err = uc.repo.List(ctx, params)
 	}
+
 	if err != nil {
 		return nil, 0, err
 	}

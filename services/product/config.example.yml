@@ -35,9 +35,13 @@ redis:
   max_conn_idle_time: 5m
 
 jwt:
-  secret: "your_jwt_secret_key_here"
+  # Required. Set JWT_SECRET in the environment or config.yaml (ignored by Git).
+  secret: ""
   issuer: "auth-service"
   redis_db: 3
+
+rbac:
+  policy_reload_interval: 5s
 
 minio:
   endpoint: "localhost:9000"

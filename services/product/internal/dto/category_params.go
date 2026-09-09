@@ -8,4 +8,5 @@ type ListCategoryParams struct {
 	PageSize            int32  `form:"page_size" validate:"clamp=10 100"`
 	PageOffset          int32  `form:"page" validate:"clamp=0"`
 	IncludeProductCount bool   `form:"include_product_count" validate:"omitempty"`
+	ActiveProductsOnly  bool   `form:"-"`
 }

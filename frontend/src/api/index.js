@@ -53,8 +53,11 @@ export const authApi = {
 
 export const userAdminApi = {
   list: (params) => api.get('/admin/users', { params }),
+  create: (data) => api.post('/admin/users', data),
   updateRole: (id, role) => api.patch(`/admin/users/${id}/role`, { role }),
-  updateStatus: (id, isActive) => api.patch(`/admin/users/${id}/status`, { is_active: isActive })
+  updateStatus: (id, isActive) => api.patch(`/admin/users/${id}/status`, { is_active: isActive }),
+  updateEmail: (id, email) => api.put(`/admin/users/${id}/email`, { email }),
+  delete: (id) => api.delete(`/admin/users/${id}`)
 }
 
 export const rbacApi = {

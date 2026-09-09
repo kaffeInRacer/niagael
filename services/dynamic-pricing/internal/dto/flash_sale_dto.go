@@ -1,6 +1,10 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"kaffein/dynamic-pricing-service/internal/domain"
+)
 
 type CreateFlashSaleDto struct {
 	Id              string
@@ -55,9 +59,26 @@ type ListFlashSaleParams struct {
 	OrderDir           string `form:"order_dir" validate:"def_enum=desc asc"`
 	PageSize           int32  `form:"page_size" validate:"clamp=10 100"`
 	PageOffset         int32  `form:"page" validate:"clamp=0"`
+	CurrentOnly        bool   `form:"-"`
 }
 
-// VariantIdPair represents a product_id + variant_id pair for bulk queries
+type PublicFlashSaleResponse struct {
+	Id              string    `json:"id"`
+	Name            string    `json:"name"`
+	ProductId       string    `json:"product_id"`
+	VariantId       *string   `json:"variant_id"`
+	DiscountPercent int       `json:"discount_percent"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+}
+
+func ToPublicFlashSaleResponse(fs domain.FlashSale) PublicFlashSaleResponse {
+	return PublicFlashSaleResponse{
+		Id: fs.Id, Name: fs.Name, ProductId: fs.ProductId, VariantId: fs.VariantId,
+		DiscountPercent: fs.DiscountPercent, StartTime: fs.StartTime, EndTime: fs.EndTime,
+	}
+}
+
 type VariantIdPair struct {
 	ProductId string `json:"product_id"`
 	VariantId string `json:"variant_id"`

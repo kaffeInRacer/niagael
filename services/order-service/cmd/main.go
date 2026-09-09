@@ -11,7 +11,9 @@ import (
 	"sync"
 	"syscall"
 
+	"kaffein/order-service/internal/repository"
 	grpcclient "kaffein/order-service/pkg/grpc/client"
+	"kaffein/order-service/pkg/kafka"
 
 	"github.com/rs/zerolog/log"
 )
@@ -46,7 +48,7 @@ func main() {
 	}
 	defer redisClient.Client.Close()
 
-	authService, err := auth.New(ctx, c.JWT.Secret, c.JWT.Issuer, c.JWT.RedisDB, authPool, redisClient.Client, c.Kafka.Brokers, c.Kafka.CasbinTopic, c.Kafka.GroupID)
+	authService, err := auth.New(ctx, c, authPool, redisClient.Client, l)
 	if err != nil {
 		l.Fatal().Err(err).Msg("failed to initialize authorization")
 	}
@@ -75,8 +77,32 @@ func main() {
 		wg:            &sync.WaitGroup{},
 	}
 
-	// Start background job for expired order cancellation
 	go app.startOrderExpiryJob(ctx)
+
+	if len(c.Kafka.Brokers) > 0 {
+		authPoolForSnapshot, err := postgresql.NewPool(ctx, c, l, postgresql.WithDSN(c.AuthDB.DSN))
+		if err != nil {
+			l.Error().Err(err).Msg("failed to connect auth db for buyers snapshot")
+		} else {
+			buyersRepo := repository.NewBuyersRepository(pool)
+			if err := buyersRepo.Snapshot(ctx, authPoolForSnapshot); err != nil {
+				l.Error().Err(err).Msg("failed to snapshot buyers from auth db")
+			}
+			authPoolForSnapshot.Close()
+
+			userConsumer := kafka.NewCasbinPolicyConsumer(c.Kafka.Brokers, c.Kafka.UserTopic, c.Kafka.GroupID+"-users", buyersRepo)
+			userConsumer.Run(ctx)
+			defer userConsumer.Close()
+		}
+
+		orderConsumer := kafka.NewFulfillmentConsumer(c.Kafka.Brokers, c.Kafka.OrderTopic, c.Kafka.GroupID+"-fulfillment", productClient, pricingClient)
+		orderConsumer.Run(ctx)
+		defer orderConsumer.Close()
+
+		relay := kafka.NewOutboxRelay(c.Kafka.Brokers, c.Kafka.OrderTopic, outboxKafkaAdapter{repository.NewOutboxRepository(pool, postgresql.NewStore(pool))})
+		go relay.Run(ctx)
+		defer relay.Close()
+	}
 
 	l.Info().Str("mode", c.HTTP.Mode).Msg("application started")
 
@@ -87,4 +113,24 @@ func main() {
 	if err := app.ServeHTTP(ctx); err != nil {
 		l.Error().Err(err).Msg("server failed")
 	}
+}
+
+type outboxKafkaAdapter struct {
+	repo *repository.OutboxRepository
+}
+
+func (a outboxKafkaAdapter) ListUnprocessed(ctx context.Context, limit int) ([]kafka.OutboxEventRow, error) {
+	events, err := a.repo.ListUnprocessed(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+	rows := make([]kafka.OutboxEventRow, 0, len(events))
+	for _, e := range events {
+		rows = append(rows, kafka.OutboxEventRow{ID: e.ID, Topic: e.Topic, Key: e.Key, Payload: e.Payload})
+	}
+	return rows, nil
+}
+
+func (a outboxKafkaAdapter) MarkProcessed(ctx context.Context, ids []int64) error {
+	return a.repo.MarkProcessed(ctx, ids)
 }

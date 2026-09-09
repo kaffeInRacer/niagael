@@ -38,6 +38,7 @@ func (r *cartRepository) ReadByUserId(ctx context.Context, userId string) (*doma
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
 
@@ -55,6 +56,7 @@ func (r *cartRepository) ReadByUserId(ctx context.Context, userId string) (*doma
 
 	for rows.Next() {
 		var item domain.CartItem
+
 		if err := rows.Scan(
 			&item.Id,
 			&item.CartId,
@@ -72,10 +74,11 @@ func (r *cartRepository) ReadByUserId(ctx context.Context, userId string) (*doma
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return &cart, nil
 }
 
-func (r *cartRepository) AddItem(ctx context.Context, userId string, cartId string, item domain.CartItem, maxQuantity int) error {
+func (r *cartRepository) AddItemWithTx(ctx context.Context, userId string, cartId string, item domain.CartItem, maxQuantity int) error {
 	return r.store.ExecTx(ctx, func(tx postgresql.DBTX) error {
 		const cartQuery = `
 			INSERT INTO cart (id, user_id, created_at)
@@ -99,9 +102,11 @@ func (r *cartRepository) AddItem(ctx context.Context, userId string, cartId stri
 		if err != nil {
 			return err
 		}
+
 		if cmdTag.RowsAffected() == 0 {
 			return errors.New(constants.ErrCartQuantityLimit)
 		}
+
 		return nil
 	})
 }
@@ -120,9 +125,11 @@ func (r *cartRepository) UpdateItem(ctx context.Context, itemId string, userId s
 	if err != nil {
 		return err
 	}
+
 	if cmdTag.RowsAffected() == 0 {
 		return errors.New(constants.ErrCartItemNotFound)
 	}
+
 	return nil
 }
 
@@ -138,13 +145,16 @@ func (r *cartRepository) DeleteItem(ctx context.Context, itemId string, userId s
 	if err != nil {
 		return err
 	}
+
 	if cmdTag.RowsAffected() == 0 {
 		return errors.New(constants.ErrCartItemNotFound)
 	}
+
 	return nil
 }
 
 func (r *cartRepository) Clear(ctx context.Context, userId string) error {
 	_, err := r.db.Exec(ctx, `DELETE FROM cart WHERE user_id = $1`, userId)
+
 	return err
 }

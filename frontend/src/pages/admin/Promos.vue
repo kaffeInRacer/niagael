@@ -2,8 +2,8 @@
   <div>
     <div class="flex justify-between items-center mb-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-800">Promos</h2>
-        <p class="text-gray-500">Manage promotional codes and discounts</p>
+        <h2 class="text-2xl font-bold text-gray-800">Voucher</h2>
+        <p class="text-gray-500">Manage promotional vouchers and discounts</p>
       </div>
       <button
         @click="showModal = true; resetForm()"
@@ -27,14 +27,15 @@
         :ajax="tableAjax"
         :server-side="true"
         :options="tableOptions"
+        @action="handleTableAction"
       >
       </AdminDataTable>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="promo-modal-title">
       <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 my-8">
         <div class="px-6 py-4 border-b">
-          <h3 class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit Promo' : 'Add Promo' }}</h3>
+          <h3 id="promo-modal-title" class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit Promo' : 'Add Promo' }}</h3>
         </div>
         <form @submit.prevent="savePromo" class="px-6 py-4 space-y-4">
           <div class="grid grid-cols-2 gap-4">
@@ -88,6 +89,10 @@
             <input v-model="form.can_combine_flash_sale" type="checkbox" id="can_combine" class="h-4 w-4 text-blue-600 rounded" />
             <label for="can_combine" class="ml-2 text-sm text-gray-700">Can combine with flash sale</label>
           </div>
+          <div class="flex items-center">
+            <input v-model="form.is_active" type="checkbox" id="promo_active" class="h-4 w-4 text-blue-600 rounded" />
+            <label for="promo_active" class="ml-2 text-sm text-gray-700">Active</label>
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
@@ -98,7 +103,7 @@
               <input v-model="form.end_date" type="datetime-local" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
           </div>
-          <div v-if="formError" class="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div v-if="formError" class="bg-red-50 border border-red-200 rounded-lg p-3" role="alert">
             <p class="text-sm text-red-600">{{ formError }}</p>
           </div>
           <div class="flex justify-end gap-3 pt-4 border-t">
@@ -114,11 +119,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import api from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
-import { createServerSideAjax } from '../../utils/datatables'
-import { formatDate, formatPrice, isPromoActive } from '../../utils/format'
+import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
+import { formatDate, formatPrice, isPromoActive, localDateTimeToIso, toLocalDateTimeInput } from '../../utils/format'
 
 const error = ref(null)
 const showModal = ref(false)
@@ -138,23 +143,24 @@ const form = ref({
   quantity: 100,
   max_usage_per_user: 1,
   can_combine_flash_sale: false,
+  is_active: true,
   start_date: '',
   end_date: ''
 })
 
 const columns = [
   { data: 'code', title: 'Code', render: function(data) {
-    return `<span class="px-2 py-1 bg-gray-100 rounded font-mono text-sm font-medium">${data}</span>`
+    return `<span class="px-2 py-1 bg-gray-100 rounded font-mono text-sm font-medium">${escapeHtml(data)}</span>`
   }},
   { data: 'name', title: 'Name' },
   { data: null, title: 'Discount', orderable: false, render: function(data, type, row) {
-    return row.discount_type === 'percentage' ? `${row.discount_value}%` : formatPrice(row.discount_value)
+    return row.discount_type === 'percentage' ? `${escapeHtml(row.discount_value)}%` : formatPrice(row.discount_value)
   }},
   { data: 'min_purchase', title: 'Min Purchase', orderable: false, render: function(data) {
     return formatPrice(data)
   }},
   { data: null, title: 'Usage', orderable: false, render: function(data, type, row) {
-    return `${row.used_count}/${row.quantity}`
+    return `${escapeHtml(row.used_count)}/${escapeHtml(row.quantity)}`
   }},
   { data: null, title: 'Period', render: function(data, type, row) {
     if (!row) return ''
@@ -162,14 +168,14 @@ const columns = [
   }},
   { data: null, title: 'Status', orderable: false, render: function(data, type, row) {
     if (!row) return ''
-    const active = isPromoActive(row.start_date, row.end_date)
+    const active = row.is_active === true && isPromoActive(row.start_date, row.end_date)
     const cls = active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
     const label = active ? 'Active' : 'Inactive'
     return `<span class="px-2 py-1 text-xs font-medium rounded-full ${cls}">${label}</span>`
   }},
   { data: null, title: 'Actions', orderable: false, searchable: false, render: function(data, type, row) {
     if (!row) return ''
-    return `<div class="flex justify-end gap-3"><button class="text-blue-600 hover:text-blue-900 edit-btn" data-id="${row.id}">Edit</button><button class="text-red-600 hover:text-red-900 delete-btn" data-id="${row.id}">Delete</button></div>`
+    return '<div class="flex justify-end gap-3"><button type="button" class="text-blue-600 hover:text-blue-900" data-table-action="edit">Edit</button><button type="button" class="text-red-600 hover:text-red-900" data-table-action="delete">Delete</button></div>'
   }}
 ]
 
@@ -188,11 +194,12 @@ const tableAjax = createServerSideAjax({
   orderColumns: { 0: 'code', 1: 'name', 5: 'start_date' },
   onError: (e) => {
     error.value = e.response?.data?.error || 'Failed to load promos'
-  }
+  },
+  onSuccess: () => { error.value = null }
 })
 
 const resetForm = () => {
-  form.value = { code: '', name: '', description: '', discount_type: 'percentage', discount_value: 10, min_purchase: 0, max_discount: 0, quantity: 100, max_usage_per_user: 1, can_combine_flash_sale: false, start_date: '', end_date: '' }
+  form.value = { code: '', name: '', description: '', discount_type: 'percentage', discount_value: 10, min_purchase: 0, max_discount: 0, quantity: 100, max_usage_per_user: 1, can_combine_flash_sale: false, is_active: true, start_date: '', end_date: '' }
   editingId.value = null
   formError.value = null
 }
@@ -210,8 +217,9 @@ const editPromo = (promo) => {
     quantity: promo.quantity,
     max_usage_per_user: promo.max_usage_per_user,
     can_combine_flash_sale: promo.can_combine_flash_sale,
-    start_date: promo.start_date ? new Date(promo.start_date).toISOString().slice(0, 16) : '',
-    end_date: promo.end_date ? new Date(promo.end_date).toISOString().slice(0, 16) : ''
+    is_active: promo.is_active ?? true,
+    start_date: toLocalDateTimeInput(promo.start_date),
+    end_date: toLocalDateTimeInput(promo.end_date)
   }
   showModal.value = true
 }
@@ -223,8 +231,8 @@ const savePromo = async () => {
     const payload = {
       ...form.value,
       code: form.value.code.toUpperCase(),
-      start_date: new Date(form.value.start_date).toISOString(),
-      end_date: new Date(form.value.end_date).toISOString()
+      start_date: localDateTimeToIso(form.value.start_date),
+      end_date: localDateTimeToIso(form.value.end_date)
     }
     if (editingId.value) {
       await api.put(`/admin/promos/${editingId.value}`, payload)
@@ -250,19 +258,8 @@ const deletePromo = async (id) => {
   }
 }
 
-onMounted(() => {
-  const tableEl = document.querySelector('.dataTable')
-  if (tableEl) {
-    tableEl.addEventListener('click', (e) => {
-      const editBtn = e.target.closest('.edit-btn')
-      const deleteBtn = e.target.closest('.delete-btn')
-      if (editBtn) {
-        const row = table.value?.getInstance()?.row(editBtn.closest('tr'))?.data()
-        if (row) editPromo(row)
-      } else if (deleteBtn) {
-        deletePromo(deleteBtn.dataset.id)
-      }
-    })
-  }
-})
+const handleTableAction = ({ action, row }) => {
+  if (action === 'edit') editPromo(row)
+  if (action === 'delete') deletePromo(row.id)
+}
 </script>

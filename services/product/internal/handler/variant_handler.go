@@ -25,22 +25,42 @@ func NewVariantHandler(usecase IUseCase.VariantUseCase, logger zerolog.Logger, e
 		v:       validator.Get(),
 	}
 
-	// Buyer routes (read-only)
 	variants := engine.Group("/variants")
-	variants.GET("", h.List)
+	variants.GET("", h.ListActive)
 
-	// Admin routes (full CRUD)
 	adminVariants := engine.Group("/admin/variants")
 	adminVariants.Use(authorization.Authenticate())
-	adminVariants.GET("", authorization.Authorize("products", "read"), h.List)
-	adminVariants.POST("", authorization.Authorize("products", "create"), h.Create)
-	adminVariants.PUT("/:id", authorization.Authorize("products", "update"), h.Update)
-	adminVariants.DELETE("/:id", authorization.Authorize("products", "delete"), h.Delete)
+	adminVariants.GET("", authorization.Authorize("variants", "read"), h.List)
+	adminVariants.POST("", authorization.Authorize("variants", "create"), h.Create)
+	adminVariants.PUT("/:id", authorization.Authorize("variants", "update"), h.Update)
+	adminVariants.DELETE("/:id", authorization.Authorize("variants", "delete"), h.Delete)
 
 	return h
 }
 
 func (h *variantHandler) List(c *gin.Context) {
+	h.list(c)
+}
+
+func (h *variantHandler) ListActive(c *gin.Context) {
+	productId := c.Query("product_id")
+
+	if productId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "product_id is required"})
+		return
+	}
+
+	variants, err := h.usecase.ListActiveByProductId(c.Request.Context(), productId)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("failed to list variants")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": variants})
+}
+
+func (h *variantHandler) list(c *gin.Context) {
 	productId := c.Query("product_id")
 	if productId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "product_id is required"})

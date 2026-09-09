@@ -15,7 +15,6 @@ import (
 func Load() (*Config, error) {
 	st := &Config{}
 
-	// 1. Ambil working directory & baca file config.yaml
 	dir, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf(constants.ErrConfigPath, err)
@@ -27,13 +26,10 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf(constants.ErrConfigFileNotFound, path)
 	}
 
-	// 2. Parse YAML dulu ke struct (sebagai data dasar)
 	if err := yaml.Unmarshal(data, st); err != nil {
 		return nil, fmt.Errorf(constants.ErrConfigParse, path, err)
 	}
 
-	// 3. Timpa (override) data YAML dengan Environment Variables (jika ENV ada)
-	// Nilai ke-2 pada env.Get* mengambil data yang SUDAH diparsing dari YAML
 	st.HTTP.ServiceName = env.GetString("SERVICE_NAME", st.HTTP.ServiceName)
 	st.HTTP.Mode = env.GetString("HTTP_MODE", st.HTTP.Mode)
 	st.HTTP.Addr = env.GetString("HTTP_ADDR", st.HTTP.Addr)
@@ -63,21 +59,16 @@ func Load() (*Config, error) {
 	st.Redis.MaxConnLifetime = env.GetDuration("REDIS_MAX_CONN_LIFETIME", st.Redis.MaxConnLifetime)
 	st.Redis.MaxConnIdleTime = env.GetDuration("REDIS_MAX_CONN_IDLE_TIME", st.Redis.MaxConnIdleTime)
 
-	st.Kafka.GroupID = env.GetString("KAFKA_GROUP_ID", st.Kafka.GroupID)
-	st.Kafka.CasbinTopic = env.GetString("KAFKA_CASBIN_TOPIC", st.Kafka.CasbinTopic)
-	if brokers := os.Getenv("KAFKA_BROKERS"); brokers != "" {
-		st.Kafka.Brokers = strings.Split(brokers, ",")
-	}
-
-	st.Minio.Endpoint = env.GetString("MINIO_ENDPOINT", st.Minio.Endpoint)
-	st.Minio.AccessKeyID = env.GetString("MINIO_ACCESS_KEY_ID", st.Minio.AccessKeyID)
-	st.Minio.SecretAccessKey = env.GetString("MINIO_SECRET_ACCESS_KEY", st.Minio.SecretAccessKey)
-	st.Minio.BucketName = env.GetString("MINIO_BUCKET_NAME", st.Minio.BucketName)
-	st.Minio.UseSSL = env.GetBool("MINIO_USE_SSL", st.Minio.UseSSL)
 	st.JWT.Secret = env.GetString("JWT_SECRET", st.JWT.Secret)
 	st.JWT.Issuer = env.GetString("JWT_ISSUER", st.JWT.Issuer)
 	st.JWT.RedisDB = env.GetInt("JWT_REDIS_DB", st.JWT.RedisDB)
+	st.RBAC.PolicyReloadInterval = env.GetDuration("RBAC_POLICY_RELOAD_INTERVAL", st.RBAC.PolicyReloadInterval)
+	st.Kafka.Brokers = env.GetStringSlice("KAFKA_BROKERS", st.Kafka.Brokers)
+	st.Kafka.GroupID = env.GetString("KAFKA_GROUP_ID", st.Kafka.GroupID)
+	st.Kafka.CasbinTopic = env.GetString("KAFKA_CASBIN_TOPIC", st.Kafka.CasbinTopic)
+	if strings.TrimSpace(st.JWT.Secret) == "" {
+		return nil, fmt.Errorf("JWT_SECRET is required")
+	}
 
-	// 4. Return pointer variabel `st`
 	return st, nil
 }

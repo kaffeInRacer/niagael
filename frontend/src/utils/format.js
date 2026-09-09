@@ -43,6 +43,16 @@ export const getFlashSaleStatus = (startTime, endTime) => {
   return 'active'
 }
 
+export const toLocalDateTimeInput = (value) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const offset = date.getTimezoneOffset() * 60 * 1000
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+}
+
+export const localDateTimeToIso = (value) => new Date(value).toISOString()
+
 export const getFlashSaleStatusClass = (status) => {
   const classes = {
     upcoming: 'bg-blue-100 text-blue-800',

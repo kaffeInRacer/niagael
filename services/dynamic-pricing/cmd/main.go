@@ -6,6 +6,7 @@ import (
 	"kaffein/dynamic-pricing-service/pkg/logger"
 	"kaffein/dynamic-pricing-service/pkg/postgresql"
 	"kaffein/dynamic-pricing-service/pkg/redis"
+	"kaffein/dynamic-pricing-service/utils/events"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -46,11 +47,13 @@ func main() {
 	}
 	defer redisClient.Client.Close()
 
-	authService, err := auth.New(ctx, c.JWT.Secret, c.JWT.Issuer, c.JWT.RedisDB, authPool, redisClient.Client, c.Kafka.Brokers, c.Kafka.CasbinTopic, c.Kafka.GroupID)
+	authService, err := auth.New(ctx, c, authPool, redisClient.Client, l)
 	if err != nil {
 		l.Fatal().Err(err).Msg("failed to initialize authorization")
 	}
 	defer authService.Close()
+
+	events.Init(c.Kafka.Brokers)
 
 	app := &application{
 		config: c,

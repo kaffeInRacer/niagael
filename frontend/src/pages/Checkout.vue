@@ -86,7 +86,7 @@
         </div>
 
         <div class="mt-4">
-          <label class="text-sm font-medium text-gray-700">Promo Code</label>
+          <label class="text-sm font-medium text-gray-700">Voucher Code</label>
           <div class="mt-2 flex gap-2">
             <input
               v-model="promoCode"
@@ -103,7 +103,7 @@
             </button>
           </div>
           <p v-if="promoError" class="mt-1 text-sm text-red-500">{{ promoError }}</p>
-          <p v-if="cart.promoDiscount > 0" class="mt-1 text-sm text-green-600">Promo {{ cart.promoCode }} applied</p>
+          <p v-if="cart.promoDiscount > 0" class="mt-1 text-sm text-green-600">Voucher {{ cart.promoCode }} applied</p>
         </div>
 
         <div class="border-t mt-4 pt-4 space-y-2">
@@ -112,7 +112,7 @@
             <span>Rp {{ formatPrice(cart.selectedSubtotal) }}</span>
           </div>
           <div v-if="cart.promoDiscount > 0" class="flex justify-between text-green-600">
-            <span>Promo ({{ cart.promoCode }})</span>
+            <span>Voucher ({{ cart.promoCode }})</span>
             <span>- Rp {{ formatPrice(cart.promoDiscount) }}</span>
           </div>
           <div class="flex justify-between font-bold text-lg">

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v3.21.12
-// source: proto/dynamic-pricing.proto
+// source: dynamic-pricing.proto
 
 package dynamicpricingpb
 
@@ -19,13 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DynamicPricingService_GetFlashSaleByProductId_FullMethodName = "/dynamic_pricing.DynamicPricingService/GetFlashSaleByProductId"
-	DynamicPricingService_GetFlashSaleByVariantId_FullMethodName = "/dynamic_pricing.DynamicPricingService/GetFlashSaleByVariantId"
-	DynamicPricingService_GetPromoByCode_FullMethodName          = "/dynamic_pricing.DynamicPricingService/GetPromoByCode"
-	DynamicPricingService_ApplyPromo_FullMethodName              = "/dynamic_pricing.DynamicPricingService/ApplyPromo"
-	DynamicPricingService_DecrementFlashSaleStock_FullMethodName = "/dynamic_pricing.DynamicPricingService/DecrementFlashSaleStock"
-	DynamicPricingService_IncrementFlashSaleUsage_FullMethodName = "/dynamic_pricing.DynamicPricingService/IncrementFlashSaleUsage"
-	DynamicPricingService_GetPromoUsage_FullMethodName           = "/dynamic_pricing.DynamicPricingService/GetPromoUsage"
+	DynamicPricingService_GetFlashSaleByProductId_FullMethodName   = "/dynamic_pricing.DynamicPricingService/GetFlashSaleByProductId"
+	DynamicPricingService_GetFlashSaleByVariantId_FullMethodName   = "/dynamic_pricing.DynamicPricingService/GetFlashSaleByVariantId"
+	DynamicPricingService_GetFlashSalesByProductIds_FullMethodName = "/dynamic_pricing.DynamicPricingService/GetFlashSalesByProductIds"
+	DynamicPricingService_GetFlashSalesByVariantIds_FullMethodName = "/dynamic_pricing.DynamicPricingService/GetFlashSalesByVariantIds"
+	DynamicPricingService_GetPromoByCode_FullMethodName            = "/dynamic_pricing.DynamicPricingService/GetPromoByCode"
+	DynamicPricingService_ApplyPromo_FullMethodName                = "/dynamic_pricing.DynamicPricingService/ApplyPromo"
+	DynamicPricingService_GetPromoUsage_FullMethodName             = "/dynamic_pricing.DynamicPricingService/GetPromoUsage"
+	DynamicPricingService_AllocatePricing_FullMethodName           = "/dynamic_pricing.DynamicPricingService/AllocatePricing"
+	DynamicPricingService_ReleasePricing_FullMethodName            = "/dynamic_pricing.DynamicPricingService/ReleasePricing"
 )
 
 // DynamicPricingServiceClient is the client API for DynamicPricingService service.
@@ -34,11 +36,13 @@ const (
 type DynamicPricingServiceClient interface {
 	GetFlashSaleByProductId(ctx context.Context, in *GetFlashSaleByProductIdRequest, opts ...grpc.CallOption) (*FlashSale, error)
 	GetFlashSaleByVariantId(ctx context.Context, in *GetFlashSaleByVariantIdRequest, opts ...grpc.CallOption) (*FlashSale, error)
+	GetFlashSalesByProductIds(ctx context.Context, in *GetFlashSalesByProductIdsRequest, opts ...grpc.CallOption) (*GetFlashSalesByProductIdsResponse, error)
+	GetFlashSalesByVariantIds(ctx context.Context, in *GetFlashSalesByVariantIdsRequest, opts ...grpc.CallOption) (*GetFlashSalesByVariantIdsResponse, error)
 	GetPromoByCode(ctx context.Context, in *GetPromoByCodeRequest, opts ...grpc.CallOption) (*Promo, error)
 	ApplyPromo(ctx context.Context, in *ApplyPromoRequest, opts ...grpc.CallOption) (*ApplyPromoResponse, error)
-	DecrementFlashSaleStock(ctx context.Context, in *DecrementFlashSaleStockRequest, opts ...grpc.CallOption) (*DecrementFlashSaleStockResponse, error)
-	IncrementFlashSaleUsage(ctx context.Context, in *IncrementFlashSaleUsageRequest, opts ...grpc.CallOption) (*IncrementFlashSaleUsageResponse, error)
 	GetPromoUsage(ctx context.Context, in *GetPromoUsageRequest, opts ...grpc.CallOption) (*PromoUsageResponse, error)
+	AllocatePricing(ctx context.Context, in *AllocatePricingRequest, opts ...grpc.CallOption) (*AllocatePricingResponse, error)
+	ReleasePricing(ctx context.Context, in *ReleasePricingRequest, opts ...grpc.CallOption) (*ReleasePricingResponse, error)
 }
 
 type dynamicPricingServiceClient struct {
@@ -69,6 +73,26 @@ func (c *dynamicPricingServiceClient) GetFlashSaleByVariantId(ctx context.Contex
 	return out, nil
 }
 
+func (c *dynamicPricingServiceClient) GetFlashSalesByProductIds(ctx context.Context, in *GetFlashSalesByProductIdsRequest, opts ...grpc.CallOption) (*GetFlashSalesByProductIdsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFlashSalesByProductIdsResponse)
+	err := c.cc.Invoke(ctx, DynamicPricingService_GetFlashSalesByProductIds_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dynamicPricingServiceClient) GetFlashSalesByVariantIds(ctx context.Context, in *GetFlashSalesByVariantIdsRequest, opts ...grpc.CallOption) (*GetFlashSalesByVariantIdsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFlashSalesByVariantIdsResponse)
+	err := c.cc.Invoke(ctx, DynamicPricingService_GetFlashSalesByVariantIds_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *dynamicPricingServiceClient) GetPromoByCode(ctx context.Context, in *GetPromoByCodeRequest, opts ...grpc.CallOption) (*Promo, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Promo)
@@ -89,30 +113,30 @@ func (c *dynamicPricingServiceClient) ApplyPromo(ctx context.Context, in *ApplyP
 	return out, nil
 }
 
-func (c *dynamicPricingServiceClient) DecrementFlashSaleStock(ctx context.Context, in *DecrementFlashSaleStockRequest, opts ...grpc.CallOption) (*DecrementFlashSaleStockResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DecrementFlashSaleStockResponse)
-	err := c.cc.Invoke(ctx, DynamicPricingService_DecrementFlashSaleStock_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *dynamicPricingServiceClient) IncrementFlashSaleUsage(ctx context.Context, in *IncrementFlashSaleUsageRequest, opts ...grpc.CallOption) (*IncrementFlashSaleUsageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(IncrementFlashSaleUsageResponse)
-	err := c.cc.Invoke(ctx, DynamicPricingService_IncrementFlashSaleUsage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *dynamicPricingServiceClient) GetPromoUsage(ctx context.Context, in *GetPromoUsageRequest, opts ...grpc.CallOption) (*PromoUsageResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PromoUsageResponse)
 	err := c.cc.Invoke(ctx, DynamicPricingService_GetPromoUsage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dynamicPricingServiceClient) AllocatePricing(ctx context.Context, in *AllocatePricingRequest, opts ...grpc.CallOption) (*AllocatePricingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AllocatePricingResponse)
+	err := c.cc.Invoke(ctx, DynamicPricingService_AllocatePricing_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dynamicPricingServiceClient) ReleasePricing(ctx context.Context, in *ReleasePricingRequest, opts ...grpc.CallOption) (*ReleasePricingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReleasePricingResponse)
+	err := c.cc.Invoke(ctx, DynamicPricingService_ReleasePricing_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -125,11 +149,13 @@ func (c *dynamicPricingServiceClient) GetPromoUsage(ctx context.Context, in *Get
 type DynamicPricingServiceServer interface {
 	GetFlashSaleByProductId(context.Context, *GetFlashSaleByProductIdRequest) (*FlashSale, error)
 	GetFlashSaleByVariantId(context.Context, *GetFlashSaleByVariantIdRequest) (*FlashSale, error)
+	GetFlashSalesByProductIds(context.Context, *GetFlashSalesByProductIdsRequest) (*GetFlashSalesByProductIdsResponse, error)
+	GetFlashSalesByVariantIds(context.Context, *GetFlashSalesByVariantIdsRequest) (*GetFlashSalesByVariantIdsResponse, error)
 	GetPromoByCode(context.Context, *GetPromoByCodeRequest) (*Promo, error)
 	ApplyPromo(context.Context, *ApplyPromoRequest) (*ApplyPromoResponse, error)
-	DecrementFlashSaleStock(context.Context, *DecrementFlashSaleStockRequest) (*DecrementFlashSaleStockResponse, error)
-	IncrementFlashSaleUsage(context.Context, *IncrementFlashSaleUsageRequest) (*IncrementFlashSaleUsageResponse, error)
 	GetPromoUsage(context.Context, *GetPromoUsageRequest) (*PromoUsageResponse, error)
+	AllocatePricing(context.Context, *AllocatePricingRequest) (*AllocatePricingResponse, error)
+	ReleasePricing(context.Context, *ReleasePricingRequest) (*ReleasePricingResponse, error)
 	mustEmbedUnimplementedDynamicPricingServiceServer()
 }
 
@@ -146,20 +172,26 @@ func (UnimplementedDynamicPricingServiceServer) GetFlashSaleByProductId(context.
 func (UnimplementedDynamicPricingServiceServer) GetFlashSaleByVariantId(context.Context, *GetFlashSaleByVariantIdRequest) (*FlashSale, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetFlashSaleByVariantId not implemented")
 }
+func (UnimplementedDynamicPricingServiceServer) GetFlashSalesByProductIds(context.Context, *GetFlashSalesByProductIdsRequest) (*GetFlashSalesByProductIdsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetFlashSalesByProductIds not implemented")
+}
+func (UnimplementedDynamicPricingServiceServer) GetFlashSalesByVariantIds(context.Context, *GetFlashSalesByVariantIdsRequest) (*GetFlashSalesByVariantIdsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetFlashSalesByVariantIds not implemented")
+}
 func (UnimplementedDynamicPricingServiceServer) GetPromoByCode(context.Context, *GetPromoByCodeRequest) (*Promo, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPromoByCode not implemented")
 }
 func (UnimplementedDynamicPricingServiceServer) ApplyPromo(context.Context, *ApplyPromoRequest) (*ApplyPromoResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ApplyPromo not implemented")
 }
-func (UnimplementedDynamicPricingServiceServer) DecrementFlashSaleStock(context.Context, *DecrementFlashSaleStockRequest) (*DecrementFlashSaleStockResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DecrementFlashSaleStock not implemented")
-}
-func (UnimplementedDynamicPricingServiceServer) IncrementFlashSaleUsage(context.Context, *IncrementFlashSaleUsageRequest) (*IncrementFlashSaleUsageResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method IncrementFlashSaleUsage not implemented")
-}
 func (UnimplementedDynamicPricingServiceServer) GetPromoUsage(context.Context, *GetPromoUsageRequest) (*PromoUsageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPromoUsage not implemented")
+}
+func (UnimplementedDynamicPricingServiceServer) AllocatePricing(context.Context, *AllocatePricingRequest) (*AllocatePricingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AllocatePricing not implemented")
+}
+func (UnimplementedDynamicPricingServiceServer) ReleasePricing(context.Context, *ReleasePricingRequest) (*ReleasePricingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReleasePricing not implemented")
 }
 func (UnimplementedDynamicPricingServiceServer) mustEmbedUnimplementedDynamicPricingServiceServer() {}
 func (UnimplementedDynamicPricingServiceServer) testEmbeddedByValue()                               {}
@@ -218,6 +250,42 @@ func _DynamicPricingService_GetFlashSaleByVariantId_Handler(srv interface{}, ctx
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DynamicPricingService_GetFlashSalesByProductIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFlashSalesByProductIdsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DynamicPricingServiceServer).GetFlashSalesByProductIds(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DynamicPricingService_GetFlashSalesByProductIds_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DynamicPricingServiceServer).GetFlashSalesByProductIds(ctx, req.(*GetFlashSalesByProductIdsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DynamicPricingService_GetFlashSalesByVariantIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFlashSalesByVariantIdsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DynamicPricingServiceServer).GetFlashSalesByVariantIds(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DynamicPricingService_GetFlashSalesByVariantIds_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DynamicPricingServiceServer).GetFlashSalesByVariantIds(ctx, req.(*GetFlashSalesByVariantIdsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DynamicPricingService_GetPromoByCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPromoByCodeRequest)
 	if err := dec(in); err != nil {
@@ -254,42 +322,6 @@ func _DynamicPricingService_ApplyPromo_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DynamicPricingService_DecrementFlashSaleStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DecrementFlashSaleStockRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DynamicPricingServiceServer).DecrementFlashSaleStock(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DynamicPricingService_DecrementFlashSaleStock_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DynamicPricingServiceServer).DecrementFlashSaleStock(ctx, req.(*DecrementFlashSaleStockRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _DynamicPricingService_IncrementFlashSaleUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IncrementFlashSaleUsageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DynamicPricingServiceServer).IncrementFlashSaleUsage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: DynamicPricingService_IncrementFlashSaleUsage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DynamicPricingServiceServer).IncrementFlashSaleUsage(ctx, req.(*IncrementFlashSaleUsageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _DynamicPricingService_GetPromoUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPromoUsageRequest)
 	if err := dec(in); err != nil {
@@ -304,6 +336,42 @@ func _DynamicPricingService_GetPromoUsage_Handler(srv interface{}, ctx context.C
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(DynamicPricingServiceServer).GetPromoUsage(ctx, req.(*GetPromoUsageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DynamicPricingService_AllocatePricing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AllocatePricingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DynamicPricingServiceServer).AllocatePricing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DynamicPricingService_AllocatePricing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DynamicPricingServiceServer).AllocatePricing(ctx, req.(*AllocatePricingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DynamicPricingService_ReleasePricing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReleasePricingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DynamicPricingServiceServer).ReleasePricing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DynamicPricingService_ReleasePricing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DynamicPricingServiceServer).ReleasePricing(ctx, req.(*ReleasePricingRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -324,6 +392,14 @@ var DynamicPricingService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DynamicPricingService_GetFlashSaleByVariantId_Handler,
 		},
 		{
+			MethodName: "GetFlashSalesByProductIds",
+			Handler:    _DynamicPricingService_GetFlashSalesByProductIds_Handler,
+		},
+		{
+			MethodName: "GetFlashSalesByVariantIds",
+			Handler:    _DynamicPricingService_GetFlashSalesByVariantIds_Handler,
+		},
+		{
 			MethodName: "GetPromoByCode",
 			Handler:    _DynamicPricingService_GetPromoByCode_Handler,
 		},
@@ -332,18 +408,18 @@ var DynamicPricingService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DynamicPricingService_ApplyPromo_Handler,
 		},
 		{
-			MethodName: "DecrementFlashSaleStock",
-			Handler:    _DynamicPricingService_DecrementFlashSaleStock_Handler,
-		},
-		{
-			MethodName: "IncrementFlashSaleUsage",
-			Handler:    _DynamicPricingService_IncrementFlashSaleUsage_Handler,
-		},
-		{
 			MethodName: "GetPromoUsage",
 			Handler:    _DynamicPricingService_GetPromoUsage_Handler,
 		},
+		{
+			MethodName: "AllocatePricing",
+			Handler:    _DynamicPricingService_AllocatePricing_Handler,
+		},
+		{
+			MethodName: "ReleasePricing",
+			Handler:    _DynamicPricingService_ReleasePricing_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/dynamic-pricing.proto",
+	Metadata: "dynamic-pricing.proto",
 }

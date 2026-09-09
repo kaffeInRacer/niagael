@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"kaffein/product-service/internal/domain"
 	"kaffein/product-service/internal/dto"
 	"kaffein/product-service/internal/interfaces/IRepository"
 	"kaffein/product-service/pkg/postgresql"
+	"kaffein/product-service/utils/constants"
 )
 
 type productImageRepository struct {
@@ -31,14 +33,20 @@ func (r *productImageRepository) Create(ctx context.Context, args dto.CreateProd
 	return nil
 }
 
-func (r *productImageRepository) Delete(ctx context.Context, id string) error {
+func (r *productImageRepository) Delete(ctx context.Context, productId string, id string) error {
 	const query = `
 		UPDATE product_image
 		SET deleted_at = NOW()
-		WHERE id = $1 AND deleted_at IS NULL
+		WHERE id = $1 AND product_id = $2 AND deleted_at IS NULL
 	`
-	_, err := r.db.Exec(ctx, query, id)
-	return err
+	result, err := r.db.Exec(ctx, query, id, productId)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return errors.New(constants.ErrImageNotFound)
+	}
+	return nil
 }
 
 func (r *productImageRepository) ListByProductId(ctx context.Context, productId string) ([]domain.ProductImage, error) {

@@ -1,16 +1,3 @@
-// Package logger menyediakan global zerolog logger yang diinisialisasi sekali
-// dan dapat diakses di seluruh package melalui fungsi Get().
-//
-// Konfigurasi didukung melalui config.Config atau environment variables.
-// Logger mengikuti pola singleton untuk memastikan hanya diinisialisasi sekali.
-//
-// Contoh config.yaml:
-//
-//	logger:
-//	  level: "info"     # trace, debug, info, warn, error, fatal, panic, disabled
-//	  stdout: true      # true = output ke terminal
-//	  path: ""          # path file log, kosong = tidak ada file log
-//	  format: "json"    # "json" atau "console" (human readable)
 package logger
 
 import (
@@ -33,14 +20,10 @@ var (
 	initErr error
 )
 
-// Get mengembalikan zerolog.Logger yang sudah diinisialisasi.
-// Jika belum diinisialisasi, mengembalikan no-op logger.
 func Get() zerolog.Logger {
 	return znLog
 }
 
-// Init menginisialisasi global logger dari config.
-// Fungsi ini hanya boleh dipanggil sekali; panggilan berikutnya diabaikan.
 func Init(cfg *config.Config, hooks ...zerolog.Hook) error {
 	once.Do(func() {
 		znLog, initErr = newLogger(cfg, hooks...)
@@ -54,12 +37,10 @@ func Init(cfg *config.Config, hooks ...zerolog.Hook) error {
 	return initErr
 }
 
-// New adalah alias untuk Init, dipertahankan untuk backward compatibility.
 func New(cfg *config.Config, hooks ...zerolog.Hook) {
 	Init(cfg, hooks...)
 }
 
-// NewWithWriter membuat logger dari writer kustom, berguna untuk testing.
 func NewWithWriter(level string, w io.Writer, hooks ...zerolog.Hook) zerolog.Logger {
 	lvl := parseLevel(level)
 	zerolog.SetGlobalLevel(lvl)
@@ -77,7 +58,6 @@ func NewWithWriter(level string, w io.Writer, hooks ...zerolog.Hook) zerolog.Log
 	return logger
 }
 
-// newLogger membuat zerolog.Logger baru dari konfigurasi.
 func newLogger(cfg *config.Config, hooks ...zerolog.Hook) (zerolog.Logger, error) {
 	level := parseLevel(cfg.Logger.Level)
 	zerolog.SetGlobalLevel(level)
@@ -98,7 +78,6 @@ func newLogger(cfg *config.Config, hooks ...zerolog.Hook) (zerolog.Logger, error
 	return logger, nil
 }
 
-// buildOutput menyusun io.Writer berdasarkan konfigurasi.
 func buildOutput(cfg *config.Config) io.Writer {
 	var writers []io.Writer
 
@@ -117,7 +96,6 @@ func buildOutput(cfg *config.Config) io.Writer {
 	return combineWriters(writers)
 }
 
-// openLogFile membuat direktori (jika perlu) dan membuka file log.
 func openLogFile(path string) (*os.File, error) {
 	if dir := filepath.Dir(path); dir != "." && dir != "" {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -127,7 +105,6 @@ func openLogFile(path string) (*os.File, error) {
 	return os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 }
 
-// wrapWriter membungkus writer dengan ConsoleWriter jika format == "console".
 func wrapWriter(w io.Writer, format string) io.Writer {
 	if format == "console" {
 		return zerolog.ConsoleWriter{Out: w, NoColor: w != os.Stdout}
@@ -135,7 +112,6 @@ func wrapWriter(w io.Writer, format string) io.Writer {
 	return w
 }
 
-// combineWriters menggabungkan beberapa writer atau fallback ke Stderr.
 func combineWriters(writers []io.Writer) io.Writer {
 	switch len(writers) {
 	case 0:
@@ -147,7 +123,6 @@ func combineWriters(writers []io.Writer) io.Writer {
 	}
 }
 
-// parseLevel mem-parsing level string, fallback ke InfoLevel jika invalid.
 func parseLevel(level string) zerolog.Level {
 	lvl, err := zerolog.ParseLevel(level)
 	if err != nil {
@@ -156,7 +131,6 @@ func parseLevel(level string) zerolog.Level {
 	return lvl
 }
 
-// GetBuildInfo mengambil informasi build dari binary.
 func GetBuildInfo() (revision, goVersion string) {
 	buildInfo, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -172,7 +146,6 @@ func GetBuildInfo() (revision, goVersion string) {
 	return revision, buildInfo.GoVersion
 }
 
-// ConsoleWriter mengembalikan zerolog.ConsoleWriter untuk development.
 func ConsoleWriter() zerolog.ConsoleWriter {
 	return zerolog.ConsoleWriter{
 		Out:        os.Stderr,
@@ -180,7 +153,6 @@ func ConsoleWriter() zerolog.ConsoleWriter {
 	}
 }
 
-// MultiLevelWriter menggabungkan beberapa writer.
 func MultiLevelWriter(writers ...io.Writer) io.Writer {
 	return zerolog.MultiLevelWriter(writers...)
 }

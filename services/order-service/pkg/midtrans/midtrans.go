@@ -12,9 +12,10 @@ import (
 )
 
 type MidtransClient struct {
-	Snap      snap.Client
-	Core      coreapi.Client
-	serverKey string
+	Snap        snap.Client
+	Core        coreapi.Client
+	serverKey   string
+	environment midtrans.EnvironmentType
 }
 
 type TransactionRequest struct {
@@ -58,10 +59,15 @@ func New(serverKey, clientKey, environment string) *MidtransClient {
 	coreClient.New(serverKey, env)
 
 	return &MidtransClient{
-		Snap:      snapClient,
-		Core:      coreClient,
-		serverKey: serverKey,
+		Snap:        snapClient,
+		Core:        coreClient,
+		serverKey:   serverKey,
+		environment: env,
 	}
+}
+
+func (m *MidtransClient) RedirectUrl(token string) string {
+	return m.environment.SnapURL() + "/snap/v2/vtweb/" + token
 }
 
 func (m *MidtransClient) CreateTransaction(req TransactionRequest) (*TransactionResponse, error) {

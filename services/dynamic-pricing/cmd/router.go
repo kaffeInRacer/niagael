@@ -33,18 +33,17 @@ func (app *application) routes(ctx context.Context) *gin.Engine {
 
 	store := postgresql.NewStore(app.pgx)
 
-	// Flash Sale
 	flashSaleRepo := repository.NewFlashSaleRepository(store)
 	flashSaleUsageRepo := repository.NewFlashSaleUsageRepository(store)
 	flashSaleUseCase := usecase.NewFlashSaleUseCase(flashSaleRepo, flashSaleUsageRepo)
 	handler.NewFlashSaleHandler(flashSaleUseCase, app.logger, r, app.auth)
 
-	// Promo
 	promoRepo := repository.NewPromoRepository(store)
 	promoUsageRepo := repository.NewPromoUsageRepository(store)
 	promoUseCase := usecase.NewPromoUseCase(promoRepo, promoUsageRepo)
 	handler.NewPromoHandler(promoUseCase, app.logger, r, app.auth)
 
-	app.startGrpcServer(ctx, flashSaleRepo, flashSaleUsageRepo, promoRepo, promoUsageRepo)
+	allocationRepo := repository.NewPricingAllocationRepository(store)
+	app.startGrpcServer(ctx, flashSaleRepo, flashSaleUsageRepo, promoRepo, promoUsageRepo, allocationRepo)
 	return r
 }

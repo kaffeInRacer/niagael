@@ -27,20 +27,22 @@
         :ajax="tableAjax"
         :server-side="true"
         :options="tableOptions"
+        @action="handleTableAction"
       >
       </AdminDataTable>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="category-modal-title">
       <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
         <div class="px-6 py-4 border-b">
-          <h3 class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit Category' : 'Add Category' }}</h3>
+          <h3 id="category-modal-title" class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit Category' : 'Add Category' }}</h3>
         </div>
         <form @submit.prevent="saveCategory" class="px-6 py-4 space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+            <label for="category-name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
             <input
               v-model="form.name"
+              id="category-name"
               type="text"
               required
               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -48,15 +50,16 @@
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label for="category-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
               v-model="form.description"
+              id="category-description"
               rows="3"
               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Optional description"
             ></textarea>
           </div>
-          <div v-if="formError" class="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div v-if="formError" class="bg-red-50 border border-red-200 rounded-lg p-3" role="alert">
             <p class="text-sm text-red-600">{{ formError }}</p>
           </div>
           <div class="flex justify-end gap-3 pt-4 border-t">
@@ -72,10 +75,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import api from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
-import { createServerSideAjax } from '../../utils/datatables'
+import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
 import { formatDate } from '../../utils/format'
 
 const error = ref(null)
@@ -92,15 +95,15 @@ const form = ref({
 
 const columns = [
   { data: 'name', title: 'Name', render: function(data, type, row) {
-    let html = `<div class="text-sm font-medium text-gray-900">${data}</div>`
+    let html = `<div class="text-sm font-medium text-gray-900">${escapeHtml(data)}</div>`
     if (row.description) {
-      html += `<div class="text-sm text-gray-500">${row.description}</div>`
+      html += `<div class="text-sm text-gray-500">${escapeHtml(row.description)}</div>`
     }
     return html
   }},
-  { data: 'slug', title: 'Slug' },
+  { data: 'slug', title: 'Slug', render: escapeHtml },
   { data: 'product_count', title: 'Products', orderable: false, render: function(data) {
-    return `<span class="px-2 py-1 bg-gray-100 rounded-full">${data ?? 0}</span>`
+    return `<span class="px-2 py-1 bg-gray-100 rounded-full">${escapeHtml(data ?? 0)}</span>`
   }},
   { data: 'is_active', title: 'Status', orderable: false, render: function(data) {
     const cls = data ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -112,7 +115,7 @@ const columns = [
   }},
   { data: null, title: 'Actions', orderable: false, searchable: false, render: function(data, type, row) {
     if (!row) return ''
-    return `<div class="flex justify-end gap-3"><button class="text-blue-600 hover:text-blue-900 edit-btn" data-id="${row.id}">Edit</button><button class="text-red-600 hover:text-red-900 delete-btn" data-id="${row.id}">Delete</button></div>`
+    return '<div class="flex justify-end gap-3"><button type="button" class="text-blue-600 hover:text-blue-900" data-table-action="edit">Edit</button><button type="button" class="text-red-600 hover:text-red-900" data-table-action="delete">Delete</button></div>'
   }}
 ]
 
@@ -135,7 +138,8 @@ const tableAjax = createServerSideAjax({
   defaultOrderDir: 'asc',
   onError: (e) => {
     error.value = e.response?.data?.error || 'Failed to load categories'
-  }
+  },
+  onSuccess: () => { error.value = null }
 })
 
 const resetForm = () => {
@@ -181,19 +185,8 @@ const deleteCategory = async (id) => {
   }
 }
 
-onMounted(() => {
-  const tableEl = document.querySelector('.dataTable')
-  if (tableEl) {
-    tableEl.addEventListener('click', (e) => {
-      const editBtn = e.target.closest('.edit-btn')
-      const deleteBtn = e.target.closest('.delete-btn')
-      if (editBtn) {
-        const row = table.value?.getInstance()?.row(editBtn.closest('tr'))?.data()
-        if (row) editCategory(row)
-      } else if (deleteBtn) {
-        deleteCategory(deleteBtn.dataset.id)
-      }
-    })
-  }
-})
+const handleTableAction = ({ action, row }) => {
+  if (action === 'edit') editCategory(row)
+  if (action === 'delete') deleteCategory(row.id)
+}
 </script>

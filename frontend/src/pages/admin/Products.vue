@@ -49,15 +49,16 @@
         :ajax="tableAjax"
         :server-side="true"
         :options="tableOptions"
+        @action="handleTableAction"
       >
       </AdminDataTable>
 
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
       <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 my-8">
         <div class="px-6 py-4 border-b">
-          <h3 class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit Product' : 'Add Product' }}</h3>
+          <h3 id="product-modal-title" class="text-lg font-semibold text-gray-800">{{ editingId ? 'Edit Product' : 'Add Product' }}</h3>
         </div>
         <form @submit.prevent="saveProduct" class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
           <div>
@@ -68,17 +69,13 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea v-model="form.description" rows="3" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
               <select v-model="form.category_id" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <option value="">Select category</option>
                 <option v-for="cat in categoryList" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
               </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
-              <input v-model="form.brand" type="text" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
           </div>
           <div v-if="editingHasVariants" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -94,15 +91,11 @@
               <input v-model.number="form.stock" type="number" required min="0" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Weight (grams)</label>
-            <input v-model.number="form.weight" type="number" min="0" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-          </div>
           <div class="flex items-center">
             <input v-model="form.is_active" type="checkbox" id="is_active" class="h-4 w-4 text-blue-600 rounded" />
             <label for="is_active" class="ml-2 text-sm text-gray-700">Active</label>
           </div>
-          <div v-if="formError" class="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div v-if="formError" class="bg-red-50 border border-red-200 rounded-lg p-3" role="alert">
             <p class="text-sm text-red-600">{{ formError }}</p>
           </div>
           <div class="flex justify-end gap-3 pt-4 border-t">
@@ -115,14 +108,14 @@
       </div>
     </div>
 
-    <div v-if="showVariantModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+    <div v-if="showVariantModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="variant-modal-title">
       <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 my-8">
         <div class="px-6 py-4 border-b flex justify-between items-center">
           <div>
-            <h3 class="text-lg font-semibold text-gray-800">Variants</h3>
+            <h3 id="variant-modal-title" class="text-lg font-semibold text-gray-800">Variants</h3>
             <p class="text-sm text-gray-500">{{ selectedProduct?.name }}</p>
           </div>
-          <button @click="showVariantModal = false" class="text-gray-400 hover:text-gray-600">
+          <button type="button" @click="showVariantModal = false" class="text-gray-400 hover:text-gray-600" aria-label="Close variants">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -276,7 +269,8 @@
                     />
                     <button
                       type="button"
-                      @click="removeAttribute(index)"
+                       @click="removeAttribute(index)"
+                       :aria-label="`Remove attribute ${index + 1}`"
                       class="text-red-500 hover:text-red-700 px-2"
                     >
                       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -314,7 +308,7 @@
 import { ref, onMounted } from 'vue'
 import api from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
-import { createServerSideAjax } from '../../utils/datatables'
+import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
 import { formatPrice } from '../../utils/format'
 
 const categoryList = ref([])
@@ -348,20 +342,20 @@ const discountPercent = (row) => {
 
 const columns = [
   { data: 'name', title: 'Product', render: function(data, type, row) {
-    return `<div class="text-sm font-medium text-gray-900">${data}</div><div class="text-sm text-gray-500">${row.slug}</div>`
+    return `<div class="text-sm font-medium text-gray-900">${escapeHtml(data)}</div><div class="text-sm text-gray-500">${escapeHtml(row.slug)}</div>`
   }},
   { data: 'category', title: 'Category', orderable: false, render: function(data) {
-    return data || '-'
+    return escapeHtml(data || '-')
   }},
   { data: null, title: 'Variants', orderable: false, searchable: false, render: function(data, type, row) {
     if (!row) return ''
     const cls = row.has_variants ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
     const label = row.has_variants ? 'Manage Variants' : 'Add Variants'
-    return `<button class="px-2 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors variants-btn ${cls}" data-id="${row.id}">${label}</button>`
+    return `<button type="button" class="px-2 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors ${cls}" data-table-action="variants">${label}</button>`
   }},
   { data: null, title: 'Actions', orderable: false, searchable: false, render: function(data, type, row) {
     if (!row) return ''
-    return `<div class="flex justify-end gap-3"><button class="text-gray-600 hover:text-gray-900 view-btn" data-id="${row.id}">View</button><button class="text-blue-600 hover:text-blue-900 edit-btn" data-id="${row.id}">Edit</button><button class="text-red-600 hover:text-red-900 delete-btn" data-id="${row.id}">Delete</button></div>`
+    return '<div class="flex justify-end gap-3"><button type="button" class="text-gray-600 hover:text-gray-900" data-table-action="view">View</button><button type="button" class="text-blue-600 hover:text-blue-900" data-table-action="edit">Edit</button><button type="button" class="text-red-600 hover:text-red-900" data-table-action="delete">Delete</button></div>'
   }}
 ]
 
@@ -383,7 +377,8 @@ const tableAjax = createServerSideAjax({
   }),
   onError: (e) => {
     error.value = e.response?.data?.error || 'Failed to load products'
-  }
+  },
+  onSuccess: () => { error.value = null }
 })
 
 const reloadTable = (resetPaging = false) => {
@@ -395,10 +390,8 @@ const form = ref({
   name: '',
   description: '',
   category_id: '',
-  brand: '',
   price: 0,
   stock: 0,
-  weight: 0,
   is_active: true
 })
 
@@ -410,7 +403,7 @@ const variantForm = ref({
 })
 
 const resetForm = () => {
-  form.value = { name: '', description: '', category_id: '', brand: '', price: 0, stock: 0, weight: 0, is_active: true }
+  form.value = { name: '', description: '', category_id: '', price: 0, stock: 0, is_active: true }
   editingId.value = null
   editingHasVariants.value = false
   formError.value = null
@@ -426,27 +419,28 @@ const fetchCategories = async () => {
 }
 
 const editProduct = async (product) => {
+  const requestId = ++editRequestId
   editingId.value = product.id
   editingHasVariants.value = product.has_variants || false
   showModal.value = true
   saving.value = true
   try {
-    const res = await api.get(`/products/${product.id}`)
+    const res = await api.get(`/admin/products/${product.id}`)
+    if (requestId !== editRequestId || editingId.value !== product.id || !showModal.value) return
     const detail = res.data.data
     form.value = {
       name: detail.name || product.name,
       description: detail.description || '',
-      category_id: detail.category?.id || '',
-      brand: detail.brand || '',
+      category_id: detail.category_id || '',
       price: detail.price || 0,
       stock: detail.stock || 0,
-      weight: detail.weight || 0,
       is_active: detail.is_active ?? true
     }
   } catch (e) {
+    if (requestId !== editRequestId) return
     formError.value = 'Failed to load product details'
   } finally {
-    saving.value = false
+    if (requestId === editRequestId) saving.value = false
   }
 }
 
@@ -492,13 +486,15 @@ const openVariants = async (product) => {
 const fetchVariants = async (productId) => {
   variantLoading.value = true
   try {
-    const res = await api.get('/variants', { params: { product_id: productId } })
+    const res = await api.get('/admin/variants', { params: { product_id: productId } })
+    if (selectedProduct.value?.id !== productId || !showVariantModal.value) return
     variants.value = res.data.data || []
   } catch (e) {
+    if (selectedProduct.value?.id !== productId) return
     console.error('Failed to load variants', e)
     variants.value = []
   } finally {
-    variantLoading.value = false
+    if (selectedProduct.value?.id === productId) variantLoading.value = false
   }
 }
 
@@ -574,27 +570,14 @@ const deleteVariant = async (id) => {
 
 onMounted(() => {
   fetchCategories()
-
-  const tableEl = document.querySelector('.dataTable')
-  if (tableEl) {
-    tableEl.addEventListener('click', (e) => {
-      const variantsBtn = e.target.closest('.variants-btn')
-      const viewBtn = e.target.closest('.view-btn')
-      const editBtn = e.target.closest('.edit-btn')
-      const deleteBtn = e.target.closest('.delete-btn')
-      if (variantsBtn) {
-        const row = table.value?.getInstance()?.row(variantsBtn.closest('tr'))?.data()
-        if (row) openVariants(row)
-      } else if (viewBtn) {
-        const row = table.value?.getInstance()?.row(viewBtn.closest('tr'))?.data()
-        if (row) viewProduct(row)
-      } else if (editBtn) {
-        const row = table.value?.getInstance()?.row(editBtn.closest('tr'))?.data()
-        if (row) editProduct(row)
-      } else if (deleteBtn) {
-        deleteProduct(deleteBtn.dataset.id)
-      }
-    })
-  }
 })
+
+let editRequestId = 0
+
+const handleTableAction = ({ action, row }) => {
+  if (action === 'variants') openVariants(row)
+  if (action === 'view') viewProduct(row)
+  if (action === 'edit') editProduct(row)
+  if (action === 'delete') deleteProduct(row.id)
+}
 </script>

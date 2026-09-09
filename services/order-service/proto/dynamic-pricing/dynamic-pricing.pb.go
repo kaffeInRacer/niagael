@@ -781,222 +781,6 @@ func (x *Promo) GetIsActive() bool {
 	return false
 }
 
-type DecrementFlashSaleStockRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FlashSaleId   string                 `protobuf:"bytes,1,opt,name=flash_sale_id,json=flashSaleId,proto3" json:"flash_sale_id,omitempty"`
-	Quantity      int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DecrementFlashSaleStockRequest) Reset() {
-	*x = DecrementFlashSaleStockRequest{}
-	mi := &file_dynamic_pricing_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DecrementFlashSaleStockRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DecrementFlashSaleStockRequest) ProtoMessage() {}
-
-func (x *DecrementFlashSaleStockRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dynamic_pricing_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DecrementFlashSaleStockRequest.ProtoReflect.Descriptor instead.
-func (*DecrementFlashSaleStockRequest) Descriptor() ([]byte, []int) {
-	return file_dynamic_pricing_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *DecrementFlashSaleStockRequest) GetFlashSaleId() string {
-	if x != nil {
-		return x.FlashSaleId
-	}
-	return ""
-}
-
-func (x *DecrementFlashSaleStockRequest) GetQuantity() int32 {
-	if x != nil {
-		return x.Quantity
-	}
-	return 0
-}
-
-type DecrementFlashSaleStockResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DecrementFlashSaleStockResponse) Reset() {
-	*x = DecrementFlashSaleStockResponse{}
-	mi := &file_dynamic_pricing_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DecrementFlashSaleStockResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DecrementFlashSaleStockResponse) ProtoMessage() {}
-
-func (x *DecrementFlashSaleStockResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_dynamic_pricing_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DecrementFlashSaleStockResponse.ProtoReflect.Descriptor instead.
-func (*DecrementFlashSaleStockResponse) Descriptor() ([]byte, []int) {
-	return file_dynamic_pricing_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *DecrementFlashSaleStockResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *DecrementFlashSaleStockResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-type IncrementFlashSaleUsageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FlashSaleId   string                 `protobuf:"bytes,1,opt,name=flash_sale_id,json=flashSaleId,proto3" json:"flash_sale_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Quantity      int32                  `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *IncrementFlashSaleUsageRequest) Reset() {
-	*x = IncrementFlashSaleUsageRequest{}
-	mi := &file_dynamic_pricing_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *IncrementFlashSaleUsageRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IncrementFlashSaleUsageRequest) ProtoMessage() {}
-
-func (x *IncrementFlashSaleUsageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dynamic_pricing_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IncrementFlashSaleUsageRequest.ProtoReflect.Descriptor instead.
-func (*IncrementFlashSaleUsageRequest) Descriptor() ([]byte, []int) {
-	return file_dynamic_pricing_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *IncrementFlashSaleUsageRequest) GetFlashSaleId() string {
-	if x != nil {
-		return x.FlashSaleId
-	}
-	return ""
-}
-
-func (x *IncrementFlashSaleUsageRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *IncrementFlashSaleUsageRequest) GetQuantity() int32 {
-	if x != nil {
-		return x.Quantity
-	}
-	return 0
-}
-
-type IncrementFlashSaleUsageResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *IncrementFlashSaleUsageResponse) Reset() {
-	*x = IncrementFlashSaleUsageResponse{}
-	mi := &file_dynamic_pricing_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *IncrementFlashSaleUsageResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IncrementFlashSaleUsageResponse) ProtoMessage() {}
-
-func (x *IncrementFlashSaleUsageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_dynamic_pricing_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IncrementFlashSaleUsageResponse.ProtoReflect.Descriptor instead.
-func (*IncrementFlashSaleUsageResponse) Descriptor() ([]byte, []int) {
-	return file_dynamic_pricing_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *IncrementFlashSaleUsageResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *IncrementFlashSaleUsageResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
 type GetPromoUsageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PromoId       string                 `protobuf:"bytes,1,opt,name=promo_id,json=promoId,proto3" json:"promo_id,omitempty"`
@@ -1007,7 +791,7 @@ type GetPromoUsageRequest struct {
 
 func (x *GetPromoUsageRequest) Reset() {
 	*x = GetPromoUsageRequest{}
-	mi := &file_dynamic_pricing_proto_msgTypes[16]
+	mi := &file_dynamic_pricing_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1019,7 +803,7 @@ func (x *GetPromoUsageRequest) String() string {
 func (*GetPromoUsageRequest) ProtoMessage() {}
 
 func (x *GetPromoUsageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_dynamic_pricing_proto_msgTypes[16]
+	mi := &file_dynamic_pricing_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1032,7 +816,7 @@ func (x *GetPromoUsageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPromoUsageRequest.ProtoReflect.Descriptor instead.
 func (*GetPromoUsageRequest) Descriptor() ([]byte, []int) {
-	return file_dynamic_pricing_proto_rawDescGZIP(), []int{16}
+	return file_dynamic_pricing_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetPromoUsageRequest) GetPromoId() string {
@@ -1061,7 +845,7 @@ type PromoUsageResponse struct {
 
 func (x *PromoUsageResponse) Reset() {
 	*x = PromoUsageResponse{}
-	mi := &file_dynamic_pricing_proto_msgTypes[17]
+	mi := &file_dynamic_pricing_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1073,7 +857,7 @@ func (x *PromoUsageResponse) String() string {
 func (*PromoUsageResponse) ProtoMessage() {}
 
 func (x *PromoUsageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_dynamic_pricing_proto_msgTypes[17]
+	mi := &file_dynamic_pricing_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1086,7 +870,7 @@ func (x *PromoUsageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PromoUsageResponse.ProtoReflect.Descriptor instead.
 func (*PromoUsageResponse) Descriptor() ([]byte, []int) {
-	return file_dynamic_pricing_proto_rawDescGZIP(), []int{17}
+	return file_dynamic_pricing_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *PromoUsageResponse) GetId() string {
@@ -1115,6 +899,406 @@ func (x *PromoUsageResponse) GetQuantity() int32 {
 		return x.Quantity
 	}
 	return 0
+}
+
+type PricingAllocationItemRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ItemId        string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
+	FlashSaleId   string                 `protobuf:"bytes,2,opt,name=flash_sale_id,json=flashSaleId,proto3" json:"flash_sale_id,omitempty"`
+	Quantity      int32                  `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	UnitPrice     int64                  `protobuf:"varint,4,opt,name=unit_price,json=unitPrice,proto3" json:"unit_price,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PricingAllocationItemRequest) Reset() {
+	*x = PricingAllocationItemRequest{}
+	mi := &file_dynamic_pricing_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PricingAllocationItemRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PricingAllocationItemRequest) ProtoMessage() {}
+
+func (x *PricingAllocationItemRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dynamic_pricing_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PricingAllocationItemRequest.ProtoReflect.Descriptor instead.
+func (*PricingAllocationItemRequest) Descriptor() ([]byte, []int) {
+	return file_dynamic_pricing_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *PricingAllocationItemRequest) GetItemId() string {
+	if x != nil {
+		return x.ItemId
+	}
+	return ""
+}
+
+func (x *PricingAllocationItemRequest) GetFlashSaleId() string {
+	if x != nil {
+		return x.FlashSaleId
+	}
+	return ""
+}
+
+func (x *PricingAllocationItemRequest) GetQuantity() int32 {
+	if x != nil {
+		return x.Quantity
+	}
+	return 0
+}
+
+func (x *PricingAllocationItemRequest) GetUnitPrice() int64 {
+	if x != nil {
+		return x.UnitPrice
+	}
+	return 0
+}
+
+type AllocatePricingRequest struct {
+	state         protoimpl.MessageState          `protogen:"open.v1"`
+	OrderId       string                          `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	UserId        string                          `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PromoCode     string                          `protobuf:"bytes,3,opt,name=promo_code,json=promoCode,proto3" json:"promo_code,omitempty"`
+	Subtotal      int64                           `protobuf:"varint,4,opt,name=subtotal,proto3" json:"subtotal,omitempty"`
+	Items         []*PricingAllocationItemRequest `protobuf:"bytes,5,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AllocatePricingRequest) Reset() {
+	*x = AllocatePricingRequest{}
+	mi := &file_dynamic_pricing_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AllocatePricingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AllocatePricingRequest) ProtoMessage() {}
+
+func (x *AllocatePricingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dynamic_pricing_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AllocatePricingRequest.ProtoReflect.Descriptor instead.
+func (*AllocatePricingRequest) Descriptor() ([]byte, []int) {
+	return file_dynamic_pricing_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *AllocatePricingRequest) GetOrderId() string {
+	if x != nil {
+		return x.OrderId
+	}
+	return ""
+}
+
+func (x *AllocatePricingRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AllocatePricingRequest) GetPromoCode() string {
+	if x != nil {
+		return x.PromoCode
+	}
+	return ""
+}
+
+func (x *AllocatePricingRequest) GetSubtotal() int64 {
+	if x != nil {
+		return x.Subtotal
+	}
+	return 0
+}
+
+func (x *AllocatePricingRequest) GetItems() []*PricingAllocationItemRequest {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+type PricingAllocationItem struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ItemId          string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
+	FlashSaleId     string                 `protobuf:"bytes,2,opt,name=flash_sale_id,json=flashSaleId,proto3" json:"flash_sale_id,omitempty"`
+	Quantity        int32                  `protobuf:"varint,3,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	Name            string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	DiscountPercent int32                  `protobuf:"varint,5,opt,name=discount_percent,json=discountPercent,proto3" json:"discount_percent,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *PricingAllocationItem) Reset() {
+	*x = PricingAllocationItem{}
+	mi := &file_dynamic_pricing_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PricingAllocationItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PricingAllocationItem) ProtoMessage() {}
+
+func (x *PricingAllocationItem) ProtoReflect() protoreflect.Message {
+	mi := &file_dynamic_pricing_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PricingAllocationItem.ProtoReflect.Descriptor instead.
+func (*PricingAllocationItem) Descriptor() ([]byte, []int) {
+	return file_dynamic_pricing_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *PricingAllocationItem) GetItemId() string {
+	if x != nil {
+		return x.ItemId
+	}
+	return ""
+}
+
+func (x *PricingAllocationItem) GetFlashSaleId() string {
+	if x != nil {
+		return x.FlashSaleId
+	}
+	return ""
+}
+
+func (x *PricingAllocationItem) GetQuantity() int32 {
+	if x != nil {
+		return x.Quantity
+	}
+	return 0
+}
+
+func (x *PricingAllocationItem) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *PricingAllocationItem) GetDiscountPercent() int32 {
+	if x != nil {
+		return x.DiscountPercent
+	}
+	return 0
+}
+
+type AllocatePricingResponse struct {
+	state               protoimpl.MessageState   `protogen:"open.v1"`
+	Items               []*PricingAllocationItem `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	PromoId             string                   `protobuf:"bytes,2,opt,name=promo_id,json=promoId,proto3" json:"promo_id,omitempty"`
+	PromoCode           string                   `protobuf:"bytes,3,opt,name=promo_code,json=promoCode,proto3" json:"promo_code,omitempty"`
+	PromoName           string                   `protobuf:"bytes,4,opt,name=promo_name,json=promoName,proto3" json:"promo_name,omitempty"`
+	PromoDiscountType   string                   `protobuf:"bytes,5,opt,name=promo_discount_type,json=promoDiscountType,proto3" json:"promo_discount_type,omitempty"`
+	PromoDiscountAmount int64                    `protobuf:"varint,6,opt,name=promo_discount_amount,json=promoDiscountAmount,proto3" json:"promo_discount_amount,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *AllocatePricingResponse) Reset() {
+	*x = AllocatePricingResponse{}
+	mi := &file_dynamic_pricing_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AllocatePricingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AllocatePricingResponse) ProtoMessage() {}
+
+func (x *AllocatePricingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_dynamic_pricing_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AllocatePricingResponse.ProtoReflect.Descriptor instead.
+func (*AllocatePricingResponse) Descriptor() ([]byte, []int) {
+	return file_dynamic_pricing_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *AllocatePricingResponse) GetItems() []*PricingAllocationItem {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *AllocatePricingResponse) GetPromoId() string {
+	if x != nil {
+		return x.PromoId
+	}
+	return ""
+}
+
+func (x *AllocatePricingResponse) GetPromoCode() string {
+	if x != nil {
+		return x.PromoCode
+	}
+	return ""
+}
+
+func (x *AllocatePricingResponse) GetPromoName() string {
+	if x != nil {
+		return x.PromoName
+	}
+	return ""
+}
+
+func (x *AllocatePricingResponse) GetPromoDiscountType() string {
+	if x != nil {
+		return x.PromoDiscountType
+	}
+	return ""
+}
+
+func (x *AllocatePricingResponse) GetPromoDiscountAmount() int64 {
+	if x != nil {
+		return x.PromoDiscountAmount
+	}
+	return 0
+}
+
+type ReleasePricingRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleasePricingRequest) Reset() {
+	*x = ReleasePricingRequest{}
+	mi := &file_dynamic_pricing_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleasePricingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleasePricingRequest) ProtoMessage() {}
+
+func (x *ReleasePricingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_dynamic_pricing_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleasePricingRequest.ProtoReflect.Descriptor instead.
+func (*ReleasePricingRequest) Descriptor() ([]byte, []int) {
+	return file_dynamic_pricing_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ReleasePricingRequest) GetOrderId() string {
+	if x != nil {
+		return x.OrderId
+	}
+	return ""
+}
+
+func (x *ReleasePricingRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type ReleasePricingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleasePricingResponse) Reset() {
+	*x = ReleasePricingResponse{}
+	mi := &file_dynamic_pricing_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleasePricingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleasePricingResponse) ProtoMessage() {}
+
+func (x *ReleasePricingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_dynamic_pricing_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleasePricingResponse.ProtoReflect.Descriptor instead.
+func (*ReleasePricingResponse) Descriptor() ([]byte, []int) {
+	return file_dynamic_pricing_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ReleasePricingResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
 }
 
 var File_dynamic_pricing_proto protoreflect.FileDescriptor
@@ -1190,20 +1374,7 @@ const file_dynamic_pricing_proto_rawDesc = "" +
 	"\n" +
 	"start_date\x18\r \x01(\tR\tstartDate\x12\x19\n" +
 	"\bend_date\x18\x0e \x01(\tR\aendDate\x12\x1b\n" +
-	"\tis_active\x18\x0f \x01(\bR\bisActive\"`\n" +
-	"\x1eDecrementFlashSaleStockRequest\x12\"\n" +
-	"\rflash_sale_id\x18\x01 \x01(\tR\vflashSaleId\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\x05R\bquantity\"U\n" +
-	"\x1fDecrementFlashSaleStockResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"y\n" +
-	"\x1eIncrementFlashSaleUsageRequest\x12\"\n" +
-	"\rflash_sale_id\x18\x01 \x01(\tR\vflashSaleId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1a\n" +
-	"\bquantity\x18\x03 \x01(\x05R\bquantity\"U\n" +
-	"\x1fIncrementFlashSaleUsageResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"J\n" +
+	"\tis_active\x18\x0f \x01(\bR\bisActive\"J\n" +
 	"\x14GetPromoUsageRequest\x12\x19\n" +
 	"\bpromo_id\x18\x01 \x01(\tR\apromoId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\"t\n" +
@@ -1211,7 +1382,40 @@ const file_dynamic_pricing_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bpromo_id\x18\x02 \x01(\tR\apromoId\x12\x17\n" +
 	"\auser_id\x18\x03 \x01(\tR\x06userId\x12\x1a\n" +
-	"\bquantity\x18\x04 \x01(\x05R\bquantity2\xf3\a\n" +
+	"\bquantity\x18\x04 \x01(\x05R\bquantity\"\x96\x01\n" +
+	"\x1cPricingAllocationItemRequest\x12\x17\n" +
+	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\"\n" +
+	"\rflash_sale_id\x18\x02 \x01(\tR\vflashSaleId\x12\x1a\n" +
+	"\bquantity\x18\x03 \x01(\x05R\bquantity\x12\x1d\n" +
+	"\n" +
+	"unit_price\x18\x04 \x01(\x03R\tunitPrice\"\xcc\x01\n" +
+	"\x16AllocatePricingRequest\x12\x19\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"promo_code\x18\x03 \x01(\tR\tpromoCode\x12\x1a\n" +
+	"\bsubtotal\x18\x04 \x01(\x03R\bsubtotal\x12C\n" +
+	"\x05items\x18\x05 \x03(\v2-.dynamic_pricing.PricingAllocationItemRequestR\x05items\"\xaf\x01\n" +
+	"\x15PricingAllocationItem\x12\x17\n" +
+	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\"\n" +
+	"\rflash_sale_id\x18\x02 \x01(\tR\vflashSaleId\x12\x1a\n" +
+	"\bquantity\x18\x03 \x01(\x05R\bquantity\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12)\n" +
+	"\x10discount_percent\x18\x05 \x01(\x05R\x0fdiscountPercent\"\x94\x02\n" +
+	"\x17AllocatePricingResponse\x12<\n" +
+	"\x05items\x18\x01 \x03(\v2&.dynamic_pricing.PricingAllocationItemR\x05items\x12\x19\n" +
+	"\bpromo_id\x18\x02 \x01(\tR\apromoId\x12\x1d\n" +
+	"\n" +
+	"promo_code\x18\x03 \x01(\tR\tpromoCode\x12\x1d\n" +
+	"\n" +
+	"promo_name\x18\x04 \x01(\tR\tpromoName\x12.\n" +
+	"\x13promo_discount_type\x18\x05 \x01(\tR\x11promoDiscountType\x122\n" +
+	"\x15promo_discount_amount\x18\x06 \x01(\x03R\x13promoDiscountAmount\"K\n" +
+	"\x15ReleasePricingRequest\x12\x19\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"2\n" +
+	"\x16ReleasePricingResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xc0\a\n" +
 	"\x15DynamicPricingService\x12f\n" +
 	"\x17GetFlashSaleByProductId\x12/.dynamic_pricing.GetFlashSaleByProductIdRequest\x1a\x1a.dynamic_pricing.FlashSale\x12f\n" +
 	"\x17GetFlashSaleByVariantId\x12/.dynamic_pricing.GetFlashSaleByVariantIdRequest\x1a\x1a.dynamic_pricing.FlashSale\x12\x82\x01\n" +
@@ -1219,10 +1423,10 @@ const file_dynamic_pricing_proto_rawDesc = "" +
 	"\x19GetFlashSalesByVariantIds\x121.dynamic_pricing.GetFlashSalesByVariantIdsRequest\x1a2.dynamic_pricing.GetFlashSalesByVariantIdsResponse\x12P\n" +
 	"\x0eGetPromoByCode\x12&.dynamic_pricing.GetPromoByCodeRequest\x1a\x16.dynamic_pricing.Promo\x12U\n" +
 	"\n" +
-	"ApplyPromo\x12\".dynamic_pricing.ApplyPromoRequest\x1a#.dynamic_pricing.ApplyPromoResponse\x12|\n" +
-	"\x17DecrementFlashSaleStock\x12/.dynamic_pricing.DecrementFlashSaleStockRequest\x1a0.dynamic_pricing.DecrementFlashSaleStockResponse\x12|\n" +
-	"\x17IncrementFlashSaleUsage\x12/.dynamic_pricing.IncrementFlashSaleUsageRequest\x1a0.dynamic_pricing.IncrementFlashSaleUsageResponse\x12[\n" +
-	"\rGetPromoUsage\x12%.dynamic_pricing.GetPromoUsageRequest\x1a#.dynamic_pricing.PromoUsageResponseB>Z<kaffein/order-service/proto/dynamic-pricing;dynamicpricingpbb\x06proto3"
+	"ApplyPromo\x12\".dynamic_pricing.ApplyPromoRequest\x1a#.dynamic_pricing.ApplyPromoResponse\x12[\n" +
+	"\rGetPromoUsage\x12%.dynamic_pricing.GetPromoUsageRequest\x1a#.dynamic_pricing.PromoUsageResponse\x12d\n" +
+	"\x0fAllocatePricing\x12'.dynamic_pricing.AllocatePricingRequest\x1a(.dynamic_pricing.AllocatePricingResponse\x12a\n" +
+	"\x0eReleasePricing\x12&.dynamic_pricing.ReleasePricingRequest\x1a'.dynamic_pricing.ReleasePricingResponseB>Z<kaffein/order-service/proto/dynamic-pricing;dynamicpricingpbb\x06proto3"
 
 var (
 	file_dynamic_pricing_proto_rawDescOnce sync.Once
@@ -1236,7 +1440,7 @@ func file_dynamic_pricing_proto_rawDescGZIP() []byte {
 	return file_dynamic_pricing_proto_rawDescData
 }
 
-var file_dynamic_pricing_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_dynamic_pricing_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_dynamic_pricing_proto_goTypes = []any{
 	(*GetFlashSaleByProductIdRequest)(nil),    // 0: dynamic_pricing.GetFlashSaleByProductIdRequest
 	(*GetFlashSaleByVariantIdRequest)(nil),    // 1: dynamic_pricing.GetFlashSaleByVariantIdRequest
@@ -1250,40 +1454,44 @@ var file_dynamic_pricing_proto_goTypes = []any{
 	(*ApplyPromoRequest)(nil),                 // 9: dynamic_pricing.ApplyPromoRequest
 	(*ApplyPromoResponse)(nil),                // 10: dynamic_pricing.ApplyPromoResponse
 	(*Promo)(nil),                             // 11: dynamic_pricing.Promo
-	(*DecrementFlashSaleStockRequest)(nil),    // 12: dynamic_pricing.DecrementFlashSaleStockRequest
-	(*DecrementFlashSaleStockResponse)(nil),   // 13: dynamic_pricing.DecrementFlashSaleStockResponse
-	(*IncrementFlashSaleUsageRequest)(nil),    // 14: dynamic_pricing.IncrementFlashSaleUsageRequest
-	(*IncrementFlashSaleUsageResponse)(nil),   // 15: dynamic_pricing.IncrementFlashSaleUsageResponse
-	(*GetPromoUsageRequest)(nil),              // 16: dynamic_pricing.GetPromoUsageRequest
-	(*PromoUsageResponse)(nil),                // 17: dynamic_pricing.PromoUsageResponse
+	(*GetPromoUsageRequest)(nil),              // 12: dynamic_pricing.GetPromoUsageRequest
+	(*PromoUsageResponse)(nil),                // 13: dynamic_pricing.PromoUsageResponse
+	(*PricingAllocationItemRequest)(nil),      // 14: dynamic_pricing.PricingAllocationItemRequest
+	(*AllocatePricingRequest)(nil),            // 15: dynamic_pricing.AllocatePricingRequest
+	(*PricingAllocationItem)(nil),             // 16: dynamic_pricing.PricingAllocationItem
+	(*AllocatePricingResponse)(nil),           // 17: dynamic_pricing.AllocatePricingResponse
+	(*ReleasePricingRequest)(nil),             // 18: dynamic_pricing.ReleasePricingRequest
+	(*ReleasePricingResponse)(nil),            // 19: dynamic_pricing.ReleasePricingResponse
 }
 var file_dynamic_pricing_proto_depIdxs = []int32{
 	3,  // 0: dynamic_pricing.GetFlashSalesByProductIdsResponse.flash_sales:type_name -> dynamic_pricing.FlashSale
 	5,  // 1: dynamic_pricing.GetFlashSalesByVariantIdsRequest.items:type_name -> dynamic_pricing.FlashSaleVariantRequest
 	3,  // 2: dynamic_pricing.GetFlashSalesByVariantIdsResponse.flash_sales:type_name -> dynamic_pricing.FlashSale
-	0,  // 3: dynamic_pricing.DynamicPricingService.GetFlashSaleByProductId:input_type -> dynamic_pricing.GetFlashSaleByProductIdRequest
-	1,  // 4: dynamic_pricing.DynamicPricingService.GetFlashSaleByVariantId:input_type -> dynamic_pricing.GetFlashSaleByVariantIdRequest
-	2,  // 5: dynamic_pricing.DynamicPricingService.GetFlashSalesByProductIds:input_type -> dynamic_pricing.GetFlashSalesByProductIdsRequest
-	6,  // 6: dynamic_pricing.DynamicPricingService.GetFlashSalesByVariantIds:input_type -> dynamic_pricing.GetFlashSalesByVariantIdsRequest
-	8,  // 7: dynamic_pricing.DynamicPricingService.GetPromoByCode:input_type -> dynamic_pricing.GetPromoByCodeRequest
-	9,  // 8: dynamic_pricing.DynamicPricingService.ApplyPromo:input_type -> dynamic_pricing.ApplyPromoRequest
-	12, // 9: dynamic_pricing.DynamicPricingService.DecrementFlashSaleStock:input_type -> dynamic_pricing.DecrementFlashSaleStockRequest
-	14, // 10: dynamic_pricing.DynamicPricingService.IncrementFlashSaleUsage:input_type -> dynamic_pricing.IncrementFlashSaleUsageRequest
-	16, // 11: dynamic_pricing.DynamicPricingService.GetPromoUsage:input_type -> dynamic_pricing.GetPromoUsageRequest
-	3,  // 12: dynamic_pricing.DynamicPricingService.GetFlashSaleByProductId:output_type -> dynamic_pricing.FlashSale
-	3,  // 13: dynamic_pricing.DynamicPricingService.GetFlashSaleByVariantId:output_type -> dynamic_pricing.FlashSale
-	4,  // 14: dynamic_pricing.DynamicPricingService.GetFlashSalesByProductIds:output_type -> dynamic_pricing.GetFlashSalesByProductIdsResponse
-	7,  // 15: dynamic_pricing.DynamicPricingService.GetFlashSalesByVariantIds:output_type -> dynamic_pricing.GetFlashSalesByVariantIdsResponse
-	11, // 16: dynamic_pricing.DynamicPricingService.GetPromoByCode:output_type -> dynamic_pricing.Promo
-	10, // 17: dynamic_pricing.DynamicPricingService.ApplyPromo:output_type -> dynamic_pricing.ApplyPromoResponse
-	13, // 18: dynamic_pricing.DynamicPricingService.DecrementFlashSaleStock:output_type -> dynamic_pricing.DecrementFlashSaleStockResponse
-	15, // 19: dynamic_pricing.DynamicPricingService.IncrementFlashSaleUsage:output_type -> dynamic_pricing.IncrementFlashSaleUsageResponse
-	17, // 20: dynamic_pricing.DynamicPricingService.GetPromoUsage:output_type -> dynamic_pricing.PromoUsageResponse
-	12, // [12:21] is the sub-list for method output_type
-	3,  // [3:12] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	14, // 3: dynamic_pricing.AllocatePricingRequest.items:type_name -> dynamic_pricing.PricingAllocationItemRequest
+	16, // 4: dynamic_pricing.AllocatePricingResponse.items:type_name -> dynamic_pricing.PricingAllocationItem
+	0,  // 5: dynamic_pricing.DynamicPricingService.GetFlashSaleByProductId:input_type -> dynamic_pricing.GetFlashSaleByProductIdRequest
+	1,  // 6: dynamic_pricing.DynamicPricingService.GetFlashSaleByVariantId:input_type -> dynamic_pricing.GetFlashSaleByVariantIdRequest
+	2,  // 7: dynamic_pricing.DynamicPricingService.GetFlashSalesByProductIds:input_type -> dynamic_pricing.GetFlashSalesByProductIdsRequest
+	6,  // 8: dynamic_pricing.DynamicPricingService.GetFlashSalesByVariantIds:input_type -> dynamic_pricing.GetFlashSalesByVariantIdsRequest
+	8,  // 9: dynamic_pricing.DynamicPricingService.GetPromoByCode:input_type -> dynamic_pricing.GetPromoByCodeRequest
+	9,  // 10: dynamic_pricing.DynamicPricingService.ApplyPromo:input_type -> dynamic_pricing.ApplyPromoRequest
+	12, // 11: dynamic_pricing.DynamicPricingService.GetPromoUsage:input_type -> dynamic_pricing.GetPromoUsageRequest
+	15, // 12: dynamic_pricing.DynamicPricingService.AllocatePricing:input_type -> dynamic_pricing.AllocatePricingRequest
+	18, // 13: dynamic_pricing.DynamicPricingService.ReleasePricing:input_type -> dynamic_pricing.ReleasePricingRequest
+	3,  // 14: dynamic_pricing.DynamicPricingService.GetFlashSaleByProductId:output_type -> dynamic_pricing.FlashSale
+	3,  // 15: dynamic_pricing.DynamicPricingService.GetFlashSaleByVariantId:output_type -> dynamic_pricing.FlashSale
+	4,  // 16: dynamic_pricing.DynamicPricingService.GetFlashSalesByProductIds:output_type -> dynamic_pricing.GetFlashSalesByProductIdsResponse
+	7,  // 17: dynamic_pricing.DynamicPricingService.GetFlashSalesByVariantIds:output_type -> dynamic_pricing.GetFlashSalesByVariantIdsResponse
+	11, // 18: dynamic_pricing.DynamicPricingService.GetPromoByCode:output_type -> dynamic_pricing.Promo
+	10, // 19: dynamic_pricing.DynamicPricingService.ApplyPromo:output_type -> dynamic_pricing.ApplyPromoResponse
+	13, // 20: dynamic_pricing.DynamicPricingService.GetPromoUsage:output_type -> dynamic_pricing.PromoUsageResponse
+	17, // 21: dynamic_pricing.DynamicPricingService.AllocatePricing:output_type -> dynamic_pricing.AllocatePricingResponse
+	19, // 22: dynamic_pricing.DynamicPricingService.ReleasePricing:output_type -> dynamic_pricing.ReleasePricingResponse
+	14, // [14:23] is the sub-list for method output_type
+	5,  // [5:14] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_dynamic_pricing_proto_init() }
@@ -1297,7 +1505,7 @@ func file_dynamic_pricing_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_dynamic_pricing_proto_rawDesc), len(file_dynamic_pricing_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

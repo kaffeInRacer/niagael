@@ -2,6 +2,7 @@ package handler
 
 import (
 	"kaffein/product-service/internal/auth"
+	"kaffein/product-service/internal/domain"
 	"kaffein/product-service/internal/dto"
 	"kaffein/product-service/internal/interfaces/IUseCase"
 	"kaffein/product-service/utils/constants"
@@ -25,13 +26,11 @@ func NewCategoryHandler(usecase IUseCase.CategoryUseCase, logger zerolog.Logger,
 		v:       validator.Get(),
 	}
 
-	// Buyer routes (read-only)
 	categories := engine.Group("/categories")
-	categories.GET("", h.List)
-	categories.GET("/:id", h.ReadById)
-	categories.GET("/slug/:slug", h.ReadBySlug)
+	categories.GET("", h.ListActive)
+	categories.GET("/:id", h.ReadActiveById)
+	categories.GET("/slug/:slug", h.ReadActiveBySlug)
 
-	// Admin routes (full CRUD)
 	adminCategories := engine.Group("/admin/categories")
 	adminCategories.Use(authorization.Authenticate())
 	adminCategories.GET("", authorization.Authorize("categories", "read"), h.List)
@@ -45,6 +44,14 @@ func NewCategoryHandler(usecase IUseCase.CategoryUseCase, logger zerolog.Logger,
 }
 
 func (h *categoryHandler) List(c *gin.Context) {
+	h.list(c, false)
+}
+
+func (h *categoryHandler) ListActive(c *gin.Context) {
+	h.list(c, true)
+}
+
+func (h *categoryHandler) list(c *gin.Context, activeOnly bool) {
 	var params dto.ListCategoryParams
 	if err := c.ShouldBindQuery(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -54,6 +61,12 @@ func (h *categoryHandler) List(c *gin.Context) {
 	if errors := h.v.ValidateStruct(&params); errors != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"errors": errors})
 		return
+	}
+
+	if activeOnly {
+		active := true
+		params.IsActive = &active
+		params.ActiveProductsOnly = true
 	}
 	params.PageOffset *= params.PageSize
 
@@ -126,6 +139,7 @@ func (h *categoryHandler) Delete(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
+
 		h.logger.Error().Err(err).Msg("failed to delete category")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
@@ -152,6 +166,19 @@ func (h *categoryHandler) ReadById(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": category})
 }
 
+func (h *categoryHandler) ReadActiveById(c *gin.Context) {
+	id := c.Param("id")
+
+	category, err := h.usecase.ReadById(c.Request.Context(), id)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("failed to read category by id")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	h.writeActiveCategory(c, category)
+}
+
 func (h *categoryHandler) ReadBySlug(c *gin.Context) {
 	slug := c.Param("slug")
 
@@ -163,6 +190,28 @@ func (h *categoryHandler) ReadBySlug(c *gin.Context) {
 	}
 
 	if category == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": constants.ErrCategoryNotFound})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": category})
+}
+
+func (h *categoryHandler) ReadActiveBySlug(c *gin.Context) {
+	slug := c.Param("slug")
+
+	category, err := h.usecase.ReadBySlug(c.Request.Context(), slug)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("failed to read category by slug")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	h.writeActiveCategory(c, category)
+}
+
+func (h *categoryHandler) writeActiveCategory(c *gin.Context, category *domain.Category) {
+	if category == nil || !category.IsActive {
 		c.JSON(http.StatusNotFound, gin.H{"error": constants.ErrCategoryNotFound})
 		return
 	}

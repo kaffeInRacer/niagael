@@ -22,14 +22,43 @@ func NewVariantRepository(store *postgresql.Store) IRepository.VariantRepository
 }
 
 func (r *variantRepository) ListByProductId(ctx context.Context, productId string) ([]domain.ProductVariant, error) {
-	return r.listByProductIds(ctx, []string{productId})
+	return r.ListByProductIds(ctx, []string{productId})
+}
+
+func (r *variantRepository) ListActiveByProductId(ctx context.Context, productId string) ([]domain.ProductVariant, error) {
+	const query = `
+		SELECT v.id, v.product_id, v.name, v.price, v.stock, v.stock_reserved, v.attributes, v.is_active, v.created_at, v.updated_at
+		FROM product_variant v
+		JOIN product p ON p.id = v.product_id
+		JOIN category c ON c.id = p.category_id
+		WHERE v.product_id = $1 AND v.is_active = true AND v.deleted_at IS NULL
+		  AND p.is_active = true AND p.deleted_at IS NULL
+		  AND c.is_active = true AND c.deleted_at IS NULL
+		ORDER BY v.created_at DESC
+	`
+	rows, err := r.db.Query(ctx, query, productId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var variants []domain.ProductVariant
+	for rows.Next() {
+		var variant domain.ProductVariant
+		if err := rows.Scan(
+			&variant.Id, &variant.ProductId, &variant.Name, &variant.Price, &variant.Stock,
+			&variant.StockReserved, &variant.Attributes, &variant.IsActive, &variant.CreatedAt,
+			&variant.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		variants = append(variants, variant)
+	}
+
+	return variants, rows.Err()
 }
 
 func (r *variantRepository) ListByProductIds(ctx context.Context, productIds []string) ([]domain.ProductVariant, error) {
-	return r.listByProductIds(ctx, productIds)
-}
-
-func (r *variantRepository) listByProductIds(ctx context.Context, productIds []string) ([]domain.ProductVariant, error) {
 	const query = `
 		SELECT id, product_id, name, price, stock, stock_reserved, attributes, is_active, created_at, updated_at
 		FROM product_variant
@@ -157,7 +186,7 @@ func (r *variantRepository) ReserveStock(ctx context.Context, variantId string, 
 	}
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		return ErrInsufficientStock
+		return errors.New(constants.ErrInsufficientStock)
 	}
 	return nil
 }
@@ -165,11 +194,19 @@ func (r *variantRepository) ReserveStock(ctx context.Context, variantId string, 
 func (r *variantRepository) ReleaseStock(ctx context.Context, variantId string, quantity int32) error {
 	const query = `
 		UPDATE product_variant 
-		SET stock_reserved = GREATEST(0, stock_reserved - $1) 
-		WHERE id = $2 AND deleted_at IS NULL
+		SET stock_reserved = stock_reserved - $1
+		WHERE id = $2 AND stock_reserved >= $1 AND deleted_at IS NULL
 	`
-	_, err := r.db.Exec(ctx, query, quantity, variantId)
-	return err
+	result, err := r.db.Exec(ctx, query, quantity, variantId)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return errors.New(constants.ErrVariantNotFound)
+	}
+
+	return nil
 }
 
 func (r *variantRepository) ConfirmStock(ctx context.Context, variantId string, quantity int32) error {
@@ -178,6 +215,14 @@ func (r *variantRepository) ConfirmStock(ctx context.Context, variantId string, 
 		SET stock = stock - $1, stock_reserved = GREATEST(0, stock_reserved - $1) 
 		WHERE id = $2 AND stock_reserved >= $1 AND deleted_at IS NULL
 	`
-	_, err := r.db.Exec(ctx, query, quantity, variantId)
-	return err
+	result, err := r.db.Exec(ctx, query, quantity, variantId)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return errors.New(constants.ErrInsufficientStock)
+	}
+
+	return nil
 }
