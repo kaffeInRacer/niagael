@@ -36,7 +36,7 @@
         <div class="px-6 py-4 space-y-4" v-if="detailItem">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-gray-500">Name</p>
+              <p class="text-sm text-gray-500">Flash Sale</p>
               <p class="font-semibold text-gray-800">{{ detailItem.name }}</p>
             </div>
             <span class="px-2 py-1 text-xs font-medium rounded-full" :class="detailItem.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'">
@@ -49,12 +49,12 @@
               <p class="text-sm">{{ formatDate(detailItem.start_time) }} - {{ formatDate(detailItem.end_time) }}</p>
             </div>
             <div>
-              <p class="text-sm text-gray-500">Stock / Max per User</p>
-              <p class="text-sm">{{ detailItem.stock }} / {{ detailItem.max_per_user }}</p>
+              <p class="text-sm text-gray-500">Total FS Stock (all items)</p>
+              <p class="text-sm">{{ detailItem.total_stock }}</p>
             </div>
           </div>
           <div class="border-t pt-4">
-            <h4 class="text-sm font-semibold text-gray-700 mb-3">Items on Flash Sale</h4>
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">Items on Flash Sale ({{ detailProducts.length }})</h4>
             <div v-if="detailLoading" class="flex justify-center py-6" role="status" aria-label="Loading details">
               <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>
@@ -417,50 +417,67 @@ const handleTableAction = ({ action, row }) => {
   if (action === 'delete') deleteFlashSale(row.id)
 }
 
+const buildDetailRow = async (item) => {
+  let p = null
+  try {
+    const { data } = await adminApi.products.getById(item.product_id)
+    p = data.data || data
+  } catch {
+    try {
+      const { data } = await productApi.getById(item.product_id)
+      p = data.data || data
+    } catch { p = null }
+  }
+  if (!p || !p.id) return null
+
+  let variant = null
+  if (item.variant_id) {
+    try {
+      const vres = await variantApi.list({ product_id: item.product_id })
+      variant = (vres.data.data || []).find(v => v.id === item.variant_id) || null
+    } catch { variant = null }
+  }
+
+  const basePrice = variant ? variant.price : p.price
+  const finalPrice = Math.round(basePrice * (1 - item.discount_percent / 100))
+  const categoryName = typeof p.category === 'object' ? (p.category?.name || '') : (p.category || '')
+
+  return {
+    id: item.id,
+    product_id: item.product_id,
+    name: p.name,
+    category: categoryName,
+    image: p.image,
+    variant,
+    base_price: basePrice,
+    final_price: finalPrice,
+    discount_percent: item.discount_percent,
+    stock: item.stock,
+    max_per_user: item.max_per_user,
+    start_time: item.start_time,
+    end_time: item.end_time
+  }
+}
+
 const openDetail = async (fs) => {
   detailItem.value = null
   detailProducts.value = []
   detailLoading.value = true
   try {
-    const { data: detailRes } = await flashSaleApi.adminGetById(fs.id)
-    detailItem.value = detailRes.data || detailRes
+    const { data: listRes } = await flashSaleApi.adminList({ name: fs.name, page: 1, page_size: 100 })
+    const items = listRes.data || []
 
-    const fresh = detailItem.value
-    let p = null
-    try {
-      const { data } = await adminApi.products.getById(fresh.product_id)
-      p = data.data || data
-    } catch {
-      try {
-        const { data } = await productApi.getById(fresh.product_id)
-        p = data.data || data
-      } catch { p = null }
+    detailItem.value = {
+      id: fs.id,
+      name: fs.name,
+      is_active: fs.is_active,
+      start_time: fs.start_time,
+      end_time: fs.end_time,
+      total_stock: items.reduce((sum, i) => sum + Number(i.stock || 0), 0)
     }
-    if (p && p.id) {
-      let variant = null
-      if (fresh.variant_id) {
-        try {
-          const vres = await variantApi.list({ product_id: fresh.product_id })
-          variant = (vres.data.data || []).find(v => v.id === fresh.variant_id) || null
-        } catch { variant = null }
-      }
-      const basePrice = variant ? variant.price : p.price
-      const finalPrice = Math.round(basePrice * (1 - fresh.discount_percent / 100))
-      const categoryName = typeof p.category === 'object' ? (p.category?.name || '') : (p.category || '')
-      detailProducts.value = [{
-        id: p.id,
-        name: p.name,
-        category: categoryName,
-        image: p.image,
-        variant,
-        price: basePrice,
-        base_price: basePrice,
-        final_price: finalPrice,
-        discount_percent: fresh.discount_percent,
-        stock: fresh.stock,
-        max_per_user: fresh.max_per_user
-      }]
-    }
+
+    const rows = await Promise.all(items.map(buildDetailRow))
+    detailProducts.value = rows.filter(Boolean)
   } catch {
     detailProducts.value = []
     error.value = 'Failed to load flash sale details'
