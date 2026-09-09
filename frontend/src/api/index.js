@@ -93,7 +93,9 @@ export const promoApi = {
 }
 
 export const orderApi = {
-  create: (data) => api.post('/orders', data),
+  create: (data, idempotencyKey) => api.post('/orders', data, {
+    headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}
+  }),
   getById: (id) => api.get(`/orders/${id}`),
   list: (params) => api.get('/orders', { params }),
   listByUser: (userId, params) => api.get(`/orders/user/${userId}`, { params })
