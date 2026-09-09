@@ -6,7 +6,8 @@ type ListCategoryParams struct {
 	OrderBy             string `form:"order_by" validate:"def_enum=created_at name slug"`
 	OrderDir            string `form:"order_dir" validate:"def_enum=desc asc"`
 	PageSize            int32  `form:"page_size" validate:"clamp=10 100"`
-	PageOffset          int32  `form:"page" validate:"clamp=0"`
+	Page                int32  `form:"page" validate:"clamp=1"`
+	PageOffset          int32  `form:"-"`
 	IncludeProductCount bool   `form:"include_product_count" validate:"omitempty"`
 	ActiveProductsOnly  bool   `form:"-"`
 }
