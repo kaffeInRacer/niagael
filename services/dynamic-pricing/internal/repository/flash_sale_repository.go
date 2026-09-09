@@ -91,6 +91,46 @@ func (r *flashSaleRepository) List(ctx context.Context, params dto.ListFlashSale
 	return flashSales, rows.Err()
 }
 
+func (r *flashSaleRepository) ListSessions(ctx context.Context, params dto.ListFlashSaleParams) ([]dto.FlashSaleSession, int64, error) {
+	const countQuery = `
+		SELECT COUNT(DISTINCT name) FROM flash_sale WHERE deleted_at IS NULL
+	`
+	var count int64
+	if err := r.db.QueryRow(ctx, countQuery).Scan(&count); err != nil {
+		return nil, 0, err
+	}
+
+	const query = `
+		SELECT name,
+		       COUNT(*) AS item_count,
+		       SUM(stock) AS total_stock,
+		       MIN(start_time) AS start_time,
+		       MAX(end_time) AS end_time,
+		       BOOL_OR(is_active) AS is_active
+		FROM flash_sale
+		WHERE deleted_at IS NULL
+		AND (NULLIF($1::text, '') IS NULL OR name ILIKE '%' || $1::text || '%')
+		GROUP BY name, start_time, end_time
+		ORDER BY MIN(created_at) DESC
+		LIMIT $2::int OFFSET $3::int
+	`
+	rows, err := r.db.Query(ctx, query, params.Search, params.PageSize, params.PageOffset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var sessions []dto.FlashSaleSession
+	for rows.Next() {
+		var session dto.FlashSaleSession
+		if err := rows.Scan(&session.Name, &session.ItemCount, &session.TotalStock, &session.StartTime, &session.EndTime, &session.IsActive); err != nil {
+			return nil, 0, err
+		}
+		sessions = append(sessions, session)
+	}
+	return sessions, count, rows.Err()
+}
+
 func (r *flashSaleRepository) ListCount(ctx context.Context, params dto.ListFlashSaleParams) (int64, error) {
 	const query = `
 		SELECT COUNT(*)
