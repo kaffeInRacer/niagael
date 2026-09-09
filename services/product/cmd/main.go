@@ -14,6 +14,7 @@ import (
 	"kaffein/product-service/config"
 	"kaffein/product-service/internal/repository"
 	grpcclient "kaffein/product-service/pkg/grpc/client"
+	kafkaevent "kaffein/product-service/pkg/kafka/event"
 	"kaffein/product-service/pkg/kafka"
 
 	"github.com/rs/zerolog/log"
@@ -75,9 +76,8 @@ func main() {
 
 	if len(c.Kafka.Brokers) > 0 && c.Kafka.FlashSaleTopic != "" {
 		projectionRepo := repository.NewFlashSaleProjectionRepository(pool)
-		fsConsumer := kafka.NewFlashSaleConsumer(c.Kafka.Brokers, c.Kafka.FlashSaleTopic, c.Kafka.GroupID+"-flashsale", projectionRepo)
-		fsConsumer.Run(ctx)
-		defer fsConsumer.Close()
+		flashSaleConsumer := kafka.NewFlashSaleConsumer(projectionRepo)
+		go kafkaevent.Consume(ctx, c.Kafka.Brokers, c.Kafka.FlashSaleTopic, c.Kafka.GroupID+"-flashsale", flashSaleConsumer.Handle)
 	}
 
 	l.Info().
