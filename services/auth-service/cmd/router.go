@@ -3,14 +3,15 @@ package main
 import (
 	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"kaffein/auth-service/internal/gateway"
 	"kaffein/auth-service/internal/handler"
 	"kaffein/auth-service/internal/middleware"
-	"kaffein/auth-service/internal/gateway"
 	"kaffein/auth-service/internal/repository"
 	"kaffein/auth-service/internal/token"
 	"kaffein/auth-service/internal/usecase"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func (app *application) routes() *gin.Engine {
@@ -21,24 +22,18 @@ func (app *application) routes() *gin.Engine {
 	users := repository.NewUserRepository(app.pgx)
 	sessions := gateway.NewSessionRepository(app.redis)
 	tokens := token.NewManager(app.config.JWT)
-	auth := middleware.Auth(tokens, sessions, users)
+	authorization := middleware.NewService(tokens, sessions, users, app.pgx, app.logger)
 
-	handler.NewAuthHandler(usecase.NewAuthUseCase(users, sessions, tokens, app.config.JWT, app.config.Kafka.Brokers), app.logger, r, auth, app.config.JWT)
+	handler.NewAuthHandler(
+		usecase.NewAuthUseCase(users, sessions, tokens, app.config.JWT, app.config.Kafka.Brokers),
+		app.logger, r, authorization, app.config.JWT,
+	)
 
-	handler.NewAdminHandler(usecase.NewAdminUseCase(users, sessions, app.config.Kafka.Brokers), app.logger, r, auth,
-		middleware.Admin(),
-		middleware.Authorize(app.pgx, app.logger, "users", "read"),
-		middleware.Authorize(app.pgx, app.logger, "users", "update"),
-		middleware.Authorize(app.pgx, app.logger, "users", "create"),
-		middleware.Authorize(app.pgx, app.logger, "users", "delete"))
+	handler.NewAdminHandler(usecase.NewAdminUseCase(users, sessions, app.config.Kafka.Brokers), app.logger, r, authorization)
 
 	rbacRepo := repository.NewRBACRepository(app.pgx, app.config.Kafka.CasbinTopic, app.config.Kafka.Brokers)
 	rbacUseCase := usecase.NewRBACUseCase(rbacRepo)
-	handler.NewRBACHandler(rbacUseCase, app.logger, r, auth,
-		middleware.Admin(),
-		middleware.Authorize(app.pgx, app.logger, "policies", "read"),
-		middleware.Authorize(app.pgx, app.logger, "policies", "create"),
-		middleware.Authorize(app.pgx, app.logger, "policies", "delete"))
+	handler.NewRBACHandler(rbacUseCase, app.logger, r, authorization)
 
 	return r
 }
