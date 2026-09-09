@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
+
+	"kaffein/product-service/internal/domain"
 )
 
 type FlashSaleEvent struct {
@@ -23,18 +25,8 @@ type FlashSaleEvent struct {
 }
 
 type FlashSaleProjectionRepo interface {
-	Upsert(ctx context.Context, p FlashSaleProjection) error
+	Upsert(ctx context.Context, p domain.FlashSaleProjection) error
 	Delete(ctx context.Context, productID, variantID string) error
-}
-
-type FlashSaleProjection struct {
-	ProductID       string
-	VariantID       string
-	Name            string
-	DiscountPercent int
-	StartTime       time.Time
-	EndTime         time.Time
-	IsActive        bool
 }
 
 type FlashSaleConsumer struct {
@@ -87,7 +79,7 @@ func (c *FlashSaleConsumer) handle(ctx context.Context, data []byte) error {
 		return c.repo.Delete(ctx, event.ProductID, variantID)
 	}
 
-	return c.repo.Upsert(ctx, FlashSaleProjection{
+	return c.repo.Upsert(ctx, domain.FlashSaleProjection{
 		ProductID:       event.ProductID,
 		VariantID:       variantID,
 		Name:            event.Name,
