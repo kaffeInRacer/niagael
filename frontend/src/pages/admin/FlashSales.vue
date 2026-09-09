@@ -74,11 +74,18 @@
                 <div class="flex-1 min-w-0">
                   <p class="font-medium text-gray-800 truncate">{{ p.name }}</p>
                   <p class="text-sm text-gray-500">
-                    <span class="line-through">{{ formatPrice(p.price) }}</span>
-                    <span class="ml-2 font-semibold text-red-600">{{ formatPrice(p.final_price) }}</span>
-                    <span class="ml-2 px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-xs font-semibold">-{{ p.discount_percent }}%</span>
+                    <template v-if="p.discount_percent > 0">
+                      <span class="line-through">{{ formatPrice(p.base_price) }}</span>
+                      <span class="ml-2 font-semibold text-red-600">{{ formatPrice(p.final_price) }}</span>
+                      <span class="ml-2 px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-xs font-semibold">-{{ p.discount_percent }}%</span>
+                    </template>
+                    <span v-else class="font-semibold text-gray-800">{{ formatPrice(p.final_price) }}</span>
                   </p>
-                  <p class="text-xs text-gray-400 mt-0.5">Category: {{ p.category || '-' }} | Stock: {{ p.stock ?? '-' }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">
+                    <span v-if="p.category">Category: {{ p.category }} · </span>
+                    <span>Stock: {{ p.stock ?? '-' }}</span>
+                    <span v-if="p.max_per_user"> · Max {{ p.max_per_user }}/user</span>
+                  </p>
                 </div>
                 <div v-if="detailItem.variant_id" class="text-right">
                   <p class="text-xs text-gray-400">Variant</p>
@@ -439,12 +446,14 @@ const openDetail = async (fs) => {
       }
       const basePrice = variant ? variant.price : p.price
       const finalPrice = Math.round(basePrice * (1 - fresh.discount_percent / 100))
+      const categoryName = typeof p.category === 'object' ? (p.category?.name || '') : (p.category || '')
       detailProducts.value = [{
         id: p.id,
         name: p.name,
-        category: p.category,
+        category: categoryName,
         image: p.image,
         variant,
+        price: basePrice,
         base_price: basePrice,
         final_price: finalPrice,
         discount_percent: fresh.discount_percent,
