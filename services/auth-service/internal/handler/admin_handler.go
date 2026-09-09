@@ -24,17 +24,17 @@ func NewAdminHandler(usecase IUseCase.AdminUseCase, logger zerolog.Logger, engin
 
 	routes := engine.Group("/admin/users")
 	routes.Use(authorization.Authenticate(), authorization.Admin())
-	routes.GET("", authorization.Authorize("users", "read"), h.list)
-	routes.POST("", authorization.Authorize("users", "create"), h.create)
-	routes.PATCH("/:id/role", authorization.Authorize("users", "update"), h.role)
-	routes.PATCH("/:id/status", authorization.Authorize("users", "update"), h.status)
-	routes.PUT("/:id/email", authorization.Authorize("users", "update"), h.email)
-	routes.DELETE("/:id", authorization.Authorize("users", "delete"), h.delete)
+	routes.GET("", authorization.Authorize("users", "read"), h.listUsers)
+	routes.POST("", authorization.Authorize("users", "create"), h.createUser)
+	routes.PATCH("/:id/role", authorization.Authorize("users", "update"), h.changeUserRole)
+	routes.PATCH("/:id/status", authorization.Authorize("users", "update"), h.changeUserStatus)
+	routes.PUT("/:id/email", authorization.Authorize("users", "update"), h.changeUserEmail)
+	routes.DELETE("/:id", authorization.Authorize("users", "delete"), h.deleteUser)
 	return h
 }
 
-func (h *adminHandler) list(c *gin.Context) {
-	page, size := positiveInt(c.Query("page"), 1), positiveInt(c.Query("page_size"), 20)
+func (h *adminHandler) listUsers(c *gin.Context) {
+	page, size := parsePositiveInt(c.Query("page"), 1), parsePositiveInt(c.Query("page_size"), 20)
 	if size > 100 {
 		size = 100
 	}
@@ -46,7 +46,7 @@ func (h *adminHandler) list(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func positiveInt(raw string, fallback int) int {
+func parsePositiveInt(raw string, fallback int) int {
 	value, err := strconv.Atoi(raw)
 	if err != nil || value < 1 {
 		return fallback
@@ -54,7 +54,7 @@ func positiveInt(raw string, fallback int) int {
 	return value
 }
 
-func parseID(c *gin.Context) (uuid.UUID, bool) {
+func parseUserID(c *gin.Context) (uuid.UUID, bool) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": constants.ErrInvalidUserID})
@@ -63,13 +63,13 @@ func parseID(c *gin.Context) (uuid.UUID, bool) {
 	return id, true
 }
 
-func (h *adminHandler) role(c *gin.Context) {
-	id, ok := parseID(c)
+func (h *adminHandler) changeUserRole(c *gin.Context) {
+	id, ok := parseUserID(c)
 	if !ok {
 		return
 	}
 	var req dto.RoleRequest
-	if !bind(c, &req) {
+	if !bindJSON(c, &req) {
 		return
 	}
 	user, err := h.usecase.ChangeRole(c.Request.Context(), id, req.Role)
@@ -80,9 +80,9 @@ func (h *adminHandler) role(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func (h *adminHandler) create(c *gin.Context) {
+func (h *adminHandler) createUser(c *gin.Context) {
 	var req dto.CreateUserRequest
-	if !bind(c, &req) {
+	if !bindJSON(c, &req) {
 		return
 	}
 	user, err := h.usecase.CreateUser(c.Request.Context(), req)
@@ -93,13 +93,13 @@ func (h *adminHandler) create(c *gin.Context) {
 	c.JSON(http.StatusCreated, user)
 }
 
-func (h *adminHandler) email(c *gin.Context) {
-	id, ok := parseID(c)
+func (h *adminHandler) changeUserEmail(c *gin.Context) {
+	id, ok := parseUserID(c)
 	if !ok {
 		return
 	}
 	var req dto.UpdateUserRequest
-	if !bind(c, &req) {
+	if !bindJSON(c, &req) {
 		return
 	}
 	user, err := h.usecase.UpdateUserEmail(c.Request.Context(), id, req.Email)
@@ -110,8 +110,8 @@ func (h *adminHandler) email(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func (h *adminHandler) delete(c *gin.Context) {
-	id, ok := parseID(c)
+func (h *adminHandler) deleteUser(c *gin.Context) {
+	id, ok := parseUserID(c)
 	if !ok {
 		return
 	}
@@ -122,13 +122,13 @@ func (h *adminHandler) delete(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (h *adminHandler) status(c *gin.Context) {
-	id, ok := parseID(c)
+func (h *adminHandler) changeUserStatus(c *gin.Context) {
+	id, ok := parseUserID(c)
 	if !ok {
 		return
 	}
 	var req dto.StatusRequest
-	if !bind(c, &req) {
+	if !bindJSON(c, &req) {
 		return
 	}
 	user, err := h.usecase.ChangeStatus(c.Request.Context(), id, *req.IsActive)
