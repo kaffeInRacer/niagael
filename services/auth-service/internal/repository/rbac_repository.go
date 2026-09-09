@@ -9,7 +9,7 @@ import (
 
 	"kaffein/auth-service/utils/constants"
 
-	"kaffein/auth-service/utils/events"
+	"kaffein/auth-service/pkg/kafka/event"
 )
 
 var (
@@ -25,12 +25,13 @@ type Policy struct {
 }
 
 type RBACRepository struct {
-	db          *pgxpool.Pool
-	casbinTopic string
+	db           *pgxpool.Pool
+	casbinTopic  string
+	kafkaBrokers []string
 }
 
-func NewRBACRepository(db *pgxpool.Pool, casbinTopic string) *RBACRepository {
-	return &RBACRepository{db: db, casbinTopic: casbinTopic}
+func NewRBACRepository(db *pgxpool.Pool, casbinTopic string, kafkaBrokers []string) *RBACRepository {
+	return &RBACRepository{db: db, casbinTopic: casbinTopic, kafkaBrokers: kafkaBrokers}
 }
 
 func (r *RBACRepository) GetAllPolicies(ctx context.Context) ([]Policy, error) {
@@ -64,7 +65,7 @@ func (r *RBACRepository) AddPolicy(ctx context.Context, service, role, resource,
 		return errors.New(constants.ErrPolicyExists)
 	}
 
-	events.Publish(r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
+	event.Publish(r.kafkaBrokers, r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
 
 	return nil
 }
@@ -80,7 +81,7 @@ func (r *RBACRepository) DeletePolicy(ctx context.Context, service, role, resour
 		return errors.New(constants.ErrPolicyNotFound)
 	}
 
-	events.Publish(r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
+	event.Publish(r.kafkaBrokers, r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
 
 	return nil
 }
@@ -91,7 +92,7 @@ func (r *RBACRepository) DeleteAllPoliciesForRole(ctx context.Context, service, 
 		return fmt.Errorf("delete policies for role: %w", err)
 	}
 
-	events.Publish(r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
+	event.Publish(r.kafkaBrokers, r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
 
 	return nil
 }
