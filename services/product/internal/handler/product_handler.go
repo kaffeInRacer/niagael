@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"golang.org/x/sync/errgroup"
 	"context"
 	"kaffein/product-service/internal/auth"
 	"kaffein/product-service/internal/domain"
@@ -97,34 +98,46 @@ func (h *productHandler) getFlashSalesForProducts(ctx *gin.Context, products []d
 	}
 
 	productFlashSales := make(map[string]*dto.FlashSaleInfo)
-	if len(productIds) > 0 {
-		resp, err := h.pricingClient.GetFlashSalesByProductIds(ctx.Request.Context(), productIds)
-		if err == nil {
-			for _, fs := range resp.FlashSales {
-				if fs.IsActive && fs.Id != "" {
-					productFlashSales[fs.ProductId] = &dto.FlashSaleInfo{
-						ProductId:       fs.ProductId,
-						DiscountPercent: int32(fs.DiscountPercent),
-					}
-				}
-			}
-		}
-	}
-
 	variantFlashSalesMap := make(map[string][]dto.VariantFlashSale)
-	if len(variantRequests) > 0 {
-		resp, err := h.pricingClient.GetFlashSalesByVariantIds(ctx.Request.Context(), variantRequests)
-		if err == nil {
-			for _, fs := range resp.FlashSales {
-				if fs.IsActive && fs.Id != "" && fs.DiscountPercent > 0 {
-					variantFlashSalesMap[fs.ProductId] = append(variantFlashSalesMap[fs.ProductId], dto.VariantFlashSale{
-						VariantId:       fs.VariantId,
-						DiscountPercent: int32(fs.DiscountPercent),
-					})
+
+	g, gctx := errgroup.WithContext(ctx.Request.Context())
+	g.Go(func() error {
+		if len(productIds) == 0 {
+			return nil
+		}
+		resp, err := h.pricingClient.GetFlashSalesByProductIds(gctx, productIds)
+		if err != nil {
+			return nil
+		}
+		for _, fs := range resp.FlashSales {
+			if fs.IsActive && fs.Id != "" {
+				productFlashSales[fs.ProductId] = &dto.FlashSaleInfo{
+					ProductId:       fs.ProductId,
+					DiscountPercent: int32(fs.DiscountPercent),
 				}
 			}
 		}
-	}
+		return nil
+	})
+	g.Go(func() error {
+		if len(variantRequests) == 0 {
+			return nil
+		}
+		resp, err := h.pricingClient.GetFlashSalesByVariantIds(gctx, variantRequests)
+		if err != nil {
+			return nil
+		}
+		for _, fs := range resp.FlashSales {
+			if fs.IsActive && fs.Id != "" && fs.DiscountPercent > 0 {
+				variantFlashSalesMap[fs.ProductId] = append(variantFlashSalesMap[fs.ProductId], dto.VariantFlashSale{
+					VariantId:       fs.VariantId,
+					DiscountPercent: int32(fs.DiscountPercent),
+				})
+			}
+		}
+		return nil
+	})
+	_ = g.Wait()
 
 	return productFlashSales, variantFlashSalesMap
 }
