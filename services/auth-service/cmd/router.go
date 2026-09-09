@@ -23,16 +23,16 @@ func (app *application) routes() *gin.Engine {
 	tokens := token.NewManager(app.config.JWT)
 	auth := middleware.Auth(tokens, sessions, users)
 
-	handler.NewAuthHandler(usecase.NewAuthUseCase(users, sessions, tokens, app.config.JWT), app.logger, r, auth, app.config.JWT)
+	handler.NewAuthHandler(usecase.NewAuthUseCase(users, sessions, tokens, app.config.JWT, app.config.Kafka.Brokers), app.logger, r, auth, app.config.JWT)
 
-	handler.NewAdminHandler(usecase.NewAdminUseCase(users, sessions), app.logger, r, auth,
+	handler.NewAdminHandler(usecase.NewAdminUseCase(users, sessions, app.config.Kafka.Brokers), app.logger, r, auth,
 		middleware.Admin(),
 		middleware.Authorize(app.pgx, app.logger, "users", "read"),
 		middleware.Authorize(app.pgx, app.logger, "users", "update"),
 		middleware.Authorize(app.pgx, app.logger, "users", "create"),
 		middleware.Authorize(app.pgx, app.logger, "users", "delete"))
 
-	rbacRepo := repository.NewRBACRepository(app.pgx, app.config.Kafka.CasbinTopic)
+	rbacRepo := repository.NewRBACRepository(app.pgx, app.config.Kafka.CasbinTopic, app.config.Kafka.Brokers)
 	rbacUseCase := usecase.NewRBACUseCase(rbacRepo)
 	handler.NewRBACHandler(rbacUseCase, app.logger, r, auth,
 		middleware.Admin(),
