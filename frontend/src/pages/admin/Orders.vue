@@ -42,16 +42,7 @@
       </AdminDataTable>
     </div>
 
-    <div v-if="selectedOrder" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[85vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b flex justify-between items-center sticky top-0 bg-white z-10">
-          <h3 id="order-modal-title" class="text-lg font-semibold text-gray-800">Order Details</h3>
-          <button type="button" @click="selectedOrder = null" class="text-gray-400 hover:text-gray-600" aria-label="Close order details">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <ModalDialog :show="!!selectedOrder" title="Order Details" aria-id="order-modal-title" size="xl" scroll-body @close="selectedOrder = null">
         <div class="px-6 py-4 space-y-4" v-if="selectedOrder">
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -164,8 +155,7 @@
             <span v-if="selectedOrder.updated_at"> | Updated: {{ formatDate(selectedOrder.updated_at) }}</span>
           </div>
         </div>
-      </div>
-    </div>
+    </ModalDialog>
   </div>
 </template>
 
@@ -173,6 +163,7 @@
 import { ref, computed, onMounted } from 'vue'
 import api, { userAdminApi } from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
+import ModalDialog from '../../components/ModalDialog.vue'
 import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
 import { formatDate, formatPrice, getStatusClass } from '../../utils/format'
 
