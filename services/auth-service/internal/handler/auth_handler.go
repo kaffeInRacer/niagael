@@ -90,7 +90,7 @@ func (h *authHandler) logout(c *gin.Context) {
 	err := h.usecase.Logout(c.Request.Context(), c.MustGet(middleware.SessionIDKey).(uuid.UUID), c.MustGet(middleware.ExpirationKey).(int64))
 	if err != nil {
 		h.logger.Error().Err(err).Msg("session revoke failed during logout")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "logout failed"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrLogoutFailed})
 		return
 	}
 	h.clearTokenCookies(c)
@@ -155,6 +155,6 @@ func (h *authHandler) respondError(c *gin.Context, err error) {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	default:
 		h.logger.Error().Err(err).Msg("auth request failed")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 	}
 }
