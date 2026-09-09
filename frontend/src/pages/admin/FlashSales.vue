@@ -78,7 +78,7 @@
                     <span class="ml-2 font-semibold text-red-600">{{ formatPrice(p.final_price) }}</span>
                     <span class="ml-2 px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-xs font-semibold">-{{ p.discount_percent }}%</span>
                   </p>
-                  <p class="text-xs text-gray-400 mt-0.5">Category: {{ p.category || '-' }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">Category: {{ p.category || '-' }} | Stock: {{ p.stock ?? '-' }}</p>
                 </div>
                 <div v-if="detailItem.variant_id" class="text-right">
                   <p class="text-xs text-gray-400">Variant</p>
@@ -419,13 +419,25 @@ const openDetail = async (fs) => {
     const p = data.data || data
     if (p && p.id) {
       let variant = null
-      if (fs.variant_id && p.has_variants) {
+      if (fs.variant_id) {
         try {
           const vres = await variantApi.list({ product_id: fs.product_id })
           variant = (vres.data.data || []).find(v => v.id === fs.variant_id) || null
         } catch { variant = null }
       }
-      detailProducts.value = [{ ...p, variant }]
+      const basePrice = variant ? variant.price : p.price
+      const finalPrice = Math.round(basePrice * (1 - fs.discount_percent / 100))
+      detailProducts.value = [{
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        image: p.image,
+        variant,
+        base_price: basePrice,
+        final_price: finalPrice,
+        discount_percent: fs.discount_percent,
+        stock: variant ? variant.stock : p.stock
+      }]
     }
   } catch {
     detailProducts.value = []
