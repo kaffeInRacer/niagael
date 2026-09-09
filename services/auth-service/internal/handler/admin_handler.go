@@ -2,11 +2,11 @@ package handler
 
 import (
 	"net/http"
-	"strconv"
 
 	"kaffein/auth-service/internal/dto"
 	"kaffein/auth-service/internal/interfaces/IUseCase"
 	"kaffein/auth-service/internal/middleware"
+	"kaffein/auth-service/utils"
 	"kaffein/auth-service/utils/constants"
 
 	"github.com/gin-gonic/gin"
@@ -34,7 +34,7 @@ func NewAdminHandler(usecase IUseCase.AdminUseCase, logger zerolog.Logger, engin
 }
 
 func (h *adminHandler) listUsers(c *gin.Context) {
-	page, size := parsePositiveInt(c.Query("page"), 1), parsePositiveInt(c.Query("page_size"), 20)
+	page, size := utils.ParsePositiveInt(c.Query("page"), 1), utils.ParsePositiveInt(c.Query("page_size"), 20)
 	if size > 100 {
 		size = 100
 	}
@@ -44,14 +44,6 @@ func (h *adminHandler) listUsers(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, result)
-}
-
-func parsePositiveInt(raw string, fallback int) int {
-	value, err := strconv.Atoi(raw)
-	if err != nil || value < 1 {
-		return fallback
-	}
-	return value
 }
 
 func parseUserID(c *gin.Context) (uuid.UUID, bool) {
