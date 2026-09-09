@@ -60,7 +60,7 @@ func (u *authUseCase) Register(ctx context.Context, req dto.RegisterRequest) (*d
 
 func (u *authUseCase) Login(ctx context.Context, req dto.LoginRequest) (*dto.TokenResponse, error) {
 	user, err := u.users.ByEmail(ctx, strings.TrimSpace(req.Email))
-	if err != nil || bcrypt.CompareHashAndPassword([]byte(valueOrEmpty(user)), []byte(req.Password)) != nil {
+	if err != nil || bcrypt.CompareHashAndPassword([]byte(userPasswordHash(user)), []byte(req.Password)) != nil {
 		return nil, errors.New(constants.ErrInvalidCredentials)
 	}
 
@@ -68,10 +68,10 @@ func (u *authUseCase) Login(ctx context.Context, req dto.LoginRequest) (*dto.Tok
 		return nil, errors.New(constants.ErrUserDisabled)
 	}
 
-	return u.issue(ctx, user)
+	return u.issueUserTokens(ctx, user)
 }
 
-func valueOrEmpty(user *domain.User) string {
+func userPasswordHash(user *domain.User) string {
 	if user == nil {
 		return ""
 	}
@@ -79,7 +79,7 @@ func valueOrEmpty(user *domain.User) string {
 	return user.PasswordHash
 }
 
-func (u *authUseCase) issue(ctx context.Context, user *domain.User) (*dto.TokenResponse, error) {
+func (u *authUseCase) issueUserTokens(ctx context.Context, user *domain.User) (*dto.TokenResponse, error) {
 	access, refresh, sid, accessExpiry, err := u.tokens.Pair(user.ID, user.Role)
 	if err != nil {
 		return nil, err
