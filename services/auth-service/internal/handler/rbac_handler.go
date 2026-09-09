@@ -30,7 +30,8 @@ type DeletePolicyRequest struct {
 
 func NewRBACHandler(usecase IUseCase.RBACUseCase, logger zerolog.Logger, engine *gin.Engine, auth, admin, read, create, remove gin.HandlerFunc) *rbacHandler {
 	h := &rbacHandler{usecase: usecase, logger: logger}
-	routes := engine.Group("/admin/rbac", auth, admin)
+	routes := engine.Group("/admin/rbac")
+	routes.Use(auth, admin)
 	routes.GET("/policies", read, h.listPolicies)
 	routes.GET("/resources", read, h.getResources)
 	routes.POST("/policies", create, h.addPolicy)

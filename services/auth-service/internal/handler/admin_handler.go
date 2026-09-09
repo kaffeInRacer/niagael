@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"kaffein/auth-service/internal/dto"
 	"kaffein/auth-service/internal/interfaces/IUseCase"
 	"kaffein/auth-service/utils/constants"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 )
 
 type adminHandler struct {
@@ -19,7 +20,9 @@ type adminHandler struct {
 
 func NewAdminHandler(usecase IUseCase.AdminUseCase, logger zerolog.Logger, engine *gin.Engine, auth, admin, read, update, create, delete gin.HandlerFunc) *adminHandler {
 	h := &adminHandler{usecase: usecase, logger: logger}
-	routes := engine.Group("/admin/users", auth, admin)
+
+	routes := engine.Group("/admin/users")
+	routes.Use(auth, admin)
 	routes.GET("", read, h.list)
 	routes.POST("", create, h.create)
 	routes.PATCH("/:id/role", update, h.role)
