@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"kaffein/auth-service/internal/handler"
 	"kaffein/auth-service/internal/middleware"
+	"kaffein/auth-service/internal/gateway"
 	"kaffein/auth-service/internal/repository"
 	"kaffein/auth-service/internal/token"
 	"kaffein/auth-service/internal/usecase"
@@ -18,7 +19,7 @@ func (app *application) routes() *gin.Engine {
 	r.GET("/health", func(c *gin.Context) { c.JSON(200, gin.H{"status": true, "message": "ok"}) })
 
 	users := repository.NewUserRepository(app.pgx)
-	sessions := repository.NewSessionRepository(app.redis)
+	sessions := gateway.NewSessionRepository(app.redis)
 	tokens := token.NewManager(app.config.JWT)
 	auth := middleware.Auth(tokens, sessions, users)
 
