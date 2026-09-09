@@ -51,6 +51,7 @@ type UpdateFlashSaleDto struct {
 
 type ListFlashSaleParams struct {
 	Search             string `form:"search" validate:"omitempty,max=100"`
+	Name               string `form:"name" validate:"omitempty,max=255"`
 	IsActive           *bool  `form:"is_active" validate:"omitempty"`
 	ProductId          string `form:"product_id" validate:"omitempty,uuid"`
 	MinDiscountPercent string `form:"min_discount_percent" validate:"omitempty,numeric"`
