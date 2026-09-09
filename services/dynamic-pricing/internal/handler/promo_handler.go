@@ -189,14 +189,14 @@ func (h *promoHandler) ReadCurrentById(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
-	if !currentPromo(promo, time.Now()) {
+	if !isPromoRedeemableNow(promo, time.Now()) {
 		c.JSON(http.StatusNotFound, gin.H{"error": constants.ErrPromoNotFound})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": dto.ToPublicPromoResponse(*promo)})
 }
 
-func currentPromo(promo *domain.Promo, now time.Time) bool {
+func isPromoRedeemableNow(promo *domain.Promo, now time.Time) bool {
 	return promo != nil && promo.IsActive && !now.Before(promo.StartDate) && !now.After(promo.EndDate) &&
 		(promo.Quantity == 0 || promo.UsedCount < promo.Quantity)
 }
