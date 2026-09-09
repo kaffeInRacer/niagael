@@ -125,7 +125,7 @@ func (uc *paymentUseCase) Callback(ctx context.Context, args dto.MidtransCallbac
 		return errors.New(constants.ErrInvalidPaymentSignature)
 	}
 
-	amount, err := parseGrossAmount(args.GrossAmount)
+	amount, err := parseMidtransGrossAmount(args.GrossAmount)
 	if err != nil {
 		return domain.ErrInvalidPaymentAmount
 	}
@@ -194,7 +194,7 @@ func (uc *paymentUseCase) Callback(ctx context.Context, args dto.MidtransCallbac
 	return err
 }
 
-func parseGrossAmount(value string) (int64, error) {
+func parseMidtransGrossAmount(value string) (int64, error) {
 	integer, fraction, found := strings.Cut(value, ".")
 	if integer == "" || strings.HasPrefix(integer, "+") || strings.HasPrefix(integer, "-") {
 		return 0, domain.ErrInvalidPaymentAmount
