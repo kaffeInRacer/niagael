@@ -71,7 +71,7 @@ func (h *flashSaleHandler) list(c *gin.Context, currentOnly bool) {
 		params.IsActive = &active
 		params.CurrentOnly = true
 	}
-	params.PageOffset *= params.PageSize
+	params.PageOffset = (params.Page - 1) * params.PageSize
 
 	flashSales, count, err := h.usecase.List(c.Request.Context(), params)
 	if err != nil {
