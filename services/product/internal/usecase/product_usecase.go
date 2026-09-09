@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"golang.org/x/sync/errgroup"
 	"context"
 	"kaffein/product-service/internal/domain"
 	"kaffein/product-service/internal/dto"
@@ -32,8 +33,28 @@ func (uc *productUseCase) List(ctx context.Context, params dto.ListProductParams
 		ids = append(ids, product.Id)
 	}
 
-	images, err := uc.imageRepo.ListByProductIds(ctx, ids)
-	if err != nil {
+	var (
+		count    int64
+		images   []domain.ProductImage
+		variants []domain.ProductVariant
+	)
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		total, err := uc.repo.ListCount(gctx, params)
+		count = total
+		return err
+	})
+	g.Go(func() error {
+		data, err := uc.imageRepo.ListByProductIds(gctx, ids)
+		images = data
+		return err
+	})
+	g.Go(func() error {
+		data, err := uc.variantRepo.ListByProductIds(gctx, ids)
+		variants = data
+		return err
+	})
+	if err := g.Wait(); err != nil {
 		return nil, 0, err
 	}
 
@@ -41,28 +62,16 @@ func (uc *productUseCase) List(ctx context.Context, params dto.ListProductParams
 	for _, image := range images {
 		byProduct[image.ProductId] = append(byProduct[image.ProductId], image)
 	}
-
 	for i := range products {
 		products[i].Images = byProduct[products[i].Id]
-	}
-
-	variants, err := uc.variantRepo.ListByProductIds(ctx, ids)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	byProductVariants := make(map[string][]domain.ProductVariant)
 	for _, v := range variants {
 		byProductVariants[v.ProductId] = append(byProductVariants[v.ProductId], v)
 	}
-
 	for i := range products {
 		products[i].Variants = byProductVariants[products[i].Id]
-	}
-
-	count, err := uc.repo.ListCount(ctx, params)
-	if err != nil {
-		return nil, 0, err
 	}
 
 	return products, count, nil
