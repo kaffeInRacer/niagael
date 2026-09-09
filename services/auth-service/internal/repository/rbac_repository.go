@@ -7,12 +7,13 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"kaffein/auth-service/utils/constants"
+
 	"kaffein/auth-service/utils/events"
 )
 
 var (
-	ErrPolicyExists   = errors.New("policy already exists")
-	ErrPolicyNotFound = errors.New("policy not found")
+	
 )
 
 type Policy struct {
@@ -60,7 +61,7 @@ func (r *RBACRepository) AddPolicy(ctx context.Context, service, role, resource,
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrPolicyExists
+		return errors.New(constants.ErrPolicyExists)
 	}
 
 	events.Publish(r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
@@ -76,7 +77,7 @@ func (r *RBACRepository) DeletePolicy(ctx context.Context, service, role, resour
 
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
-		return ErrPolicyNotFound
+		return errors.New(constants.ErrPolicyNotFound)
 	}
 
 	events.Publish(r.casbinTopic, "policy-changed", map[string]string{"type": "reload", "service": service})
