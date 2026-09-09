@@ -5,16 +5,28 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 )
 
 func (app *application) ServeHTTP(ctx context.Context) error {
-	if app.config.HTTP.Mode == "production" {
+	isProduction := app.config.HTTP.Mode == "production"
+
+	if isProduction {
 		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
 	}
+
+	router := app.routes()
+
+	if !isProduction {
+		pprof.Register(router)
+	}
+
 	server := &http.Server{
 		Addr:         app.config.HTTP.Addr,
-		Handler:      app.routes(),
+		Handler:      router,
 		ReadTimeout:  app.config.HTTP.ReadTimeout,
 		WriteTimeout: app.config.HTTP.WriteTimeout,
 		IdleTimeout:  app.config.HTTP.IdleTimeout,
