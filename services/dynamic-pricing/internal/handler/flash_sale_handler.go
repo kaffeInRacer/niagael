@@ -205,14 +205,14 @@ func (h *flashSaleHandler) ReadCurrentById(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrInternalServer})
 		return
 	}
-	if !currentFlashSale(flashSale, time.Now()) {
+	if !isFlashSalePurchasableNow(flashSale, time.Now()) {
 		c.JSON(http.StatusNotFound, gin.H{"error": constants.ErrFlashSaleNotFound})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": dto.ToPublicFlashSaleResponse(*flashSale)})
 }
 
-func currentFlashSale(flashSale *domain.FlashSale, now time.Time) bool {
+func isFlashSalePurchasableNow(flashSale *domain.FlashSale, now time.Time) bool {
 	return flashSale != nil && flashSale.IsActive && flashSale.Stock > 0 &&
 		!now.Before(flashSale.StartTime) && !now.After(flashSale.EndTime)
 }
