@@ -7,7 +7,7 @@ import (
 )
 
 type OrderUseCase interface {
-	Create(ctx context.Context, args dto.CreateOrderDto) (*domain.Order, error)
+	Create(ctx context.Context, args dto.CreateOrderDto, idempotencyKey string) (*domain.Order, error)
 	List(ctx context.Context, params dto.ListOrderParams) ([]domain.Order, int64, error)
 	ReadById(ctx context.Context, id string) (*domain.Order, error)
 	ReadByIdWithItems(ctx context.Context, id string) (*domain.Order, []domain.OrderItem, error)
