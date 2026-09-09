@@ -411,22 +411,26 @@ const handleTableAction = ({ action, row }) => {
 }
 
 const openDetail = async (fs) => {
-  detailItem.value = fs
+  detailItem.value = null
   detailProducts.value = []
   detailLoading.value = true
   try {
-    const { data } = await productApi.getById(fs.product_id)
+    const { data: detailRes } = await flashSaleApi.adminGetById(fs.id)
+    detailItem.value = detailRes.data || detailRes
+
+    const fresh = detailItem.value
+    const { data } = await productApi.getById(fresh.product_id)
     const p = data.data || data
     if (p && p.id) {
       let variant = null
-      if (fs.variant_id) {
+      if (fresh.variant_id) {
         try {
-          const vres = await variantApi.list({ product_id: fs.product_id })
-          variant = (vres.data.data || []).find(v => v.id === fs.variant_id) || null
+          const vres = await variantApi.list({ product_id: fresh.product_id })
+          variant = (vres.data.data || []).find(v => v.id === fresh.variant_id) || null
         } catch { variant = null }
       }
       const basePrice = variant ? variant.price : p.price
-      const finalPrice = Math.round(basePrice * (1 - fs.discount_percent / 100))
+      const finalPrice = Math.round(basePrice * (1 - fresh.discount_percent / 100))
       detailProducts.value = [{
         id: p.id,
         name: p.name,
@@ -435,12 +439,14 @@ const openDetail = async (fs) => {
         variant,
         base_price: basePrice,
         final_price: finalPrice,
-        discount_percent: fs.discount_percent,
-        stock: variant ? variant.stock : p.stock
+        discount_percent: fresh.discount_percent,
+        stock: fresh.stock,
+        max_per_user: fresh.max_per_user
       }]
     }
   } catch {
     detailProducts.value = []
+    error.value = 'Failed to load flash sale details'
   } finally {
     detailLoading.value = false
   }
