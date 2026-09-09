@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"time"
 
@@ -14,14 +15,20 @@ type OutboxRelay struct {
 	pollInterval time.Duration
 }
 
+type OutboxRepo interface {
+	ListUnprocessed(ctx context.Context, limit int) ([]OutboxEventRow, error)
+	MarkProcessed(ctx context.Context, ids []int64) error
+}
+
+type OutboxEventRow struct {
+	ID      int64
+	Topic   string
+	Key     string
+	Payload []byte
+}
+
 func NewOutboxRelay(brokers []string, topic string, outbox OutboxRepo) *OutboxRelay {
-	writer := &kafka.Writer{
-		Addr:         kafka.TCP(brokers...),
-		Topic:        topic,
-		Balancer:     &kafka.LeastBytes{},
-		RequiredAcks: kafka.RequireAll,
-	}
-	return &OutboxRelay{writer: writer, outbox: outbox, pollInterval: 5 * time.Second}
+	return &OutboxRelay{writer: NewWriter(brokers, topic), outbox: outbox, pollInterval: 5 * time.Second}
 }
 
 func (r *OutboxRelay) Run(ctx context.Context) {
@@ -65,4 +72,10 @@ func (r *OutboxRelay) relayBatch(ctx context.Context) {
 
 func (r *OutboxRelay) Close() error {
 	return r.writer.Close()
+}
+
+func DecodeOutboxEvent(data []byte) (OutboxEvent, error) {
+	var event OutboxEvent
+	err := json.Unmarshal(data, &event)
+	return event, err
 }
