@@ -54,4 +54,11 @@ const (
 	ErrInsufficientStock   = "insufficient stock"
 	ErrInvalidStockRequest = "invalid stock request"
 	ErrStockStateConflict  = "stock reservation state conflict"
+	ErrInternalServer      = "internal server error"
+	ErrUnauthorized        = "unauthorized"
+	ErrForbidden           = "forbidden"
+	ErrProductIDRequired   = "product_id is required"
+	ErrFileRequired        = "file is required"
+	ErrFailedUploadFile    = "failed to upload file"
+	ErrFailedOpenFile      = "failed to open file"
 )
