@@ -57,6 +57,7 @@ export const userAdminApi = {
   updateRole: (id, role) => api.patch(`/admin/users/${id}/role`, { role }),
   updateStatus: (id, isActive) => api.patch(`/admin/users/${id}/status`, { is_active: isActive }),
   updateEmail: (id, email) => api.put(`/admin/users/${id}/email`, { email }),
+  updatePassword: (id, password) => api.patch(`/admin/users/${id}/password`, { password }),
   delete: (id) => api.delete(`/admin/users/${id}`)
 }
 

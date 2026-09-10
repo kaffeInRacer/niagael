@@ -47,3 +47,7 @@ type RoleRequest struct {
 type StatusRequest struct {
 	IsActive *bool `json:"is_active" binding:"required"`
 }
+
+type ChangePasswordRequest struct {
+	Password string `json:"password" binding:"required,min=8"`
+}

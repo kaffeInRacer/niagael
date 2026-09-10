@@ -17,9 +17,10 @@ type AuthUseCase interface {
 }
 
 type AdminUseCase interface {
-	ListUsers(context.Context, int, int) (*dto.UserList, error)
+	ListUsers(context.Context, string, int, int) (*dto.UserList, error)
 	CreateUser(context.Context, dto.CreateUserRequest) (*domain.User, error)
 	UpdateUserEmail(context.Context, uuid.UUID, string) (*domain.User, error)
+	ChangePassword(context.Context, uuid.UUID, string) (*domain.User, error)
 	DeleteUser(context.Context, uuid.UUID) error
 	ChangeRole(context.Context, uuid.UUID, string) (*domain.User, error)
 	ChangeStatus(context.Context, uuid.UUID, bool) (*domain.User, error)

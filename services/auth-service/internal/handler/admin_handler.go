@@ -30,6 +30,7 @@ func NewAdminHandler(usecase IUseCase.AdminUseCase, logger zerolog.Logger, engin
 	routes.PATCH("/:id/status", authorization.Authorize("users", "update"), h.changeUserStatus)
 	routes.PUT("/:id/email", authorization.Authorize("users", "update"), h.changeUserEmail)
 	routes.DELETE("/:id", authorization.Authorize("users", "delete"), h.deleteUser)
+	routes.PATCH("/:id/password", authorization.Authorize("users", "update"), h.changeUserPassword)
 	return h
 }
 
@@ -38,7 +39,8 @@ func (h *adminHandler) listUsers(c *gin.Context) {
 	if size > 100 {
 		size = 100
 	}
-	result, err := h.usecase.ListUsers(c.Request.Context(), page, size)
+	search := c.Query("search")
+	result, err := h.usecase.ListUsers(c.Request.Context(), search, page, size)
 	if err != nil {
 		h.fail(c, err)
 		return
@@ -124,6 +126,23 @@ func (h *adminHandler) changeUserStatus(c *gin.Context) {
 		return
 	}
 	user, err := h.usecase.ChangeStatus(c.Request.Context(), id, *req.IsActive)
+	if err != nil {
+		h.fail(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
+
+func (h *adminHandler) changeUserPassword(c *gin.Context) {
+	id, ok := parseUserID(c)
+	if !ok {
+		return
+	}
+	var req dto.ChangePasswordRequest
+	if !bindJSON(c, &req) {
+		return
+	}
+	user, err := h.usecase.ChangePassword(c.Request.Context(), id, req.Password)
 	if err != nil {
 		h.fail(c, err)
 		return

@@ -152,9 +152,37 @@ func NewAdminUseCase(users IRepository.UserRepository, sessions IRepository.Sess
 	return &adminUseCase{users: users, sessions: sessions, kafkaBrokers: kafkaBrokers}
 }
 
-func (u *adminUseCase) ListUsers(ctx context.Context, page, size int) (*dto.UserList, error) {
-	users, count, err := u.users.List(ctx, size, (page-1)*size)
+func (u *adminUseCase) ListUsers(ctx context.Context, search string, page, size int) (*dto.UserList, error) {
+	users, count, err := u.users.List(ctx, search, size, (page-1)*size)
 	return &dto.UserList{Data: users, Count: count, Page: page, PageSize: size}, err
+}
+
+func (u *adminUseCase) ChangePassword(ctx context.Context, id uuid.UUID, newPassword string) (*domain.User, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := u.users.UpdatePassword(ctx, id, string(hash))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := u.sessions.RevokeUser(ctx, id); err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, nil
+	}
+
+	event.Publish(u.kafkaBrokers, constants.UserTopic, user.ID.String(), map[string]any{
+		"type":      "password-changed",
+		"id":        user.ID.String(),
+		"email":     user.Email,
+	})
+
+	return user, nil
 }
 
 func (u *adminUseCase) ChangeRole(ctx context.Context, id uuid.UUID, role string) (*domain.User, error) {

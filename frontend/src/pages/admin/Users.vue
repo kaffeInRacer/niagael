@@ -93,6 +93,36 @@
           </div>
         </form>
     </ModalDialog>
+
+    <ModalDialog :show="showPasswordModal" :title="`Change Password — ${passwordUserEmail}`" aria-id="password-modal-title" @close="showPasswordModal = false">
+        <form @submit.prevent="savePassword" class="px-6 py-4 space-y-4">
+          <div>
+            <label for="new-password" class="block text-sm font-medium text-gray-700 mb-1">New Password *</label>
+            <input
+              v-model="newPassword"
+              id="new-password"
+              type="password"
+              required
+              minlength="8"
+              class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Min. 8 characters"
+            />
+          </div>
+          <div v-if="passwordError" class="bg-red-50 border border-red-200 rounded-lg p-3">
+            <p class="text-red-600 text-sm">{{ passwordError }}</p>
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" @click="showPasswordModal = false" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Cancel</button>
+            <button
+              type="submit"
+              :disabled="passwordSaving"
+              class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {{ passwordSaving ? 'Saving...' : 'Change Password' }}
+            </button>
+          </div>
+        </form>
+    </ModalDialog>
   </div>
 </template>
 
@@ -117,6 +147,13 @@ const editingId = ref(null)
 const editingOriginal = ref(null)
 const form = ref({ email: '', password: '', role: 'tenant', isActive: true })
 
+const showPasswordModal = ref(false)
+const passwordUserId = ref(null)
+const passwordUserEmail = ref('')
+const newPassword = ref('')
+const passwordSaving = ref(false)
+const passwordError = ref(null)
+
 const columns = [
   { data: 'email', title: 'Email', render: (data, type, row) => {
     if (type !== 'display') return data
@@ -140,6 +177,7 @@ const columns = [
     return `
       <div class="flex items-center gap-2 justify-end">
         <button type="button" data-table-action="edit" class="text-sm font-medium text-blue-600 hover:text-blue-900">Edit</button>
+        <button type="button" data-table-action="password" class="text-sm font-medium text-amber-600 hover:text-amber-900">Password</button>
         <button type="button" data-table-action="status" class="text-sm font-medium ${row.is_active ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}">${row.is_active ? 'Deactivate' : 'Activate'}</button>
         <button type="button" data-table-action="delete" class="text-sm font-medium text-red-600 hover:text-red-900">Delete</button>
       </div>`
@@ -149,7 +187,7 @@ const columns = [
 const tableOptions = {
   pageLength: 10,
   order: [[3, 'desc']],
-  searching: false,
+  searching: true,
   ordering: false,
   columnDefs: [{ orderable: false, searchable: false, targets: [0, 1, 2, 4] }]
 }
@@ -235,7 +273,30 @@ const changeStatus = async (user) => {
 
 const handleTableAction = ({ action, row }) => {
   if (action === 'edit') openEdit(row)
+  if (action === 'password') openPassword(row)
   if (action === 'status') changeStatus(row)
   if (action === 'delete') deleteUser(row)
+}
+
+const openPassword = (user) => {
+  passwordUserId.value = user.id
+  passwordUserEmail.value = user.email
+  newPassword.value = ''
+  passwordError.value = null
+  showPasswordModal.value = true
+}
+
+const savePassword = async () => {
+  passwordSaving.value = true
+  passwordError.value = null
+  try {
+    await userAdminApi.updatePassword(passwordUserId.value, newPassword.value)
+    showPasswordModal.value = false
+    table.value?.reload()
+  } catch (e) {
+    passwordError.value = e.response?.data?.error || 'Failed to change password'
+  } finally {
+    passwordSaving.value = false
+  }
 }
 </script>
