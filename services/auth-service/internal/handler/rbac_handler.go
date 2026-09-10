@@ -11,8 +11,9 @@ import (
 )
 
 type rbacHandler struct {
-	usecase IUseCase.RBACUseCase
-	logger  zerolog.Logger
+	usecase       IUseCase.RBACUseCase
+	logger        zerolog.Logger
+	authorization *middleware.Service
 }
 
 type AddPolicyRequest struct {
@@ -30,7 +31,7 @@ type DeletePolicyRequest struct {
 }
 
 func NewRBACHandler(usecase IUseCase.RBACUseCase, logger zerolog.Logger, engine *gin.Engine, authorization *middleware.Service) *rbacHandler {
-	h := &rbacHandler{usecase: usecase, logger: logger}
+	h := &rbacHandler{usecase: usecase, logger: logger, authorization: authorization}
 	routes := engine.Group("/admin/rbac")
 	routes.Use(authorization.Authenticate(), authorization.Admin())
 	routes.GET("/policies", authorization.Authorize("policies", "read"), h.listPolicies)
@@ -77,6 +78,9 @@ func (h *rbacHandler) addPolicy(c *gin.Context) {
 		return
 	}
 
+	if err := h.authorization.ReloadPolicies(); err != nil {
+		h.logger.Error().Err(err).Msg("failed to reload auth policies")
+	}
 	c.JSON(http.StatusCreated, gin.H{"message": "policy added successfully"})
 }
 
@@ -97,5 +101,8 @@ func (h *rbacHandler) deletePolicy(c *gin.Context) {
 		return
 	}
 
+	if err := h.authorization.ReloadPolicies(); err != nil {
+		h.logger.Error().Err(err).Msg("failed to reload auth policies")
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "policy deleted successfully"})
 }

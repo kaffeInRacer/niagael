@@ -1,10 +1,14 @@
 package middleware
 
 import (
+	"fmt"
+	"context"
 	"net/http"
 	"strings"
 	"sync"
 
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/model"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -28,18 +32,22 @@ type Service struct {
 	db       *pgxpool.Pool
 	logger   zerolog.Logger
 
-	mu     sync.Mutex
-	policy map[string]map[string]map[string]bool
+	enforcer   *casbin.SyncedEnforcer
+	enforcerMu sync.RWMutex
 }
 
 func NewService(tokens *token.Manager, sessions IRepository.SessionRepository, users IRepository.UserRepository, db *pgxpool.Pool, logger zerolog.Logger) *Service {
-	return &Service{
+	s := &Service{
 		tokens:   tokens,
 		sessions: sessions,
 		users:    users,
 		db:       db,
 		logger:   logger,
 	}
+	if err := s.ReloadPolicies(); err != nil {
+		logger.Error().Err(err).Msg("failed to load casbin policies")
+	}
+	return s
 }
 
 func (s *Service) Authenticate() gin.HandlerFunc {
@@ -102,22 +110,56 @@ func (s *Service) Authorize(resource, action string) gin.HandlerFunc {
 			return
 		}
 
-		var allowed bool
-		err := s.db.QueryRow(c.Request.Context(), `SELECT EXISTS (
-			SELECT 1 FROM casbin_rule
-			WHERE ptype = 'p' AND service = 'auth' AND v0 = ANY($1) AND v1 = $2 AND v2 = $3
-		)`, roles.([]string), resource, action).Scan(&allowed)
-		if err != nil {
-			s.logger.Error().Err(err).Str("resource", resource).Str("action", action).Msg("RBAC authorization query failed")
-			abort(c, http.StatusInternalServerError, constants.ErrInternalServer)
-			return
+		s.enforcerMu.RLock()
+		e := s.enforcer
+		s.enforcerMu.RUnlock()
+
+		for _, role := range roles.([]string) {
+			if allowed, err := e.Enforce(role, resource, action); err == nil && allowed {
+				c.Next()
+				return
+			}
 		}
-		if !allowed {
-			abort(c, http.StatusForbidden, constants.ErrForbidden)
-			return
-		}
-		c.Next()
+		abort(c, http.StatusForbidden, constants.ErrForbidden)
 	}
+}
+
+// ReloadPolicies rebuilds the in-memory casbin enforcer from the database
+// (source of truth for the auth service itself).
+func (s *Service) ReloadPolicies() error {
+	m := model.NewModel()
+	m.AddDef("r", "r", "sub, obj, act")
+	m.AddDef("p", "p", "sub, obj, act")
+	m.AddDef("e", "e", "some(where (p_eft == allow))")
+	m.AddDef("m", "m", "r.sub == p.sub && r.obj == p.obj && r.act == p.act")
+
+	e, err := casbin.NewSyncedEnforcer(m)
+	if err != nil {
+		return fmt.Errorf("create casbin enforcer: %w", err)
+	}
+	rows, err := s.db.Query(context.Background(), `SELECT v0, v1, v2 FROM casbin_rule WHERE ptype = 'p' AND service = 'auth'`)
+	if err != nil {
+		return fmt.Errorf("load casbin policies: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var role, resource, action string
+		if err := rows.Scan(&role, &resource, &action); err != nil {
+			return fmt.Errorf("scan casbin policy: %w", err)
+		}
+		if _, err := e.AddPolicy(role, resource, action); err != nil {
+			return fmt.Errorf("add casbin policy: %w", err)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("load casbin policies: %w", err)
+	}
+
+	s.enforcerMu.Lock()
+	s.enforcer = e
+	s.enforcerMu.Unlock()
+	return nil
 }
 
 func bearerToken(header string) string {

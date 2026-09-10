@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
+	"encoding/json"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -25,7 +26,6 @@ import (
 const (
 	claimsKey        = "auth.claims"
 	serviceName      = "dynamic-pricing"
-	policyNotifyChan = "casbin_policy_changed"
 )
 
 type Claims struct {
@@ -40,88 +40,78 @@ type Service struct {
 	issuer       string
 	redis        *redis.Client
 	db           *pgxpool.Pool
-	enforcer     *casbin.SyncedEnforcer
-	enforcerMu   sync.RWMutex
-	reloadMu     sync.Mutex
-	logger       zerolog.Logger
-	cancelReload context.CancelFunc
-	reloadDone   chan struct{}
-	watcher      *kafka.Watcher
+	enforcer   *casbin.SyncedEnforcer
+	enforcerMu sync.RWMutex
+	logger     zerolog.Logger
+	watcher    *kafka.Watcher
 }
 
 func New(ctx context.Context, c *config.Config, db *pgxpool.Pool, redisClient *redis.Client, logger zerolog.Logger) (*Service, error) {
 	if c.JWT.Secret == "" || c.JWT.Issuer == "" {
 		return nil, errors.New("JWT secret and issuer are required")
 	}
-	e, err := loadEnforcer(ctx, db)
+	e, err := loadEnforcer()
 	if err != nil {
 		return nil, err
 	}
 
 	redisOptions := *redisClient.Options()
 	redisOptions.DB = c.JWT.RedisDB
-	if c.RBAC.PolicyReloadInterval <= 0 {
-		c.RBAC.PolicyReloadInterval = 30 * time.Second
-	}
 
-	reloadCtx, cancel := context.WithCancel(context.Background())
 	s := &Service{
-		secret:       []byte(c.JWT.Secret),
-		issuer:       c.JWT.Issuer,
-		redis:        redis.NewClient(&redisOptions),
-		db:           db,
-		enforcer:     e,
-		logger:       logger,
-		cancelReload: cancel,
-		reloadDone:   make(chan struct{}),
+		secret:   []byte(c.JWT.Secret),
+		issuer:   c.JWT.Issuer,
+		redis:    redis.NewClient(&redisOptions),
+		db:       db,
+		enforcer: e,
+		logger:   logger,
 	}
-
-	go s.watchPolicyChanges(reloadCtx, db)
-	go s.autoReload(reloadCtx, db, c.RBAC.PolicyReloadInterval)
 
 	if len(c.Kafka.Brokers) > 0 && c.Kafka.CasbinTopic != "" {
 		s.watcher = kafka.NewWatcher(c.Kafka.Brokers, c.Kafka.CasbinTopic, c.Kafka.GroupID)
-		if err := s.watcher.SetUpdateCallback(func(string) { _ = s.reloadPolicies(context.Background(), db) }); err != nil {
+		if err := s.watcher.SetUpdateCallback(func(raw string) { s.handlePolicyEvent([]byte(raw)) }); err != nil {
 			return nil, fmt.Errorf("start casbin watcher: %w", err)
 		}
 	}
 	return s, nil
 }
 
-func loadEnforcer(ctx context.Context, db *pgxpool.Pool) (*casbin.SyncedEnforcer, error) {
+func loadEnforcer() (*casbin.SyncedEnforcer, error) {
+	content, err := loadPolicyFromDisk()
+	if err != nil {
+		return nil, err
+	}
+
 	m := model.NewModel()
 	m.AddDef("r", "r", "sub, obj, act")
 	m.AddDef("p", "p", "sub, obj, act")
 	m.AddDef("e", "e", "some(where (p_eft == allow))")
 	m.AddDef("m", "m", "r.sub == p.sub && r.obj == p.obj && r.act == p.act")
+
 	e, err := casbin.NewSyncedEnforcer(m)
 	if err != nil {
 		return nil, fmt.Errorf("create casbin enforcer: %w", err)
 	}
-	rows, err := db.Query(ctx, `SELECT v0, v1, v2 FROM casbin_rule WHERE ptype = 'p' AND service = $1`, serviceName)
-	if err != nil {
-		return nil, fmt.Errorf("load casbin policies: %w", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var role, resource, action string
-		if err := rows.Scan(&role, &resource, &action); err != nil {
-			return nil, fmt.Errorf("scan casbin policy: %w", err)
+
+	for _, line := range strings.Split(content, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
 		}
-		if _, err := e.AddPolicy(role, resource, action); err != nil {
-			return nil, fmt.Errorf("add casbin policy: %w", err)
+		parts := strings.Split(line, ",")
+		if len(parts) != 3 {
+			continue
+		}
+		if _, err := e.AddPolicy(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), strings.TrimSpace(parts[2])); err != nil {
+			return nil, fmt.Errorf("add casbin policy %q: %w", line, err)
 		}
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("load casbin policies: %w", err)
-	}
+
 	return e, nil
 }
 
-func (s *Service) reloadPolicies(ctx context.Context, db *pgxpool.Pool) error {
-	s.reloadMu.Lock()
-	defer s.reloadMu.Unlock()
-	e, err := loadEnforcer(ctx, db)
+func (s *Service) reloadPolicies() error {
+	e, err := loadEnforcer()
 	if err != nil {
 		return err
 	}
@@ -131,77 +121,28 @@ func (s *Service) reloadPolicies(ctx context.Context, db *pgxpool.Pool) error {
 	return nil
 }
 
-func (s *Service) watchPolicyChanges(ctx context.Context, db *pgxpool.Pool) {
-	defer close(s.reloadDone)
-
-	for {
-		if ctx.Err() != nil {
-			return
-		}
-		if err := s.listenLoop(ctx, db); err != nil && ctx.Err() == nil {
-			s.logger.Error().Err(err).Str("service", serviceName).Msg("RBAC policy notify listener disconnected; reconnecting")
-		}
-		if ctx.Err() != nil {
-			return
-		}
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(2 * time.Second):
-		}
+func (s *Service) handlePolicyEvent(data []byte) {
+	var event PolicyEvent
+	if err := json.Unmarshal(data, &event); err != nil {
+		return
 	}
-}
-
-func (s *Service) listenLoop(ctx context.Context, db *pgxpool.Pool) error {
-	conn, err := db.Acquire(ctx)
-	if err != nil {
-		return fmt.Errorf("acquire notify connection: %w", err)
+	if event.Service != serviceName {
+		return
 	}
-	defer conn.Release()
-
-	if _, err := conn.Exec(ctx, "LISTEN "+policyNotifyChan); err != nil {
-		return fmt.Errorf("listen policy channel: %w", err)
+	if err := writePolicyFile(event.PolicyFileLines()); err != nil {
+		s.logger.Error().Err(err).Msg("failed to rewrite casbin_rule.conf")
+		return
 	}
-
-	for {
-		notification, err := conn.Conn().WaitForNotification(ctx)
-		if err != nil {
-			return fmt.Errorf("wait for policy notification: %w", err)
-		}
-		if notification != nil && notification.Channel == policyNotifyChan {
-			if err := s.reloadPolicies(context.WithoutCancel(ctx), db); err != nil {
-				s.logger.Error().Err(err).Str("service", serviceName).Msg("RBAC policy reload failed after notification")
-			}
-		}
+	if err := s.reloadPolicies(); err != nil {
+		s.logger.Error().Err(err).Msg("failed to reload casbin policies")
+		return
 	}
-}
-
-func (s *Service) autoReload(ctx context.Context, db *pgxpool.Pool, interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if err := s.reloadPolicies(ctx, db); err != nil && ctx.Err() == nil {
-				s.logger.Error().Err(err).Str("service", serviceName).Msg("RBAC policy reload failed; retrying")
-			}
-		}
-	}
+	s.logger.Info().Int("policies", len(event.Policies)).Msg("casbin policies reloaded from auth-service")
 }
 
 func (s *Service) Close() error {
-	if s.cancelReload != nil {
-		s.cancelReload()
-	}
 	if s.watcher != nil {
 		s.watcher.Close()
-	}
-	select {
-	case <-s.reloadDone:
-	case <-time.After(5 * time.Second):
-		s.logger.Error().Str("service", serviceName).Msg("timed out stopping RBAC policy poller")
 	}
 	return s.redis.Close()
 }
