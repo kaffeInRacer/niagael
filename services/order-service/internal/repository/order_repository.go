@@ -238,8 +238,8 @@ func (r *orderRepository) List(ctx context.Context, params dto.ListOrderParams) 
 		LEFT JOIN buyers b ON b.id::text = o.user_id
 		WHERE (
 			NULLIF($1::text, '') IS NULL
-			OR o.id::text ILIKE '%' || $1::text || '%'
-			OR o.user_id ILIKE '%' || $1::text || '%'
+			OR o.order_ref ILIKE '%' || $1::text || '%'
+			OR b.email::text ILIKE '%' || $1::text || '%'
 		)
 		AND (NULLIF($2::text, '') IS NULL OR o.user_id = $2::text)
 		AND (NULLIF($3::text, '') IS NULL OR o.status = $3::text)
@@ -294,15 +294,16 @@ func (r *orderRepository) List(ctx context.Context, params dto.ListOrderParams) 
 func (r *orderRepository) ListCount(ctx context.Context, params dto.ListOrderParams) (int64, error) {
 	const query = `
 		SELECT COUNT(*)
-		FROM orders
+		FROM orders o
+		LEFT JOIN buyers b ON b.id::text = o.user_id
 		WHERE (
 			NULLIF($1::text, '') IS NULL
-			OR id::text ILIKE '%' || $1::text || '%'
-			OR user_id ILIKE '%' || $1::text || '%'
+			OR o.order_ref ILIKE '%' || $1::text || '%'
+			OR b.email::text ILIKE '%' || $1::text || '%'
 		)
-		AND (NULLIF($2::text, '') IS NULL OR user_id = $2::text)
-		AND (NULLIF($3::text, '') IS NULL OR status = $3::text)
-		AND deleted_at IS NULL
+		AND (NULLIF($2::text, '') IS NULL OR o.user_id = $2::text)
+		AND (NULLIF($3::text, '') IS NULL OR o.status = $3::text)
+		AND o.deleted_at IS NULL
 	`
 
 	var count int64
