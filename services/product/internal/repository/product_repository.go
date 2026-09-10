@@ -3,6 +3,9 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
+
 	"github.com/jackc/pgx/v5"
 	"kaffein/product-service/internal/domain"
 	"kaffein/product-service/internal/dto"
@@ -21,34 +24,56 @@ func NewProductRepository(store *postgresql.Store) IRepository.ProductRepository
 	}
 }
 
+// productOrderBy builds a safe ORDER BY clause from column and direction.
+// Uses table alias 'v' for materialized view queries.
+func productOrderBy(column, direction string) (string, string) {
+	allowed := map[string]string{
+		"name":       "v.name",
+		"price":      "v.price",
+		"created_at": "v.created_at",
+		"updated_at": "v.updated_at",
+	}
+
+	col, ok := allowed[column]
+	if !ok {
+		col = "v.created_at"
+	}
+
+	dir := "DESC"
+	if strings.EqualFold(direction, "asc") {
+		dir = "ASC"
+	}
+
+	orderBy := fmt.Sprintf("%s %s", col, dir)
+	fallback := "v.created_at DESC"
+	return orderBy, fallback
+}
+
+// productColumns is the column list for product_list_view (aliased as 'v').
+const productColumns = `
+		v.id, v.category_id, v.category_name, v.category_active,
+		v.name, v.slug, v.description, v.price, v.stock, v.stock_reserved,
+		v.is_active, v.is_promo_excluded, v.created_at, v.updated_at
+`
+
 func (r *productRepository) List(ctx context.Context, params dto.ListProductParams) ([]domain.Product, error) {
-	const query = `
-		SELECT p.id, p.category_id, c.name as category_name, c.is_active, p.name, p.slug,
-		       p.description, p.price, p.stock, p.stock_reserved,
-		       p.is_active, p.is_promo_excluded, p.created_at, p.updated_at
-		FROM product p
-		LEFT JOIN category c ON p.category_id = c.id
-		WHERE (NULLIF($1::text, '') IS NULL OR p.name ILIKE '%' || $1::text || '%')
-		AND ($2::boolean IS NULL OR p.is_active = $2::boolean)
-		AND ($3::boolean IS NULL OR p.is_promo_excluded = $3::boolean)
-		AND (NULLIF($4::text, '') IS NULL OR p.category_id = NULLIF($4::text, '')::uuid)
-		AND (NULLIF($5::text, '') IS NULL OR p.price >= NULLIF($5::text, '')::numeric)
-		AND (NULLIF($6::text, '') IS NULL OR p.price <= NULLIF($6::text, '')::numeric)
-		AND (NOT $7::boolean OR (c.is_active = true AND c.deleted_at IS NULL))
-		AND p.deleted_at IS NULL
-		ORDER BY
-		  CASE WHEN $8::text = 'name'       AND $9::text = 'asc'  THEN p.name       END ASC,
-		  CASE WHEN $8::text = 'price'      AND $9::text = 'asc'  THEN p.price      END ASC,
-		  CASE WHEN $8::text = 'created_at' AND $9::text = 'asc'  THEN p.created_at END ASC,
-		  CASE WHEN $8::text = 'updated_at' AND $9::text = 'asc'  THEN p.updated_at END ASC,
-		  CASE WHEN $8::text = 'name'       AND $9::text = 'desc' THEN p.name       END DESC,
-		  CASE WHEN $8::text = 'price'      AND $9::text = 'desc' THEN p.price      END DESC,
-		  CASE WHEN $8::text = 'created_at' AND $9::text = 'desc' THEN p.created_at END DESC,
-		  CASE WHEN $8::text = 'updated_at' AND $9::text = 'desc' THEN p.updated_at END DESC,
-		p.created_at DESC
-		LIMIT $10::int
-		OFFSET $11::int
-	`
+	orderBy, fallbackOrderBy := productOrderBy(params.OrderBy, params.OrderDir)
+
+	query := fmt.Sprintf(`
+		SELECT %s
+		FROM product_list_view v
+		WHERE (NULLIF($1::text, '') IS NULL OR v.name ILIKE '%%' || $1::text || '%%')
+		AND ($2::boolean IS NULL OR v.is_active = $2::boolean)
+		AND ($3::boolean IS NULL OR v.is_promo_excluded = $3::boolean)
+		AND (NULLIF($4::text, '') IS NULL OR v.category_id = NULLIF($4::text, '')::uuid)
+		AND (NULLIF($5::text, '') IS NULL OR v.price >= NULLIF($5::text, '')::numeric)
+		AND (NULLIF($6::text, '') IS NULL OR v.price <= NULLIF($6::text, '')::numeric)
+		AND (NOT $7::boolean OR (v.category_active = true))
+		ORDER BY %s, %s
+		LIMIT $8::int
+		OFFSET $9::int
+	`, productColumns, orderBy, fallbackOrderBy)
+
 	rows, err := r.db.Query(ctx, query,
 		params.Search,
 		params.IsActive,
@@ -57,8 +82,6 @@ func (r *productRepository) List(ctx context.Context, params dto.ListProductPara
 		params.MinPrice,
 		params.MaxPrice,
 		params.PublicOnly,
-		params.OrderBy,
-		params.OrderDir,
 		params.PageSize,
 		params.PageOffset,
 	)
@@ -97,16 +120,14 @@ func (r *productRepository) List(ctx context.Context, params dto.ListProductPara
 func (r *productRepository) ListCount(ctx context.Context, params dto.ListProductParams) (int64, error) {
 	const query = `
 		SELECT COUNT(*)
-		FROM product p
-		LEFT JOIN category c ON p.category_id = c.id
-		WHERE (NULLIF($1::text, '') IS NULL OR p.name ILIKE '%' || $1::text || '%')
-		AND ($2::boolean IS NULL OR p.is_active = $2::boolean)
-		AND ($3::boolean IS NULL OR p.is_promo_excluded = $3::boolean)
-		AND (NULLIF($4::text, '') IS NULL OR p.category_id = NULLIF($4::text, '')::uuid)
-		AND (NULLIF($5::text, '') IS NULL OR p.price >= NULLIF($5::text, '')::numeric)
-		AND (NULLIF($6::text, '') IS NULL OR p.price <= NULLIF($6::text, '')::numeric)
-		AND (NOT $7::boolean OR (c.is_active = true AND c.deleted_at IS NULL))
-		AND p.deleted_at IS NULL
+		FROM product_list_view v
+		WHERE (NULLIF($1::text, '') IS NULL OR v.name ILIKE '%' || $1::text || '%')
+		AND ($2::boolean IS NULL OR v.is_active = $2::boolean)
+		AND ($3::boolean IS NULL OR v.is_promo_excluded = $3::boolean)
+		AND (NULLIF($4::text, '') IS NULL OR v.category_id = NULLIF($4::text, '')::uuid)
+		AND (NULLIF($5::text, '') IS NULL OR v.price >= NULLIF($5::text, '')::numeric)
+		AND (NULLIF($6::text, '') IS NULL OR v.price <= NULLIF($6::text, '')::numeric)
+		AND (NOT $7::boolean OR (v.category_active = true))
 	`
 
 	var count int64
@@ -179,16 +200,13 @@ func (r *productRepository) Delete(ctx context.Context, id string) error {
 
 func (r *productRepository) ReadById(ctx context.Context, id string) (*domain.Product, error) {
 	const query = `
-		SELECT p.id, p.category_id, c.name as category_name, c.is_active, p.name, p.slug,
-		       p.description, p.price, p.stock, p.stock_reserved,
-		       p.is_active, p.is_promo_excluded, p.created_at, p.updated_at
-		FROM product p
-		LEFT JOIN category c ON p.category_id = c.id
-		WHERE p.id = $1 AND p.deleted_at IS NULL
+		SELECT %s
+		FROM product_list_view v
+		WHERE v.id = $1
 	`
 
 	var product domain.Product
-	err := r.db.QueryRow(ctx, query, id).Scan(
+	err := r.db.QueryRow(ctx, fmt.Sprintf(query, productColumns), id).Scan(
 		&product.Id,
 		&product.CategoryId,
 		&product.CategoryName,
@@ -216,16 +234,13 @@ func (r *productRepository) ReadById(ctx context.Context, id string) (*domain.Pr
 
 func (r *productRepository) ReadBySlug(ctx context.Context, slug string) (*domain.Product, error) {
 	const query = `
-		SELECT p.id, p.category_id, c.name as category_name, c.is_active, p.name, p.slug,
-		       p.description, p.price, p.stock, p.stock_reserved,
-		       p.is_active, p.is_promo_excluded, p.created_at, p.updated_at
-		FROM product p
-		LEFT JOIN category c ON p.category_id = c.id
-		WHERE p.slug = $1 AND p.deleted_at IS NULL
+		SELECT %s
+		FROM product_list_view v
+		WHERE v.slug = $1
 	`
 
 	var product domain.Product
-	err := r.db.QueryRow(ctx, query, slug).Scan(
+	err := r.db.QueryRow(ctx, fmt.Sprintf(query, productColumns), slug).Scan(
 		&product.Id,
 		&product.CategoryId,
 		&product.CategoryName,
@@ -253,14 +268,12 @@ func (r *productRepository) ReadBySlug(ctx context.Context, slug string) (*domai
 
 func (r *productRepository) BatchById(ctx context.Context, ids []string) ([]domain.Product, error) {
 	const query = `
-		SELECT p.id, p.category_id, c.name as category_name, c.is_active, p.name, p.slug,
-		       p.description, p.price, p.stock, p.stock_reserved,
-		       p.is_active, p.is_promo_excluded, p.created_at, p.updated_at
-		FROM product p
-		LEFT JOIN category c ON p.category_id = c.id
-		WHERE p.id = ANY($1) AND p.is_active = true AND p.deleted_at IS NULL
+		SELECT %s
+		FROM product_list_view v
+		WHERE v.id = ANY($1) AND v.is_active = true
 	`
-	rows, err := r.db.Query(ctx, query, ids)
+
+	rows, err := r.db.Query(ctx, fmt.Sprintf(query, productColumns), ids)
 	if err != nil {
 		return nil, err
 	}
