@@ -3,6 +3,9 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
+
 	"github.com/jackc/pgx/v5"
 	"kaffein/product-service/internal/domain"
 	"kaffein/product-service/internal/dto"
@@ -21,32 +24,47 @@ func NewCategoryRepository(store *postgresql.Store) IRepository.CategoryReposito
 	}
 }
 
+// categoryOrderBy builds a safe ORDER BY clause for category queries.
+func categoryOrderBy(column, direction string, prefix string) (string, string) {
+	allowed := map[string]string{
+		"name":       prefix + ".name",
+		"slug":       prefix + ".slug",
+		"created_at": prefix + ".created_at",
+		"updated_at": prefix + ".updated_at",
+	}
+
+	col, ok := allowed[column]
+	if !ok {
+		col = prefix + ".created_at"
+	}
+
+	dir := "DESC"
+	if strings.EqualFold(direction, "asc") {
+		dir = "ASC"
+	}
+
+	orderBy := fmt.Sprintf("%s %s", col, dir)
+	fallback := prefix + ".created_at DESC"
+	return orderBy, fallback
+}
+
 func (r *categoryRepository) List(ctx context.Context, params dto.ListCategoryParams) ([]domain.Category, error) {
-	const query = `
+	orderBy, fallbackOrderBy := categoryOrderBy(params.OrderBy, params.OrderDir, "c")
+
+	query := fmt.Sprintf(`
 		SELECT id, name, slug, description, is_active, created_at, updated_at
 		FROM category
-		WHERE (NULLIF($1::text, '') IS NULL OR name ILIKE '%' || $1::text || '%')
+		WHERE (NULLIF($1::text, '') IS NULL OR name ILIKE '%%' || $1::text || '%%')
 		AND ($2::boolean IS NULL OR is_active = $2::boolean)
 		AND deleted_at IS NULL
-		ORDER BY
-		  CASE WHEN $3::text = 'name'       AND $4::text = 'asc'  THEN name       END ASC,
-		  CASE WHEN $3::text = 'slug'       AND $4::text = 'asc'  THEN slug       END ASC,
-		  CASE WHEN $3::text = 'created_at' AND $4::text = 'asc'  THEN created_at END ASC,
-		  CASE WHEN $3::text = 'updated_at' AND $4::text = 'asc'  THEN updated_at END ASC,
+		ORDER BY %s, %s
+		LIMIT $3::int
+		OFFSET $4::int
+	`, orderBy, fallbackOrderBy)
 
-		  CASE WHEN $3::text = 'name'       AND $4::text = 'desc' THEN name       END DESC,
-		  CASE WHEN $3::text = 'slug'       AND $4::text = 'desc' THEN slug       END DESC,
-		  CASE WHEN $3::text = 'created_at' AND $4::text = 'desc' THEN created_at END DESC,
-		  CASE WHEN $3::text = 'updated_at' AND $4::text = 'desc' THEN updated_at END DESC,
-		created_at DESC
-		LIMIT $5::int
-		OFFSET $6::int
-	`
 	rows, err := r.db.Query(ctx, query,
 		params.Search,
 		params.IsActive,
-		params.OrderBy,
-		params.OrderDir,
 		params.PageSize,
 		params.PageOffset,
 	)
@@ -201,35 +219,26 @@ func (r *categoryRepository) ReadBySlug(ctx context.Context, slug string) (*doma
 }
 
 func (r *categoryRepository) ListWithProductCount(ctx context.Context, params dto.ListCategoryParams) ([]domain.Category, error) {
-	const query = `
+	orderBy, fallbackOrderBy := categoryOrderBy(params.OrderBy, params.OrderDir, "c")
+
+	query := fmt.Sprintf(`
 		SELECT 
 			c.id, c.name, c.slug, c.description, c.is_active, c.created_at, c.updated_at,
 			COUNT(p.id) as product_count
 		FROM category c
-		LEFT JOIN product p ON p.category_id = c.id AND p.deleted_at IS NULL AND (NOT $7::boolean OR p.is_active = true)
-		WHERE (NULLIF($1::text, '') IS NULL OR c.name ILIKE '%' || $1::text || '%')
+		LEFT JOIN product p ON p.category_id = c.id AND p.deleted_at IS NULL AND (NOT $5::boolean OR p.is_active = true)
+		WHERE (NULLIF($1::text, '') IS NULL OR c.name ILIKE '%%' || $1::text || '%%')
 		AND ($2::boolean IS NULL OR c.is_active = $2::boolean)
 		AND c.deleted_at IS NULL
 		GROUP BY c.id, c.name, c.slug, c.description, c.is_active, c.created_at, c.updated_at
-		ORDER BY
-		  CASE WHEN $3::text = 'name'       AND $4::text = 'asc'  THEN c.name       END ASC,
-		  CASE WHEN $3::text = 'slug'       AND $4::text = 'asc'  THEN c.slug       END ASC,
-		  CASE WHEN $3::text = 'created_at' AND $4::text = 'asc'  THEN c.created_at END ASC,
-		  CASE WHEN $3::text = 'updated_at' AND $4::text = 'asc'  THEN c.updated_at END ASC,
+		ORDER BY %s, %s
+		LIMIT $3::int
+		OFFSET $4::int
+	`, orderBy, fallbackOrderBy)
 
-		  CASE WHEN $3::text = 'name'       AND $4::text = 'desc' THEN c.name       END DESC,
-		  CASE WHEN $3::text = 'slug'       AND $4::text = 'desc' THEN c.slug       END DESC,
-		  CASE WHEN $3::text = 'created_at' AND $4::text = 'desc' THEN c.created_at END DESC,
-		  CASE WHEN $3::text = 'updated_at' AND $4::text = 'desc' THEN c.updated_at END DESC,
-		c.created_at DESC
-		LIMIT $5::int
-		OFFSET $6::int
-	`
 	rows, err := r.db.Query(ctx, query,
 		params.Search,
 		params.IsActive,
-		params.OrderBy,
-		params.OrderDir,
 		params.PageSize,
 		params.PageOffset,
 		params.ActiveProductsOnly,
