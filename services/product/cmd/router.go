@@ -52,7 +52,7 @@ func (app *application) routes(ctx context.Context) *gin.Engine {
 	productImageHandler := handler.NewProductImageHandler(productImageUseCase, storage, app.logger)
 	handler.NewCategoryHandler(categoryUseCase, app.logger, r, app.auth)
 	handler.NewVariantHandler(variantUseCase, app.logger, r, app.auth)
-	handler.NewProductHandler(productUseCase, app.pricingClient, app.logger, r, productImageHandler, app.auth, repository.NewFlashSaleProjectionRepository(app.pgx))
+	handler.NewProductHandler(productUseCase, app.pricingClient, app.logger, r, productImageHandler, app.auth, repository.NewFlashSaleSnapshotRepository(app.pgx))
 
 	app.startGrpcServer(ctx, productUseCase)
 	return r

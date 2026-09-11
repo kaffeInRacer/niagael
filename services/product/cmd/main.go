@@ -75,7 +75,7 @@ func main() {
 	l.Info().Str("mode", c.HTTP.Mode).Msg("application started")
 
 	if len(c.Kafka.Brokers) > 0 && c.Kafka.FlashSaleTopic != "" {
-		projectionRepo := repository.NewFlashSaleProjectionRepository(pool)
+		projectionRepo := repository.NewFlashSaleSnapshotRepository(pool)
 		flashSaleConsumer := kafka.NewFlashSaleConsumer(projectionRepo)
 		go kafkaevent.Consume(ctx, c.Kafka.Brokers, c.Kafka.FlashSaleTopic, c.Kafka.GroupID+"-flashsale", flashSaleConsumer.Handle)
 	}

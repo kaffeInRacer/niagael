@@ -21,16 +21,16 @@ type FlashSaleEvent struct {
 	DeletedAt       *time.Time `json:"deleted_at"`
 }
 
-type FlashSaleProjectionRepo interface {
+type FlashSaleSnapshotRepo interface {
 	Upsert(ctx context.Context, p domain.FlashSaleProjection) error
 	Delete(ctx context.Context, productID, variantID string) error
 }
 
 type FlashSaleConsumer struct {
-	repo FlashSaleProjectionRepo
+	repo FlashSaleSnapshotRepo
 }
 
-func NewFlashSaleConsumer(repo FlashSaleProjectionRepo) *FlashSaleConsumer {
+func NewFlashSaleConsumer(repo FlashSaleSnapshotRepo) *FlashSaleConsumer {
 	return &FlashSaleConsumer{repo: repo}
 }
 

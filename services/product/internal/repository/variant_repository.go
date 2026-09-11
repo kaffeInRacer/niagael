@@ -167,6 +167,7 @@ func (r *variantRepository) ReadById(ctx context.Context, id string) (*domain.Pr
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -184,10 +185,12 @@ func (r *variantRepository) ReserveStock(ctx context.Context, variantId string, 
 	if err != nil {
 		return err
 	}
+
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
 		return errors.New(constants.ErrInsufficientStock)
 	}
+
 	return nil
 }
 

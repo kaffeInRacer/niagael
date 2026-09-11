@@ -17,7 +17,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type FlashSaleProjectionReader interface {
+type FlashSaleSnapshotReader interface {
 	ListActive(ctx context.Context) ([]domain.FlashSaleProjection, error)
 }
 
@@ -27,7 +27,7 @@ type productHandler struct {
 	pricingClient *grpcclient.DynamicPricingClient
 	logger        zerolog.Logger
 	v             *validator.Validator
-	projection    FlashSaleProjectionReader
+	snapshot      FlashSaleSnapshotReader
 }
 
 func NewProductHandler(
@@ -37,14 +37,14 @@ func NewProductHandler(
 	engine *gin.Engine,
 	imageHandler *productImageHandler,
 	authorization *auth.Service,
-	projection FlashSaleProjectionReader) *productHandler {
+	snapshot FlashSaleSnapshotReader) *productHandler {
 	h := &productHandler{
 		usecase:       usecase,
 		imageHandler:  imageHandler,
 		pricingClient: pricingClient,
 		logger:        logger,
 		v:             validator.Get(),
-		projection:    projection,
+		snapshot:      snapshot,
 	}
 
 	products := engine.Group("/products")
@@ -69,7 +69,7 @@ func NewProductHandler(
 }
 
 func (h *productHandler) getFlashSalesForProducts(ctx *gin.Context, products []domain.Product) (map[string]*dto.FlashSaleInfo, map[string][]dto.VariantFlashSale) {
-	if h.projection != nil {
+	if h.snapshot != nil {
 		info, variants, found := h.getFlashSalesFromProjection(ctx, products)
 		if found {
 			return info, variants
@@ -143,7 +143,7 @@ func (h *productHandler) getFlashSalesForProducts(ctx *gin.Context, products []d
 }
 
 func (h *productHandler) getFlashSalesFromProjection(ctx *gin.Context, products []domain.Product) (map[string]*dto.FlashSaleInfo, map[string][]dto.VariantFlashSale, bool) {
-	items, err := h.projection.ListActive(ctx.Request.Context())
+	items, err := h.snapshot.ListActive(ctx.Request.Context())
 	if err != nil || len(items) == 0 {
 		return nil, nil, false
 	}

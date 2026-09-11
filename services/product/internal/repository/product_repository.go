@@ -24,8 +24,6 @@ func NewProductRepository(store *postgresql.Store) IRepository.ProductRepository
 	}
 }
 
-// productOrderBy builds a safe ORDER BY clause from column and direction.
-// Uses table alias 'v' for materialized view queries.
 func productOrderBy(column, direction string) (string, string) {
 	allowed := map[string]string{
 		"name":       "v.name",
@@ -49,7 +47,6 @@ func productOrderBy(column, direction string) (string, string) {
 	return orderBy, fallback
 }
 
-// productColumns is the column list for product_list_view (aliased as 'v').
 const productColumns = `
 		v.id, v.category_id, v.category_name, v.category_active,
 		v.name, v.slug, v.description, v.price, v.stock, v.stock_reserved,
@@ -225,6 +222,7 @@ func (r *productRepository) ReadById(ctx context.Context, id string) (*domain.Pr
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -259,6 +257,7 @@ func (r *productRepository) ReadBySlug(ctx context.Context, slug string) (*domai
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -317,10 +316,12 @@ func (r *productRepository) ReserveStock(ctx context.Context, productId string, 
 		if err != nil {
 			return err
 		}
+
 		rowsAffected := result.RowsAffected()
 		if rowsAffected == 0 {
 			return errors.New(constants.ErrInsufficientStock)
 		}
+
 		return nil
 	}
 
@@ -333,10 +334,12 @@ func (r *productRepository) ReserveStock(ctx context.Context, productId string, 
 	if err != nil {
 		return err
 	}
+
 	rowsAffected := result.RowsAffected()
 	if rowsAffected == 0 {
 		return errors.New(constants.ErrInsufficientStock)
 	}
+
 	return nil
 }
 
@@ -351,9 +354,11 @@ func (r *productRepository) ReleaseStock(ctx context.Context, productId string, 
 		if err != nil {
 			return err
 		}
+
 		if result.RowsAffected() == 0 {
 			return errors.New(constants.ErrVariantNotFound)
 		}
+
 		return nil
 	}
 
@@ -366,9 +371,11 @@ func (r *productRepository) ReleaseStock(ctx context.Context, productId string, 
 	if err != nil {
 		return err
 	}
+
 	if result.RowsAffected() == 0 {
 		return errors.New(constants.ErrProductNotFound)
 	}
+
 	return nil
 }
 
@@ -383,9 +390,11 @@ func (r *productRepository) ConfirmStock(ctx context.Context, productId string, 
 		if err != nil {
 			return err
 		}
+
 		if result.RowsAffected() == 0 {
 			return errors.New(constants.ErrInsufficientStock)
 		}
+
 		return nil
 	}
 

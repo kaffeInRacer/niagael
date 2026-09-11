@@ -24,7 +24,6 @@ func NewCategoryRepository(store *postgresql.Store) IRepository.CategoryReposito
 	}
 }
 
-// categoryOrderBy builds a safe ORDER BY clause for category queries.
 func categoryOrderBy(column, direction string, prefix string) (string, string) {
 	allowed := map[string]string{
 		"name":       prefix + ".name",
@@ -184,6 +183,7 @@ func (r *categoryRepository) ReadById(ctx context.Context, id string) (*domain.C
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -211,6 +211,7 @@ func (r *categoryRepository) ReadBySlug(ctx context.Context, slug string) (*doma
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
