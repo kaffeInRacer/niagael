@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS buyers (
+    id UUID PRIMARY KEY,
+    email CITEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
