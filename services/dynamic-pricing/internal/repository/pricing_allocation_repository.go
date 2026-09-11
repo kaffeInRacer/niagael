@@ -35,6 +35,7 @@ func (r *pricingAllocationRepository) AllocateWithTx(ctx context.Context, alloca
 		if err != nil {
 			return err
 		}
+
 		if existing != nil {
 			if existing.UserID != allocation.UserID || existing.RequestHash != allocation.RequestHash {
 				return errors.New(constants.ErrAllocationConflict)
@@ -71,6 +72,7 @@ func (r *pricingAllocationRepository) AllocateWithTx(ctx context.Context, alloca
 			if errors.Is(err, pgx.ErrNoRows) {
 				continue
 			}
+
 			if err != nil {
 				return err
 			}
@@ -90,6 +92,7 @@ func (r *pricingAllocationRepository) AllocateWithTx(ctx context.Context, alloca
 			if err != nil {
 				return err
 			}
+
 			if command.RowsAffected() != 1 {
 				return errors.New(constants.ErrFlashSaleStockInsufficient)
 			}
@@ -131,6 +134,7 @@ func (r *pricingAllocationRepository) AllocateWithTx(ctx context.Context, alloca
 			if errors.Is(err, pgx.ErrNoRows) {
 				return errors.New(constants.ErrPromoNotFound)
 			}
+
 			if err != nil {
 				return err
 			}
@@ -166,6 +170,7 @@ func (r *pricingAllocationRepository) AllocateWithTx(ctx context.Context, alloca
 			if err != nil {
 				return err
 			}
+
 			if command.RowsAffected() != 1 {
 				return errors.New(constants.ErrPromoLimitReached)
 			}
@@ -214,6 +219,7 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 		if err != nil {
 			return err
 		}
+
 		if command.RowsAffected() == 1 {
 			return nil
 		}
@@ -225,6 +231,7 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 		if err != nil {
 			return err
 		}
+
 		if allocatedUserID != userID {
 			return errors.New(constants.ErrAllocationOwnerMismatch)
 		}
@@ -262,6 +269,7 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 			if err != nil {
 				return err
 			}
+
 			if command.RowsAffected() != 1 {
 				return errors.New(constants.ErrFlashSaleReleaseTargetMissing)
 			}
@@ -269,6 +277,7 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 			if err != nil {
 				return err
 			}
+
 			if command.RowsAffected() != 1 {
 				return errors.New(constants.ErrFlashSaleUsageTargetMissing)
 			}
@@ -278,6 +287,7 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 			if err != nil {
 				return err
 			}
+
 			if command.RowsAffected() != 1 {
 				return errors.New(constants.ErrPromoReleaseTargetMissing)
 			}
@@ -285,6 +295,7 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 			if err != nil {
 				return err
 			}
+
 			if command.RowsAffected() != 1 {
 				return errors.New(constants.ErrPromoUsageTargetMissing)
 			}
@@ -293,6 +304,7 @@ func (r *pricingAllocationRepository) ReleaseWithTx(ctx context.Context, orderID
 		if err != nil {
 			return err
 		}
+
 		if command.RowsAffected() != 1 {
 			return errors.New(constants.ErrAllocationReleaseTargetMissing)
 		}
@@ -313,6 +325,7 @@ func readAllocation(ctx context.Context, db postgresql.DBTX, orderID string) (*P
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}

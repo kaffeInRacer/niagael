@@ -271,6 +271,7 @@ func (r *flashSaleRepository) ReadById(ctx context.Context, id string) (*domain.
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -310,6 +311,7 @@ func (r *flashSaleRepository) ReadByProductId(ctx context.Context, productId str
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -349,6 +351,7 @@ func (r *flashSaleRepository) ReadByVariantId(ctx context.Context, productId str
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -466,8 +469,10 @@ func (r *flashSaleRepository) DecrementStock(ctx context.Context, id string, qua
 	if err != nil {
 		return err
 	}
+
 	if cmdTag.RowsAffected() == 0 {
 		return errors.New(constants.ErrFlashSaleStockInsufficient)
 	}
+
 	return nil
 }

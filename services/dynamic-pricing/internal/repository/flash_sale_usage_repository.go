@@ -39,6 +39,7 @@ func (r *flashSaleUsageRepository) GetUsage(ctx context.Context, flashSaleId str
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}

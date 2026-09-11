@@ -200,6 +200,7 @@ func (r *promoRepository) ReadById(ctx context.Context, id string) (*domain.Prom
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -238,6 +239,7 @@ func (r *promoRepository) ReadByCode(ctx context.Context, code string) (*domain.
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}

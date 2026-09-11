@@ -12,14 +12,10 @@ const policyFileName = "internal/auth/casbin_rule.conf"
 //go:embed casbin_rule.conf
 var embeddedPolicies string
 
-// policyFilePath returns the on-disk policy file path next to the binary's
-// auth package source tree; falls back to the embedded copy when missing.
 func policyFilePath() string {
 	return policyFileName
 }
 
-// loadPolicyFromDisk reads the policy file, creating it from the embedded
-// default when it does not exist yet.
 func loadPolicyFromDisk() (string, error) {
 	data, err := os.ReadFile(policyFilePath())
 	if err != nil {
@@ -38,8 +34,6 @@ func loadPolicyFromDisk() (string, error) {
 	return content, nil
 }
 
-// writePolicyFile atomically rewrites the policy file with the given lines
-// (each line: "role, resource, action").
 func writePolicyFile(lines []string) error {
 	content := strings.Join(lines, "\n") + "\n"
 	tmp := policyFileName + ".tmp"
@@ -60,7 +54,6 @@ type PolicyEvent struct {
 	Policies []PolicyLine `json:"policies"`
 }
 
-// PolicyFileLines converts a policy event into casbin_rule.conf lines.
 func (e PolicyEvent) PolicyFileLines() []string {
 	lines := make([]string, 0, len(e.Policies))
 	for _, p := range e.Policies {
