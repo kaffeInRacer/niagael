@@ -10,3 +10,4 @@ CREATE TABLE IF NOT EXISTS flash_sale_usage (
 
 CREATE INDEX ix_flash_sale_usage_flash_sale_id ON flash_sale_usage(flash_sale_id);
 CREATE INDEX ix_flash_sale_usage_user_id ON flash_sale_usage(user_id);
+CREATE INDEX idx_flash_sale_usage_lookup ON flash_sale_usage (flash_sale_id, user_id, quantity);

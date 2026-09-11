@@ -23,3 +23,5 @@ CREATE TABLE IF NOT EXISTS promo (
 CREATE INDEX ix_promo_deleted_at ON promo(deleted_at);
 CREATE INDEX idx_promo_start_end ON promo(start_date, end_date);
 CREATE INDEX idx_promo_is_active ON promo(is_active) WHERE deleted_at IS NULL;
+CREATE INDEX idx_promo_search_trgm ON promo USING gin (name gin_trgm_ops, code gin_trgm_ops) WHERE deleted_at IS NULL;
+CREATE INDEX idx_promo_active_time ON promo (is_active, start_date, end_date, quantity, used_count) WHERE deleted_at IS NULL;
