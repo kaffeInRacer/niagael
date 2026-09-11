@@ -51,6 +51,7 @@ func (r *paymentRepository) InitiateWithTx(ctx context.Context, orderId string, 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return errors.New(constants.ErrPaymentNotFound)
 		}
+
 		if err != nil {
 			return err
 		}
@@ -107,6 +108,7 @@ func (r *paymentRepository) ReadByOrderId(ctx context.Context, orderId string) (
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +131,7 @@ func (r *paymentRepository) ReadById(ctx context.Context, id string) (*domain.Pa
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +158,7 @@ func (r *paymentRepository) ProcessCallbackWithTx(ctx context.Context, orderId s
 		if errors.Is(err, pgx.ErrNoRows) {
 			return errors.New(constants.ErrPaymentNotFound)
 		}
+
 		if err != nil {
 			return err
 		}
@@ -182,6 +186,7 @@ func (r *paymentRepository) ProcessCallbackWithTx(ctx context.Context, orderId s
 		if err != nil {
 			return err
 		}
+
 		if paymentTag.RowsAffected() != 1 {
 			return errors.New(constants.ErrInvalidOrderStatusTransition)
 		}
@@ -194,6 +199,7 @@ func (r *paymentRepository) ProcessCallbackWithTx(ctx context.Context, orderId s
 		if err != nil {
 			return err
 		}
+
 		if orderTag.RowsAffected() != 1 {
 			return errors.New(constants.ErrInvalidOrderStatusTransition)
 		}
