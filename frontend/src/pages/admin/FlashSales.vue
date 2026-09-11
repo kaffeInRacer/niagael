@@ -154,10 +154,30 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                   <tr v-for="(item, index) in form.items" :key="index">
                     <td class="px-3 py-2">
-                      <select v-model="item.product_id" @change="onProductChange(index)" required class="w-full border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500">
-                        <option value="">Select</option>
-                        <option v-for="p in productList" :key="p.id" :value="p.id">{{ p.name }}</option>
-                      </select>
+                      <div class="flex items-center gap-2">
+                        <button
+                          type="button"
+                          @click="openProductPicker(index)"
+                          class="w-full text-left border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 bg-white hover:bg-gray-50 flex items-center justify-between"
+                        >
+                          <span v-if="item.product_name" class="truncate">{{ item.product_name }}</span>
+                          <span v-else class="text-gray-400">Click to select product</span>
+                          <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        <button
+                          v-if="item.product_id"
+                          type="button"
+                          @click="item.product_id = ''; item.product_name = ''; item.variant_id = ''; item.variants = []"
+                          class="text-gray-400 hover:text-red-500 flex-shrink-0"
+                          aria-label="Clear product"
+                        >
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                     <td class="px-3 py-2">
                       <select v-model="item.variant_id" :disabled="!item.variants?.length" class="w-full border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100">
@@ -198,19 +218,26 @@
           </div>
         </form>
     </ModalDialog>
+
+    <ProductPickerModal
+      :show="showProductPicker"
+      :exclude-ids="form.items.map(i => i.product_id).filter(Boolean)"
+      @close="showProductPicker = false"
+      @select="handleProductSelected"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import api from '../../api'
 import { flashSaleApi, adminApi, productApi } from '../../api'
 import AdminDataTable from '../../components/AdminDataTable.vue'
 import ModalDialog from '../../components/ModalDialog.vue'
+import ProductPickerModal from '../../components/ProductPickerModal.vue'
 import { createServerSideAjax, escapeHtml } from '../../utils/datatables'
 import { formatDate, formatPrice, getFlashSaleStatus, getFlashSaleStatusClass, localDateTimeToIso, toLocalDateTimeInput } from '../../utils/format'
 
-const productList = ref([])
 const error = ref(null)
 const showModal = ref(false)
 const saving = ref(false)
@@ -221,8 +248,12 @@ const detailItem = ref(null)
 const detailLoading = ref(false)
 const detailProducts = ref([])
 
+const showProductPicker = ref(false)
+const pickingItemIndex = ref(null)
+
 const createEmptyItem = () => ({
   product_id: '',
+  product_name: '',
   variant_id: '',
   variants: [],
   discount_percent: 20,
@@ -292,15 +323,6 @@ const resetForm = () => {
   formError.value = null
 }
 
-const fetchProducts = async () => {
-  try {
-    const res = await api.get('/admin/products', { params: { page_size: 100 } })
-    productList.value = res.data.data || []
-  } catch (e) {
-    console.error('Failed to load products', e)
-  }
-}
-
 const fetchVariantsForItem = async (index) => {
   const item = form.value.items[index]
   if (!item.product_id) {
@@ -319,18 +341,32 @@ const fetchVariantsForItem = async (index) => {
   }
 }
 
-const onProductChange = (index) => {
-  const item = form.value.items[index]
-  item.variant_id = ''
-  fetchVariantsForItem(index)
-}
-
 const addItem = () => {
   form.value.items.push(createEmptyItem())
 }
 
 const removeItem = (index) => {
   form.value.items.splice(index, 1)
+}
+
+const openProductPicker = (index) => {
+  pickingItemIndex.value = index
+  showProductPicker.value = true
+}
+
+const handleProductSelected = (product) => {
+  if (pickingItemIndex.value === null) return
+  const item = form.value.items[pickingItemIndex.value]
+  item.product_id = product.id
+  item.product_name = product.name
+  item.variant_id = ''
+  fetchVariantsForItem(pickingItemIndex.value)
+  pickingItemIndex.value = null
+}
+
+const getProductImageUrl = (product) => {
+  const base = import.meta.env.VITE_IMG_URL || ''
+  return `${base}/${product.id}/${product.image.file_name}`
 }
 
 const saveFlashSale = async () => {
@@ -375,10 +411,6 @@ const saveFlashSale = async () => {
     saving.value = false
   }
 }
-
-onMounted(() => {
-  fetchProducts()
-})
 
 const handleTableAction = ({ action, row }) => {
   if (action === 'details') openDetail(row)
@@ -495,6 +527,7 @@ const editSessionItem = (item) => {
     is_active: true,
     items: [{
       product_id: item.product_id,
+      product_name: item.name,
       variant_id: item.variant?.id || '',
       variants: [],
       discount_percent: item.discount_percent,
