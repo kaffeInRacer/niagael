@@ -307,8 +307,6 @@ func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// --- Cache helpers ---
-
 func (r *userRepository) getCachedCount(ctx context.Context) (int64, error) {
 	if r.redis == nil {
 		return 0, errors.New("redis not available")

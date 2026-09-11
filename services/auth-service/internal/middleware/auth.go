@@ -124,8 +124,6 @@ func (s *Service) Authorize(resource, action string) gin.HandlerFunc {
 	}
 }
 
-// ReloadPolicies rebuilds the in-memory casbin enforcer from the database
-// (source of truth for the auth service itself).
 func (s *Service) ReloadPolicies() error {
 	m := model.NewModel()
 	m.AddDef("r", "r", "sub, obj, act")
