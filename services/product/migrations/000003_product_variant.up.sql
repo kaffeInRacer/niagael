@@ -14,3 +14,5 @@ CREATE TABLE IF NOT EXISTS product_variant (
 
 CREATE INDEX ix_product_variant_deleted_at ON product_variant(deleted_at);
 CREATE INDEX idx_product_variant_product_id ON product_variant(product_id);
+CREATE INDEX idx_variant_product_active ON product_variant (product_id, is_active, deleted_at)
+    INCLUDE (name, price, stock, stock_reserved, attributes, created_at, updated_at);
